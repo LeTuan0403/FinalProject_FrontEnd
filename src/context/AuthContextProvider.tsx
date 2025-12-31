@@ -1,0 +1,97 @@
+import { useState, useEffect } from 'react';
+import type { LoginResponse } from '../types';
+import { AuthContext } from './authContext';
+
+export interface AuthContextType {
+  user: LoginResponse | null;
+  login: (data: LoginResponse) => void;
+  logout: () => void;
+  isLoading: boolean;
+}
+
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const [user, setUser] = useState<LoginResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Initial auth state from localStorage on component mount
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const hoTen = localStorage.getItem('hoTen');
+    const role = localStorage.getItem('role');
+    const userId = localStorage.getItem('userId');
+
+    if (token && hoTen && role) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setUser({ token, hoTen, role, userId: Number(userId) });
+    }
+
+    setIsLoading(false);
+  }, []);
+
+  const parseJwt = (token: string) => {
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function (c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      return JSON.parse(jsonPayload);
+    } catch (e) {
+      return {};
+    }
+  };
+
+  const login = (data: any) => {
+    // Handle potential attribute name mismatches from backend
+    const token = data.token || data.Token || data.result?.token;
+    const hoTen = data.hoTen || data.HoTen || data.fullName || data.FullName || data.result?.hoTen;
+    const role = data.role || data.Role || data.result?.role;
+
+    // 1. Try to get ID from response body
+    let rawId = data.userId || data.UserId || data.userID || data.id || data.Id ||
+      data.user?.id || data.user?.userId ||
+      data.User?.Id || data.User?.UserId || data.User?.id || data.User?.userId ||
+      data.result?.userId || data.result?.id ||
+      data.data?.userId || data.data?.id || 0;
+
+    // 2. If not found in body, try to extract from Token
+    if (!rawId && token) {
+      const decoded = parseJwt(token);
+      // Common claims for User ID: nameid, sub, or custom fields
+      rawId = decoded.nameid || decoded.sub || decoded.UserId || decoded.userId || decoded.id || decoded.UserID || 0;
+    }
+
+    const userId = Number(rawId);
+
+    if (userId === 0) {
+      alert("Cảnh báo: Không tìm thấy ID người dùng. Vui lòng liên hệ hỗ trợ hoặc thử lại.");
+    }
+
+    localStorage.setItem('token', token);
+    localStorage.setItem('hoTen', hoTen);
+    localStorage.setItem('role', role);
+    localStorage.setItem('userId', String(userId));
+
+    // Update state
+    setUser({
+      token,
+      hoTen,
+      role,
+      userId
+    });
+  };
+
+  const logout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('hoTen');
+    localStorage.removeItem('role');
+    localStorage.removeItem('userId');
+    setUser(null);
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, login, logout, isLoading }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};

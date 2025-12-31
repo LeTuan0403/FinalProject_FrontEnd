@@ -1,0 +1,40 @@
+import axiosClient from '../api/axiosClient';
+import type { LoginResponse } from '../types';
+
+interface LoginData {
+  email: string;
+  matKhau: string;
+}
+
+export const authService = {
+  login: async (data: LoginData) => {
+    return axiosClient.post<LoginResponse>('/auth/login', data);
+  },
+  register: async (data: Record<string, unknown>) => {
+    return axiosClient.post('/auth/register', data);
+  },
+  loginGoogle: async (idToken: string) => {
+    return axiosClient.post<LoginResponse>('/auth/google-login', { idToken });
+  },
+  forgotPassword: async (email: string) => {
+    return axiosClient.post('/auth/forgot-password', { email });
+  },
+  resetPassword: async (data: { email: string; token: string; newPassword: string }) => {
+    return axiosClient.post('/auth/reset-password', data);
+  }
+};
+
+export const userService = {
+  getAll: async (params?: any) => {
+    return axiosClient.get<any>('/users', { params });
+  },
+  delete: async (id: number) => {
+    return axiosClient.delete(`/users/${id}`);
+  },
+  getMe: async () => {
+    return axiosClient.get<any>('/users/me');
+  },
+  updateProfile: async (data: { hoTen: string; soDienThoai?: string; diaChi?: string; ngaySinh?: string }) => {
+    return axiosClient.put('/users/profile', data);
+  }
+};

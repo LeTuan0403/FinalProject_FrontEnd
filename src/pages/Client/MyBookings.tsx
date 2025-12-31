@@ -1,0 +1,176 @@
+import { useState, useEffect } from 'react';
+import { Calendar, MapPin, User, Clock } from 'lucide-react';
+import { bookingService } from '../../services/tourService';
+import { useAuth } from '../../hooks/useAuth';
+import type { DonDatTour } from '../../types';
+import { Link } from 'react-router-dom';
+import StatusBadge from '../../components/booking/StatusBadge';
+import BookingEditModal from '../../components/booking/BookingEditModal';
+
+const MyBookings = () => {
+    const { user } = useAuth();
+    const [bookings, setBookings] = useState<DonDatTour[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [editBooking, setEditBooking] = useState<any>(null); // State for editing
+
+    useEffect(() => {
+        if (user) {
+            fetchMyBookings();
+        }
+    }, [user]);
+
+    const fetchMyBookings = async () => {
+        try {
+            setLoading(true);
+            const res = await bookingService.getMyBookings();
+
+            // Sort: Pending/Chờ thanh toán FIRST, then Others. Within group: Oldest First (FIFO)
+            const sorted = res.data.sort((a: DonDatTour, b: DonDatTour) => {
+                const pendingStatuses = ['Pending', 'Chờ thanh toán'];
+                const aIsPending = pendingStatuses.includes(a.trangThai || '');
+                const bIsPending = pendingStatuses.includes(b.trangThai || '');
+
+                if (aIsPending && !bIsPending) return -1;
+                if (!aIsPending && bIsPending) return 1;
+
+                return new Date(a.ngayDat || 0).getTime() - new Date(b.ngayDat || 0).getTime();
+            });
+
+            setBookings(sorted);
+        } catch (error) {
+            console.error("Failed to fetch bookings", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleUpdate = async (e: React.FormEvent, data: any) => {
+        e.preventDefault();
+        try {
+            const payload = {
+                ...data,
+                soLuongNguoi: Number(data.soLuongNguoiLon || 0) + Number(data.soLuongTreEm || 0)
+            };
+            await bookingService.update(payload.donDatId, payload);
+            alert("Cập nhật đơn đặt tour thành công!");
+            setEditBooking(null);
+            fetchMyBookings();
+        } catch (error: any) {
+            alert(error.response?.data?.message || "Lỗi cập nhật!");
+        }
+    };
+
+    const handleDelete = async (id: number) => {
+        if (!window.confirm("Bạn có chắc chắn muốn xóa đơn này?")) return;
+        try {
+            await bookingService.delete(id);
+            alert("Đã xóa đơn thành công!");
+            fetchMyBookings();
+        } catch (error: any) {
+            alert(error.response?.data?.message || "Lỗi xóa đơn!");
+        }
+    };
+
+    if (loading) return <div className="min-h-screen pt-24 pb-12 flex justify-center items-center">Loading...</div>;
+
+    if (!bookings.length) {
+        return (
+            <div className="min-h-screen pt-24 pb-12 bg-gray-50">
+                <div className="max-w-7xl mx-auto px-4 text-center">
+                    <h1 className="text-3xl font-bold text-gray-800 mb-4">Đơn đặt tour của tôi</h1>
+                    <div className="bg-white rounded-2xl p-12 shadow-sm border border-gray-100">
+                        <p className="text-gray-500 mb-6">Bạn chưa đặt tour nào.</p>
+                        <Link to="/" className="inline-block bg-blue-600 text-white px-8 py-3 rounded-full font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-200">
+                            Khám phá Tour ngay
+                        </Link>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="min-h-screen pt-24 pb-12 bg-gray-50">
+            <div className="max-w-7xl mx-auto px-4">
+                <h1 className="text-3xl font-bold text-gray-800 mb-8">Đơn đặt tour của tôi</h1>
+                <div className="grid grid-cols-1 gap-6">
+                    {bookings.map((booking) => (
+                        <div key={booking.donDatId} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition flex flex-col md:flex-row gap-6 relative">
+                            <div className="w-full md:w-1/4">
+                                <img
+                                    src={booking.tour?.hinhAnhBia || "https://via.placeholder.com/300x200"}
+                                    alt={booking.tour?.tenTour}
+                                    className="w-full h-48 object-cover rounded-xl"
+                                />
+                            </div>
+                            <div className="flex-1 flex flex-col justify-between">
+                                <div>
+                                    <div className="flex justify-between items-start mb-2">
+                                        <h3 className="text-xl font-bold text-gray-800">{booking.tour?.tenTour || `Tour #${booking.tourId}`}</h3>
+                                        <StatusBadge status={booking.trangThai} />
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-600 mb-4">
+                                        <div className="flex items-center gap-2">
+                                            <Calendar size={18} className="text-blue-500" />
+                                            <span>Ngày đi: {new Date(booking.ngayKhoiHanh).toLocaleDateString('vi-VN')}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <User size={18} className="text-blue-500" />
+                                            <span>{booking.soLuongNguoi} Khách ({booking.soLuongNguoiLon || 0} Lớn, {booking.soLuongTreEm || 0} Trẻ)</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <MapPin size={18} className="text-blue-500" />
+                                            <span>Khởi hành: {booking.tour?.diemKhoiHanh || 'Hà Nội'}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <Clock size={18} className="text-blue-500" />
+                                            <span>Đặt ngày: {booking.ngayDat ? new Date(booking.ngayDat).toLocaleDateString('vi-VN') : 'N/A'}</span>
+                                        </div>
+                                    </div>
+                                    {booking.ghiChu && <div className="text-sm bg-gray-50 p-2 rounded text-gray-600 italic mb-2">Ghi chú: {booking.ghiChu}</div>}
+                                </div>
+                                <div className="flex justify-between items-end border-t border-gray-100 pt-4 mt-2">
+                                    <div>
+                                        <span className="text-sm text-gray-500">Tổng thanh toán</span>
+                                        <div className="text-2xl font-bold text-blue-600">{Number(booking.tongTienThanhToan).toLocaleString()} ₫</div>
+                                    </div>
+                                    <div className="flex gap-3">
+                                        {/* User Action Logic */}
+                                        {['Pending', 'Chờ thanh toán'].includes(booking.trangThai) && ( // 'Chờ thanh toán'
+                                            <>
+                                                <button
+                                                    onClick={() => setEditBooking(booking)}
+                                                    className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg font-bold hover:bg-blue-100 transition"
+                                                >
+                                                    Sửa đơn
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(booking.donDatId)}
+                                                    className="px-4 py-2 bg-red-50 text-red-600 rounded-lg font-bold hover:bg-red-100 transition"
+                                                >
+                                                    Hủy đơn (Xóa)
+                                                </button>
+                                            </>
+                                        )}
+                                        {/* Cannot act on Completed or Cancelled or Paid */}
+                                        {/* Cannot act on Completed or Cancelled */}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Edit Modal Refactored */}
+                <BookingEditModal
+                    isOpen={!!editBooking}
+                    onClose={() => setEditBooking(null)}
+                    onSubmit={handleUpdate}
+                    bookingData={editBooking}
+                />
+            </div>
+        </div>
+    );
+};
+
+export default MyBookings;
