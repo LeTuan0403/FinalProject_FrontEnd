@@ -151,7 +151,7 @@ const LocationManagement = () => {
                                 <tr key={loc.diaDiemId} className="hover:bg-gray-50 transition">
                                     <td className="p-4">
                                         <img
-                                            src={loc.hinhAnh || 'https://via.placeholder.com/100'}
+                                            src={loc.hinhAnh || 'https://placehold.co/100'}
                                             alt={loc.tenDiaDiem}
                                             className="w-16 h-16 object-cover rounded-lg shadow-sm"
                                         />

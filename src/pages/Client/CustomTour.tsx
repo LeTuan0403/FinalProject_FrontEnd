@@ -425,7 +425,7 @@ const CustomTour = () => {
 
       const payload = {
         userId: user.userId,
-        tenTour: `Tour Tự Chọn: ${formData.startPoint} - ${formData.destinations.join(' & ')}`,
+        tenTour: `Tour Tự Chọn: ${formData.startPoint}${formData.destinations.length > 0 ? ' - ' + formData.destinations.join(' & ') : ''}`,
         isTuChon: true,
         diemKhoiHanh: formData.startPoint,
         tenDiaDiem: formData.destinations.join(' - '), // Store all cities stringified
@@ -437,7 +437,10 @@ const CustomTour = () => {
         // Send as STRINGS (backend requirement)
         anSang: String(totalS),
         anTrua: String(totalT),
-        anToi: String(totalC)
+        anToi: String(totalC),
+        // Add capacity and date per user request
+        soLuongCho: typeof formData.adults === 'number' ? formData.adults : 1,
+        ngayKhoiHanh: [formData.startDate]
       };
 
       if (editData?.tourId) {
@@ -677,7 +680,7 @@ const CustomTour = () => {
                 <div>
                   <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">Phương tiện di chuyển</label>
                   <div className="flex gap-2">
-                    {['Oto', 'Máy bay', 'Xe máy', 'Tàu hỏa'].map(tech => (
+                    {['Oto', 'Máy bay', 'Tàu hỏa'].map(tech => (
                       <button
                         key={tech}
                         onClick={() => setFormData({ ...formData, transport: tech })}

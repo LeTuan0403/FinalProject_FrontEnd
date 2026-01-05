@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Loader, User, Mail, Phone, FileText, X } from 'lucide-react';
+import { Loader, User, Mail, Phone, FileText, X, Edit, Trash2, Plus } from 'lucide-react';
 import { bookingService } from '../../../services/bookingService';
 import Sidebar from '../components/Sidebar';
 import StatusBadge from '../../../components/booking/StatusBadge';
 import BookingEditModal from '../../../components/booking/BookingEditModal';
+import AdminBookingCreateModal from '../../../components/booking/AdminBookingCreateModal';
 import PaymentTimer from '../../../components/common/PaymentTimer';
 
 const BookingManagement = () => {
@@ -11,6 +12,7 @@ const BookingManagement = () => {
     const [loading, setLoading] = useState(true);
     const [selectedBooking, setSelectedBooking] = useState<any>(null);
     const [editBooking, setEditBooking] = useState<any>(null);
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
     const fetchBookings = async () => {
         try {
@@ -81,6 +83,17 @@ const BookingManagement = () => {
         }
     };
 
+    const handleCreate = async (data: any) => {
+        try {
+            await bookingService.create(data);
+            alert("Tạo đơn đặt thành công!");
+            setIsCreateModalOpen(false);
+            fetchBookings();
+        } catch (e: any) {
+            alert(e.response?.data?.msg || e.response?.data?.message || "Lỗi khi tạo đơn!");
+        }
+    };
+
     // Helper to get booking contact info
     // Prioritize contact info in the booking record (book on behalf)
     // Fallback to user account info if missing (backward compatibility)
@@ -104,12 +117,20 @@ const BookingManagement = () => {
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                         <div className="p-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
                             <span className="font-bold text-gray-700">Tổng số đơn: {bookings.length}</span>
-                            <button
-                                onClick={fetchBookings}
-                                className="text-sm bg-white border border-gray-200 px-3 py-1 rounded-lg hover:bg-gray-100 text-blue-600 font-bold"
-                            >
-                                Làm mới
-                            </button>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setIsCreateModalOpen(true)}
+                                    className="text-sm bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-700 font-bold flex items-center gap-1 shadow-sm"
+                                >
+                                    <Plus size={16} /> Tạo đơn
+                                </button>
+                                <button
+                                    onClick={fetchBookings}
+                                    className="text-sm bg-white border border-gray-200 px-3 py-1 rounded-lg hover:bg-gray-100 text-blue-600 font-bold"
+                                >
+                                    Làm mới
+                                </button>
+                            </div>
                         </div>
                         <table className="w-full text-left">
                             <thead className="bg-gray-50 border-b border-gray-100">
@@ -169,30 +190,38 @@ const BookingManagement = () => {
                                                 <StatusBadge status={b.trangThai} />
                                             </td>
                                             {/* Actions Column */}
-                                            <td className="p-4 flex gap-2 flex-wrap">
-                                                <button
-                                                    onClick={() => setEditBooking(b)}
-                                                    className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded hover:bg-blue-100 font-bold border border-blue-200"
-                                                >
-                                                    Sửa
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(b.donDatId)}
-                                                    className="text-xs bg-red-50 text-red-600 px-2 py-1 rounded hover:bg-red-100 font-bold border border-red-200"
-                                                >
-                                                    Xóa
-                                                </button>
+                                            <td className="p-4">
+                                                <div className="flex flex-col gap-2">
+                                                    {/* Primary Status Actions */}
+                                                    {['Pending', 'Chờ thanh toán'].includes(b.trangThai) && (
+                                                        <div className="flex gap-1">
+                                                            <button onClick={() => handleStatusUpdate(b.donDatId, 'Đã thanh toán')} className="flex-1 text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded hover:bg-indigo-200 font-bold whitespace-nowrap">
+                                                                Duyệt
+                                                            </button>
+                                                            <button onClick={() => handleStatusUpdate(b.donDatId, 'Đã hủy')} className="flex-1 text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded hover:bg-gray-200 font-bold whitespace-nowrap">
+                                                                Hủy
+                                                            </button>
+                                                        </div>
+                                                    )}
 
-                                                {['Pending', 'Chờ thanh toán'].includes(b.trangThai) && (
-                                                    <button onClick={() => handleStatusUpdate(b.donDatId, 'Đã thanh toán')} className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded hover:bg-indigo-200 font-bold">Duyệt</button>
-                                                )}
-                                                {['Confirmed', 'Đã thanh toán'].includes(b.trangThai) && (
-                                                    <button onClick={() => handleStatusUpdate(b.donDatId, 'Hoàn tất')} className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded hover:bg-green-200 font-bold">Hoàn tất</button>
-                                                )}
-                                                {/* Existing Cancel Logic via StatusUpdate if needed, or specific cancel button */}
-                                                {(['Pending', 'Chờ thanh toán', 'Confirmed', 'Đã thanh toán'].includes(b.trangThai)) && (
-                                                    <button onClick={() => handleStatusUpdate(b.donDatId, 'Đã hủy')} className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded hover:bg-gray-200 font-bold">Hủy</button>
-                                                )}
+                                                    {/* Edit/Delete Tools */}
+                                                    <div className="flex gap-2 mt-1">
+                                                        <button
+                                                            onClick={() => setEditBooking(b)}
+                                                            className="flex-1 flex items-center justify-center gap-1 text-xs bg-white text-blue-600 px-2 py-1.5 rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors font-medium shadow-sm"
+                                                            title="Sửa đơn hàng"
+                                                        >
+                                                            <Edit size={12} /> Sửa
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDelete(b.donDatId)}
+                                                            className="flex-1 flex items-center justify-center gap-1 text-xs bg-white text-red-600 px-2 py-1.5 rounded-lg border border-red-200 hover:bg-red-50 transition-colors font-medium shadow-sm"
+                                                            title="Xóa đơn hàng"
+                                                        >
+                                                            <Trash2 size={12} /> Xóa
+                                                        </button>
+                                                    </div>
+                                                </div>
                                             </td>
                                         </tr>
                                     )
@@ -209,6 +238,12 @@ const BookingManagement = () => {
                     onClose={() => setEditBooking(null)}
                     onSubmit={handleUpdate}
                     bookingData={editBooking}
+                />
+
+                <AdminBookingCreateModal
+                    isOpen={isCreateModalOpen}
+                    onClose={() => setIsCreateModalOpen(false)}
+                    onSubmit={handleCreate}
                 />
 
                 {/* Contact Details Modal */}

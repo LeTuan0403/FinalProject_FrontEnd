@@ -64,7 +64,10 @@ const BookingEditModal: React.FC<BookingEditModalProps> = ({ isOpen, onClose, on
                                 min="1"
                                 className="w-full p-3 border rounded-lg"
                                 value={formData.soLuongNguoiLon || 0}
-                                onChange={e => setFormData({ ...formData, soLuongNguoiLon: Number(e.target.value) })}
+                                onChange={e => {
+                                    const val = e.target.value;
+                                    setFormData({ ...formData, soLuongNguoiLon: val === '' ? '' : Number(val) });
+                                }}
                             />
                         </div>
                         <div>
@@ -74,17 +77,42 @@ const BookingEditModal: React.FC<BookingEditModalProps> = ({ isOpen, onClose, on
                                 min="0"
                                 className="w-full p-3 border rounded-lg"
                                 value={formData.soLuongTreEm || 0}
-                                onChange={e => setFormData({ ...formData, soLuongTreEm: Number(e.target.value) })}
+                                onChange={e => {
+                                    const val = e.target.value;
+                                    setFormData({ ...formData, soLuongTreEm: val === '' ? '' : Number(val) });
+                                }}
                             />
                         </div>
                         <div>
                             <label className="block text-sm font-bold text-gray-700 mb-1">Ngày khởi hành</label>
-                            <input
-                                type="date"
-                                className="w-full p-3 border rounded-lg"
-                                value={formData.ngayKhoiHanh ? formData.ngayKhoiHanh.split('T')[0] : ''}
-                                onChange={e => setFormData({ ...formData, ngayKhoiHanh: e.target.value })}
-                            />
+                            {bookingData.tour?.ngayKhoiHanh && Array.isArray(bookingData.tour.ngayKhoiHanh) && bookingData.tour.ngayKhoiHanh.length > 0 ? (
+                                <select
+                                    className="w-full p-3 border rounded-lg"
+                                    value={formData.ngayKhoiHanh ? formData.ngayKhoiHanh.split('T')[0] : ''}
+                                    onChange={e => setFormData({ ...formData, ngayKhoiHanh: e.target.value })}
+                                >
+                                    <option value="">-- Chọn ngày khởi hành --</option>
+                                    {bookingData.tour.ngayKhoiHanh
+                                        .map((d: string) => new Date(d))
+                                        .filter((d: Date) => d.getTime() >= new Date().setHours(0, 0, 0, 0))
+                                        .sort((a: Date, b: Date) => a.getTime() - b.getTime())
+                                        .map((date: Date, idx: number) => {
+                                            const dateStr = date.toISOString().split('T')[0];
+                                            const displayStr = date.toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'numeric', day: 'numeric' });
+                                            return <option key={idx} value={dateStr}>{displayStr}</option>;
+                                        })
+                                    }
+                                    <option value="other" disabled>Liên hệ để đặt các lịch khác</option>
+                                </select>
+                            ) : (
+                                <input
+                                    type="date"
+                                    className="w-full p-3 border rounded-lg"
+                                    value={formData.ngayKhoiHanh ? formData.ngayKhoiHanh.split('T')[0] : ''}
+                                    onChange={e => setFormData({ ...formData, ngayKhoiHanh: e.target.value })}
+                                    min={new Date().toISOString().split('T')[0]}
+                                />
+                            )}
                         </div>
                         <div className="col-span-2">
                             <label className="block text-sm font-bold text-gray-700 mb-1">Ghi chú</label>

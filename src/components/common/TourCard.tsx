@@ -60,8 +60,27 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
 
         if (futureDates.length === 0) return "Đã hết lịch";
 
-        const nextDate = futureDates[0].toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-        return futureDates.length > 1 ? `${nextDate} (+${futureDates.length - 1})` : nextDate;
+        // Check availability if provided, otherwise assume available
+        const filteredDates = futureDates.filter(d => {
+            if (tour.availability) {
+                const dateStr = d.toISOString().split('T')[0];
+                const avail = tour.availability.find(a => new Date(a.date).toISOString().split('T')[0] === dateStr);
+                // If availability info exists, check remainingSeats > 0.
+                if (avail) {
+                    return avail.remainingSeats > 0;
+                }
+            }
+            // Fallback: If no availability info, we show it (or should we hide? Safe to show).
+            // Actually, if backend sends availability, it should be comprehensive.
+
+            // Legacy/Fallback check: (Ideally we trust availability array)
+            return true;
+        });
+
+        if (filteredDates.length === 0) return "Đã hết chỗ";
+
+        const nextDate = filteredDates[0].toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        return filteredDates.length > 1 ? `${nextDate} (+${filteredDates.length - 1})` : nextDate;
     };
     const nextDepartureText = getNextDeparture();
 
@@ -81,7 +100,7 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
 
                 <div className="relative overflow-hidden h-60">
                     <img
-                        src={tour.hinhAnhBia || "https://via.placeholder.com/400x300?text=Tour"}
+                        src={tour.hinhAnhBia || "https://placehold.co/400x300?text=Tour"}
                         alt={tour.tenTour}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     />
@@ -107,7 +126,22 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
 
                     <div className="flex items-center gap-2 mb-4 text-sm text-gray-500 -mt-2">
                         <User className="w-4 h-4" />
-                        <span>Còn: <span className="font-semibold text-red-500">{tour.soLuongCho ?? 0} chỗ</span></span>
+                        {(() => {
+                            let nextRem = tour.soLuongCho ?? 0;
+                            if (tour.availability) {
+                                // Availability for future
+                                const tomorrow = new Date();
+                                tomorrow.setDate(tomorrow.getDate() + 1);
+                                tomorrow.setHours(0, 0, 0, 0);
+
+                                const avail = tour.availability
+                                    .filter(a => new Date(a.date).getTime() >= tomorrow.getTime() && a.remainingSeats > 0)
+                                    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
+
+                                if (avail) nextRem = avail.remainingSeats;
+                            }
+                            return <span>Còn: <span className="font-semibold text-red-500">{nextRem} chỗ</span></span>;
+                        })()}
                     </div>
 
                     <div className="mt-auto flex justify-between items-center border-t border-gray-100 pt-4">
@@ -141,7 +175,7 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
             {/* Horizontal Image */}
             <div className="md:w-1/3 relative overflow-hidden h-64 md:h-auto">
                 <img
-                    src={tour.hinhAnhBia || "https://via.placeholder.com/400x300?text=Tour"}
+                    src={tour.hinhAnhBia || "https://placehold.co/400x300?text=Tour"}
                     alt={tour.tenTour}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                 />
@@ -186,7 +220,22 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
                         </div>
                         <div className="flex items-center gap-2">
                             <User className="w-4 h-4 text-blue-500" />
-                            <span>Còn: <span className="font-semibold text-red-500">{tour.soLuongCho ?? 0} chỗ</span></span>
+                            {(() => {
+                                let nextRem = tour.soLuongCho ?? 0;
+                                if (tour.availability) {
+                                    // Availability for future
+                                    const tomorrow = new Date();
+                                    tomorrow.setDate(tomorrow.getDate() + 1);
+                                    tomorrow.setHours(0, 0, 0, 0);
+
+                                    const avail = tour.availability
+                                        .filter(a => new Date(a.date).getTime() >= tomorrow.getTime() && a.remainingSeats > 0)
+                                        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
+
+                                    if (avail) nextRem = avail.remainingSeats;
+                                }
+                                return <span>Còn: <span className="font-semibold text-red-500">{nextRem} chỗ</span></span>;
+                            })()}
                         </div>
                     </div>
                 </div>

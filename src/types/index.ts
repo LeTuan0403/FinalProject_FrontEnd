@@ -66,6 +66,13 @@ export interface Tour {
   // Additional DB fields
   ngayTao?: string;
   diemDanhGia?: number;
+
+  // Dynamic Seat Availability
+  availability?: {
+    date: string;
+    bookedSeats: number;
+    remainingSeats: number;
+  }[];
 }
 
 export interface DonDatTour {

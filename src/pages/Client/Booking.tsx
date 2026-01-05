@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { tourService } from '../../services/tourService';
 import { bookingService } from '../../services/bookingService';
 import type { Tour } from '../../types';
-import { X, Loader } from 'lucide-react';
+import { X, Loader, AlertTriangle, CheckCircle } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
 const Booking = () => {
@@ -13,6 +13,8 @@ const Booking = () => {
     const [tour, setTour] = useState<Tour | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [errorModal, setErrorModal] = useState<{ isOpen: boolean; message: string }>({ isOpen: false, message: '' });
+    const [successModal, setSuccessModal] = useState<{ isOpen: boolean; bookingId: string }>({ isOpen: false, bookingId: '' });
 
     // Form Stats
     const [formData, setFormData] = useState({
@@ -21,14 +23,14 @@ const Booking = () => {
         phone: '',
         address: '',
         departureDate: '',
-        adults: 1 as number | '',
-        children: 0,
+        adults: 1 as number | string,
+        children: 0 as number | string,
         note: ''
     });
 
     const [isConfirming, setIsConfirming] = useState(false);
     const [touched, setTouched] = useState<Record<string, boolean>>({});
-    const [paymentMethod, setPaymentMethod] = useState<'cash' | 'transfer' | 'online'>('online');
+    const [paymentMethod, setPaymentMethod] = useState<'cash' | 'transfer'>('transfer');
 
     useEffect(() => {
         const fetchTour = async () => {
@@ -37,12 +39,63 @@ const Booking = () => {
                 setLoading(true);
                 const res = await tourService.getById(Number(id));
                 setTour(res.data);
-                setFormData(prev => ({
-                    ...prev,
-                    departureDate: new Date().toISOString().split('T')[0],
-                    // Pre-fill user data if available
-                    fullName: user?.hoTen || prev.fullName
-                }));
+
+                // Smart Date Selection: Pick the first available future date if array exists
+                // Note: res.data might differ if we populated availability in tourController.
+                // Assuming tourController sends { ...tour, availability: [{ date, bookedSeats, remainingSeats }] }
+
+                const rawDates = res.data.ngayKhoiHanh;
+                let availabilityMap: Record<string, number> = {};
+
+                // Map availability if provided by backend
+                // If not provided (old backend), we fallback to global 'soLuongCho' which is now static Max Capacity
+                if (res.data.availability && Array.isArray(res.data.availability)) {
+                    res.data.availability.forEach((item: any) => {
+                        // Normalize date key to YYYY-MM-DD
+                        const dateKey = new Date(item.date).toISOString().split('T')[0];
+                        availabilityMap[dateKey] = item.remainingSeats;
+                    });
+                }
+
+                let initialDate = "";
+                if (rawDates && Array.isArray(rawDates) && rawDates.length > 0) {
+                    const validDates = rawDates
+                        .map((d: string) => {
+                            const dateObj = new Date(d);
+                            const dateStr = dateObj.toISOString().split('T')[0];
+                            // Check if we have specific remaining seats, otherwise use global max (less reliable now) or assume available
+                            // If backend sends availability, use it. If not, assume tour.soLuongCho (legacy behavior, but we stopped mutating it).
+                            // Ideally, if availability is missing, we treat it as max capacity.
+                            const remaining = availabilityMap[dateStr] !== undefined ? availabilityMap[dateStr] : res.data.soLuongCho;
+
+                            return { date: dateObj, dateStr, remaining };
+                        })
+                        .filter((item: any) => item.date.getTime() >= new Date().setHours(0, 0, 0, 0)) // Future only
+                        .sort((a: any, b: any) => a.date.getTime() - b.date.getTime());
+
+                    // Find first date with seats > 0
+                    const firstAvailable = validDates.find((item: any) => item.remaining > 0);
+                    if (firstAvailable) {
+                        initialDate = firstAvailable.dateStr;
+                    }
+
+                    // We can also store this availability state to use in render
+                    setTour({ ...res.data, availabilityMap } as any); // extend Tour type locally or ignore TS for now
+
+                    setFormData(prev => ({
+                        ...prev,
+                        departureDate: initialDate,
+                        fullName: user?.hoTen || prev.fullName,
+                        // If Custom Tour, use the Requested Capacity as default Adults count
+                        adults: res.data.isTuChon ? (res.data.soLuongCho || 1) : 1
+                    }));
+                } else {
+                    setFormData(prev => ({
+                        ...prev,
+                        fullName: user?.hoTen || prev.fullName,
+                        adults: res.data.isTuChon ? (res.data.soLuongCho || 1) : 1
+                    }));
+                }
             } catch (err) {
                 setError('Không thể tải thông tin tour');
             } finally {
@@ -56,9 +109,12 @@ const Booking = () => {
     if (loading) return <div className="min-h-screen flex text-center justify-center items-center text-gray-500 gap-2"><Loader className="animate-spin" /> Loading tour info...</div>;
     if (error || !tour) return <div className="min-h-screen flex text-center justify-center items-center text-red-500">{error || 'Tour not found'}</div>;
 
-    const priceAdult = tour.tongGiaDuKien;
-    const priceChild = tour.tongGiaDuKien * 0.75; // 75% for children
-    const totalPrice = ((typeof formData.adults === 'number' ? formData.adults : 0) * priceAdult) + (formData.children * priceChild);
+    // For Custom Tour, tongGiaDuKien is TOTAL. Retrieve Unit Price by dividing by capacity.
+    // For Standard Tour, tongGiaDuKien is Unit Price.
+    const priceAdult = tour.isTuChon ? Math.round(tour.tongGiaDuKien / (tour.soLuongCho || 1)) : tour.tongGiaDuKien;
+    const priceChild = priceAdult * 0.75; // 75% for children
+
+    const totalPrice = (Number(formData.adults || 0) * priceAdult) + (Number(formData.children || 0) * priceChild);
 
     const validate = () => {
         const errors: Record<string, string> = {};
@@ -102,11 +158,9 @@ const Booking = () => {
                 return;
             }
 
-            // Mock Payment Process
-            if (paymentMethod === 'online') {
-                const confirmed = window.confirm("Đang chuyển hướng đến cổng thanh toán VNPAY (Mô phỏng). Nhấn OK để thanh toán thành công, Cancel để hủy.");
-                if (!confirmed) return;
-            }
+            // Payment Process Logic
+            // Transfer -> Redirect to QR (formerly 'online')
+            // Cash -> Show Success Modal
 
             // Ensure adults is a valid number
             const adultsCount = typeof formData.adults === 'number' && formData.adults > 0
@@ -117,9 +171,9 @@ const Booking = () => {
                 tourId: Number(id),
                 // userId: user.userId, // Backend extracts from token
                 ngayKhoiHanh: formData.departureDate,
-                soLuongNguoi: adultsCount + formData.children,
+                soLuongNguoi: adultsCount + Number(formData.children || 0),
                 soLuongNguoiLon: adultsCount,
-                soLuongTreEm: formData.children,
+                soLuongTreEm: Number(formData.children || 0),
                 tongTienThanhToan: totalPrice,
 
                 // Contact Info
@@ -131,21 +185,18 @@ const Booking = () => {
                 ghiChu: `Địa chỉ: ${formData.address}. ${formData.note ? `Ghi chú: ${formData.note}.` : ''} Thanh toán: ${paymentMethod}`
             };
 
-            console.log("📤 Sending booking:", bookingPayload);
-            if (paymentMethod === 'online') {
-                // For Online payment, we might usually redirect to VNPAY url returned from backend
-                // But for now, we redirect to our Payment Instruction page as well, or a specific success page
-                // navigate(`/payment/${res.data.id}`); // Assuming backend returns the booking object
-                // Since we don't have the real ID from created booking in the previous snippets (bookingService.create returns response), we need to capture it.
-                // Let's assume response.data is the booking.
+            if (paymentMethod === 'transfer') {
+                // Previously 'online' logic - Redirect to QR Page
                 const newBookingFn = await bookingService.create(bookingPayload);
-                // Check structure of response
                 const newBookingId = newBookingFn.data?.donDatId || newBookingFn.data?.id;
                 navigate(`/payment/${newBookingId}`);
             } else {
+                // Cash Payment - Show Instructions
                 const newBookingFn = await bookingService.create(bookingPayload);
                 const newBookingId = newBookingFn.data?.donDatId || newBookingFn.data?.id;
-                navigate(`/payment/${newBookingId}`);
+
+                // Show local success modal
+                setSuccessModal({ isOpen: true, bookingId: newBookingId });
             }
         } catch (error: any) {
             console.error("❌ Booking failed:", error);
@@ -155,6 +206,9 @@ const Booking = () => {
             if (error.response?.status === 401) {
                 errorMsg = "Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.";
                 navigate('/login');
+            } else if (error.response?.data?.msg) {
+                // Backend often uses 'msg'
+                errorMsg = error.response.data.msg;
             } else if (error.response?.data?.message) {
                 errorMsg = error.response.data.message;
             } else if (error.response?.data?.title) {
@@ -163,7 +217,15 @@ const Booking = () => {
                 errorMsg = error.response.data;
             }
 
-            alert(errorMsg);
+            // alert(errorMsg);
+            setErrorModal({ isOpen: true, message: errorMsg });
+        }
+    };
+
+    const closeErrorModal = () => {
+        setErrorModal({ isOpen: false, message: '' });
+        if (errorModal.message.includes("đăng nhập")) {
+            navigate('/login');
         }
     };
 
@@ -175,14 +237,14 @@ const Booking = () => {
                     {/* Left: Tour Summary - Hidden on mobile or sticky? Let's make it top on mobile */}
                     <div className="md:w-1/3 bg-blue-900 text-white p-8 md:p-10 flex flex-col">
                         <h2 className="text-xl opacity-80 mb-6 uppercase tracking-widest font-bold">Thông tin Tour</h2>
-                        <img src={tour.hinhAnhBia || "https://via.placeholder.com/400"} alt={tour.tenTour} className="w-full h-40 object-cover rounded-xl mb-6 border-2 border-blue-700" />
+                        <img src={tour.hinhAnhBia || "https://placehold.co/400"} alt={tour.tenTour} className="w-full h-40 object-cover rounded-xl mb-6 border-2 border-blue-700" />
 
                         <h3 className="text-2xl font-bold mb-4 leading-tight">{tour.tenTour}</h3>
 
                         <div className="space-y-4 text-sm opacity-90 flex-grow">
                             <div className="flex justify-between border-b border-blue-800 pb-2">
                                 <span>Mã tour:</span>
-                                <span className="font-bold">TB-{tour.tourId}</span>
+                                <span className="font-bold">{tour.maTour || `T-${tour.tourId}`}</span>
                             </div>
                             <div className="flex justify-between border-b border-blue-800 pb-2">
                                 <span>Thời gian:</span>
@@ -244,12 +306,44 @@ const Booking = () => {
                                 </div>
                                 <div>
                                     <label className="block text-sm font-bold text-gray-700 mb-2">Ngày khởi hành</label>
-                                    <input
-                                        type="date"
-                                        className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-200 focus:border-blue-500 outline-none"
-                                        value={formData.departureDate}
-                                        onChange={e => setFormData({ ...formData, departureDate: e.target.value })}
-                                    />
+                                    {tour.ngayKhoiHanh && Array.isArray(tour.ngayKhoiHanh) && tour.ngayKhoiHanh.length > 0 ? (
+                                        <select
+                                            className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-200 focus:border-blue-500 outline-none"
+                                            value={formData.departureDate}
+                                            onChange={e => setFormData({ ...formData, departureDate: e.target.value })}
+                                        >
+                                            <option value="">-- Chọn ngày khởi hành --</option>
+                                            {tour.ngayKhoiHanh
+                                                .map(d => new Date(d))
+                                                .filter(d => d.getTime() >= new Date().setHours(0, 0, 0, 0)) // Future only
+                                                .sort((a, b) => a.getTime() - b.getTime())
+                                                .map((date, idx) => {
+                                                    const dateStr = date.toISOString().split('T')[0];
+                                                    const displayStr = date.toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'numeric', day: 'numeric' });
+
+                                                    // Check availability
+                                                    // @ts-ignore
+                                                    const remaining = tour.availabilityMap ? tour.availabilityMap[dateStr] : tour.soLuongCho;
+                                                    const isFull = remaining !== undefined && remaining <= 0;
+
+                                                    return (
+                                                        <option key={idx} value={dateStr} disabled={isFull}>
+                                                            {displayStr} {isFull ? '(Hết chỗ)' : `(Còn ${remaining} chỗ)`}
+                                                        </option>
+                                                    );
+                                                })
+                                            }
+                                            <option value="other" disabled>Liên hệ để đặt các lịch khác</option>
+                                        </select>
+                                    ) : (
+                                        <input
+                                            type="date"
+                                            className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-200 focus:border-blue-500 outline-none"
+                                            value={formData.departureDate}
+                                            onChange={e => setFormData({ ...formData, departureDate: e.target.value })}
+                                            min={new Date().toISOString().split('T')[0]} // Cannot pick past dates
+                                        />
+                                    )}
                                 </div>
                             </div>
 
@@ -277,11 +371,20 @@ const Booking = () => {
                                         onKeyDown={(e) => ["-", "e", "E", "+"].includes(e.key) && e.preventDefault()}
                                         onChange={e => {
                                             const val = e.target.value;
-                                            setFormData({ ...formData, adults: val === '' ? '' : Math.max(1, parseInt(val)) });
+                                            if (val === '') {
+                                                setFormData({ ...formData, adults: '' });
+                                                return;
+                                            }
+                                            const num = parseInt(val);
+                                            // Allow typing freely, enforce min on blur
+                                            setFormData({ ...formData, adults: isNaN(num) ? '' : num });
                                         }}
                                         onBlur={() => {
                                             setTouched({ ...touched, adults: true });
-                                            if (formData.adults === '') setFormData({ ...formData, adults: 1 });
+                                            // Enforce minimum 1 on blur
+                                            if (formData.adults === '' || Number(formData.adults) < 1) {
+                                                setFormData({ ...formData, adults: 1 });
+                                            }
                                         }}
                                     />
                                     {touched.adults && errors.adults && <p className="text-red-500 text-xs mt-1">{errors.adults}</p>}
@@ -296,11 +399,16 @@ const Booking = () => {
                                         onKeyDown={(e) => ["-", "e", "E", "+"].includes(e.key) && e.preventDefault()}
                                         onChange={e => {
                                             const val = e.target.value;
-                                            // Allow empty string temporarily by handling in UI render, but here we strictly set number or 0
-                                            setFormData({ ...formData, children: val === '' ? 0 : Math.max(0, parseInt(val)) });
+                                            if (val === '') {
+                                                setFormData({ ...formData, children: '' });
+                                                return;
+                                            }
+                                            const num = parseInt(val);
+                                            setFormData({ ...formData, children: isNaN(num) ? '' : num });
                                         }}
                                         onBlur={() => {
-                                            if (formData.children === undefined) {
+                                            // Enforce minimum 0 on blur
+                                            if (formData.children === '' || typeof formData.children !== 'number') {
                                                 setFormData({ ...formData, children: 0 });
                                             }
                                         }}
@@ -332,43 +440,62 @@ const Booking = () => {
                                             className="w-5 h-5 text-blue-600"
                                         />
                                         <div>
-                                            <div className="font-bold text-gray-800">Chuyển khoản ngân hàng</div>
-                                            <div className="text-sm text-gray-500">Thanh toán qua tài khoản ngân hàng</div>
+                                            <div className="font-bold text-gray-800">Chuyển khoản ngân hàng (QR Code)</div>
+                                            <div className="text-sm text-gray-500">Quét mã QR để thanh toán nhanh chóng</div>
                                         </div>
                                     </label>
 
-                                    <label className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition ${paymentMethod === 'cash' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-200'}`}>
-                                        <input
-                                            type="radio"
-                                            name="paymentMethod"
-                                            value="cash"
-                                            checked={paymentMethod === 'cash'}
-                                            onChange={() => setPaymentMethod('cash')}
-                                            className="w-5 h-5 text-blue-600"
-                                        />
-                                        <div>
-                                            <div className="font-bold text-gray-800">Thanh toán tại văn phòng</div>
-                                            <div className="text-sm text-gray-500">Đến văn phòng để thanh toán trực tiếp</div>
-                                        </div>
-                                    </label>
-
-                                    <label className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition ${paymentMethod === 'online' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-200'}`}>
-                                        <input
-                                            type="radio"
-                                            name="paymentMethod"
-                                            value="online"
-                                            checked={paymentMethod === 'online'}
-                                            onChange={() => setPaymentMethod('online')}
-                                            className="w-5 h-5 text-blue-600"
-                                        />
-                                        <div>
-                                            <div className="font-bold text-gray-800 flex items-center gap-2">
-                                                Thanh toán trực tuyến (VNPAY/Momo)
-                                                <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Khuyên dùng</span>
+                                    <div
+                                        className={`p-4 rounded-xl border-2 cursor-pointer transition ${paymentMethod === 'cash' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-200'}`}
+                                        onClick={() => setPaymentMethod('cash')}
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <input
+                                                type="radio"
+                                                name="paymentMethod"
+                                                value="cash"
+                                                checked={paymentMethod === 'cash'}
+                                                onChange={() => setPaymentMethod('cash')}
+                                                className="w-5 h-5 text-blue-600"
+                                            />
+                                            <div>
+                                                <div className="font-bold text-gray-800">Thanh toán tại văn phòng</div>
+                                                <div className="text-sm text-gray-500">Đến văn phòng để thanh toán trực tiếp</div>
                                             </div>
-                                            <div className="text-sm text-gray-500">Thanh toán ngay để giữ chỗ (Mô phỏng)</div>
                                         </div>
-                                    </label>
+
+                                        {/* Show addresses if selected */}
+                                        {paymentMethod === 'cash' && (
+                                            <div className="mt-3 ml-9 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm animate-fadeIn">
+                                                <div className="bg-white p-3 rounded-lg border border-blue-100 shadow-sm">
+                                                    <div className="font-bold text-blue-800 mb-1">Văn phòng Hà Nội</div>
+                                                    <p className="text-gray-600 text-xs mb-2">123 Đường Trần Duy Hưng, Cầu Giấy, Hà Nội</p>
+                                                    <a
+                                                        href="https://www.google.com/maps/search/?api=1&query=123+Trần+Duy+Hưng+Hà+Nội"
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-blue-600 hover:underline text-xs flex items-center gap-1 font-medium"
+                                                        onClick={e => e.stopPropagation()}
+                                                    >
+                                                        Xem bản đồ &rarr;
+                                                    </a>
+                                                </div>
+                                                <div className="bg-white p-3 rounded-lg border border-blue-100 shadow-sm">
+                                                    <div className="font-bold text-blue-800 mb-1">Văn phòng TP.HCM</div>
+                                                    <p className="text-gray-600 text-xs mb-2">456 Đường Nguyễn Huệ, Quận 1, TP.HCM</p>
+                                                    <a
+                                                        href="https://www.google.com/maps/search/?api=1&query=Phố+đi+bộ+Nguyễn+Huệ"
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-blue-600 hover:underline text-xs flex items-center gap-1 font-medium"
+                                                        onClick={e => e.stopPropagation()}
+                                                    >
+                                                        Xem bản đồ &rarr;
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 
@@ -381,69 +508,172 @@ const Booking = () => {
                         </form>
                     </div>
                 </div>
-            </div>
+            </div >
 
             {/* Confirmation Modal */}
-            {isConfirming && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl max-w-2xl w-full shadow-2xl relative animate-fadeInUp">
-                        <button
-                            onClick={() => setIsConfirming(false)}
-                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-                        >
-                            <X size={24} />
-                        </button>
-
-                        <div className="p-8 border-b border-gray-100 text-center">
-                            <h2 className="text-2xl font-black text-blue-900 mb-1">Xác Nhận Đặt Tour</h2>
-                            <p className="text-gray-500">Vui lòng kiểm tra kỹ thông tin trước khi xác nhận</p>
-                        </div>
-
-                        <div className="p-8 max-h-[60vh] overflow-y-auto space-y-6">
-                            <div className="bg-gray-50 p-6 rounded-xl space-y-4">
-                                <h3 className="font-bold text-gray-800 border-b border-gray-200 pb-2">Thông tin khách hàng</h3>
-                                <div className="grid grid-cols-2 gap-4 text-sm">
-                                    <div><span className="text-gray-500 block">Họ tên:</span> <span className="font-medium">{formData.fullName}</span></div>
-                                    <div><span className="text-gray-500 block">SĐT:</span> <span className="font-medium">{formData.phone}</span></div>
-                                    <div className="col-span-2"><span className="text-gray-500 block">Email:</span> <span className="font-medium">{formData.email}</span></div>
-                                    <div className="col-span-2"><span className="text-gray-500 block">Địa chỉ:</span> <span className="font-medium">{formData.address}</span></div>
-                                </div>
-                            </div>
-
-                            <div className="bg-blue-50 p-6 rounded-xl space-y-4">
-                                <h3 className="font-bold text-blue-900 border-b border-blue-200 pb-2">Thông tin Booking</h3>
-                                <div className="flex justify-between items-center">
-                                    <span className="font-bold text-blue-900">{tour.tenTour}</span>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4 text-sm text-blue-800">
-                                    <div>Ngày đi: <strong>{formData.departureDate}</strong></div>
-                                    <div>Khách: <strong>{formData.adults} Lớn, {formData.children} Trẻ em</strong></div>
-                                </div>
-                                <div className="flex justify-between items-center pt-4 border-t border-blue-200">
-                                    <span className="text-lg">Tổng cộng:</span>
-                                    <span className="text-2xl font-black text-orange-600">{totalPrice.toLocaleString()} ₫</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="p-6 border-t border-gray-100 flex gap-4">
+            {
+                isConfirming && (
+                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                        <div className="bg-white rounded-2xl max-w-2xl w-full shadow-2xl relative animate-fadeInUp">
                             <button
                                 onClick={() => setIsConfirming(false)}
-                                className="flex-1 py-4 rounded-xl font-bold text-gray-600 hover:bg-gray-100 transition"
+                                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
                             >
-                                Chỉnh sửa
+                                <X size={24} />
                             </button>
-                            <button
-                                onClick={handleConfirm}
-                                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-bold shadow-lg shadow-blue-200 transition"
-                            >
-                                Xác Nhận & Đặt Tour
-                            </button>
+
+                            <div className="p-8 border-b border-gray-100 text-center">
+                                <h2 className="text-2xl font-black text-blue-900 mb-1">Xác Nhận Đặt Tour</h2>
+                                <p className="text-gray-500">Vui lòng kiểm tra kỹ thông tin trước khi xác nhận</p>
+                            </div>
+
+                            <div className="p-8 max-h-[60vh] overflow-y-auto space-y-6">
+                                <div className="bg-gray-50 p-6 rounded-xl space-y-4">
+                                    <h3 className="font-bold text-gray-800 border-b border-gray-200 pb-2">Thông tin khách hàng</h3>
+                                    <div className="grid grid-cols-2 gap-4 text-sm">
+                                        <div><span className="text-gray-500 block">Họ tên:</span> <span className="font-medium">{formData.fullName}</span></div>
+                                        <div><span className="text-gray-500 block">SĐT:</span> <span className="font-medium">{formData.phone}</span></div>
+                                        <div className="col-span-2"><span className="text-gray-500 block">Email:</span> <span className="font-medium">{formData.email}</span></div>
+                                        <div className="col-span-2"><span className="text-gray-500 block">Địa chỉ:</span> <span className="font-medium">{formData.address}</span></div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-blue-50 p-6 rounded-xl space-y-4">
+                                    <h3 className="font-bold text-blue-900 border-b border-blue-200 pb-2">Thông tin Booking</h3>
+                                    <div className="flex justify-between items-center">
+                                        <span className="font-bold text-blue-900">{tour.tenTour}</span>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4 text-sm text-blue-800">
+                                        <div>Ngày đi: <strong>{formData.departureDate}</strong></div>
+                                        <div>Khách: <strong>{formData.adults} Lớn, {formData.children} Trẻ em</strong></div>
+                                    </div>
+                                    <div className="flex justify-between items-center pt-4 border-t border-blue-200">
+                                        <span className="text-lg">Tổng cộng:</span>
+                                        <span className="text-2xl font-black text-orange-600">{totalPrice.toLocaleString()} ₫</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="p-6 border-t border-gray-100 flex gap-4">
+                                <button
+                                    onClick={() => setIsConfirming(false)}
+                                    className="flex-1 py-4 rounded-xl font-bold text-gray-600 hover:bg-gray-100 transition"
+                                >
+                                    Chỉnh sửa
+                                </button>
+                                <button
+                                    onClick={handleConfirm}
+                                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-bold shadow-lg shadow-blue-200 transition"
+                                >
+                                    Xác Nhận & Đặt Tour
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+            {/* Cancel/Confirm Modal */}
+            {/* ... (existing modals) ... */}
+
+            {/* Success Modal for Cash Payment */}
+            {
+                successModal.isOpen && (
+                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[70] flex items-center justify-center p-4">
+                        <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl relative animate-fadeInUp overflow-hidden">
+                            <div className="bg-green-50 p-6 flex flex-col items-center justify-center border-b border-green-100">
+                                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center text-green-600 mb-2 shadow-sm">
+                                    <CheckCircle size={32} />
+                                </div>
+                                <h2 className="text-xl font-black text-green-800">Đặt Tour Thành Công!</h2>
+                                <p className="text-green-700 font-medium">Mã đơn: #{successModal.bookingId}</p>
+                            </div>
+
+                            <div className="p-8 space-y-4">
+                                <p className="text-gray-600 text-center leading-relaxed">
+                                    Cảm ơn quý khách đã đặt tour. Vì quý khách chọn <strong>Thanh toán tại văn phòng</strong>, vui lòng ghé qua một trong các địa chỉ sau để hoàn tất thủ tục:
+                                </p>
+
+                                <div className="bg-gray-50 p-4 rounded-xl space-y-3 border border-gray-100">
+                                    <div className="flex gap-3 items-start">
+                                        <div className="w-2 h-2 mt-2 rounded-full bg-blue-500 shrink-0"></div>
+                                        <div>
+                                            <div className="font-bold text-gray-800">Văn phòng Hà Nội</div>
+                                            <div className="text-sm text-gray-600">123 Đường Trần Duy Hưng, Cầu Giấy, Hà Nội</div>
+                                            <a href="https://www.google.com/maps/search/?api=1&query=123+Trần+Duy+Hưng+Hà+Nội" target="_blank" className="text-xs text-blue-600 hover:underline">Xem bản đồ</a>
+                                        </div>
+                                    </div>
+                                    <div className="border-t border-gray-200"></div>
+                                    <div className="flex gap-3 items-start">
+                                        <div className="w-2 h-2 mt-2 rounded-full bg-blue-500 shrink-0"></div>
+                                        <div>
+                                            <div className="font-bold text-gray-800">Văn phòng TP.HCM</div>
+                                            <div className="text-sm text-gray-600">456 Đường Nguyễn Huệ, Quận 1, TP.HCM</div>
+                                            <a href="https://www.google.com/maps/search/?api=1&query=Phố+đi+bộ+Nguyễn+Huệ" target="_blank" className="text-xs text-blue-600 hover:underline">Xem bản đồ</a>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <p className="text-xs text-center text-gray-400 italic">
+                                    * Quý khách vui lòng thanh toán trong vòng 24h để giữ chỗ.
+                                </p>
+                            </div>
+
+                            <div className="p-6 border-t border-gray-100 bg-gray-50 flex gap-3">
+                                <button
+                                    onClick={() => navigate('/')}
+                                    className="flex-1 py-3 bg-white border border-gray-200 text-gray-700 rounded-xl font-bold hover:bg-gray-100"
+                                >
+                                    Về trang chủ
+                                </button>
+                                <button
+                                    onClick={() => navigate('/my-bookings')}
+                                    className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-100"
+                                >
+                                    Xem đơn hàng
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+
+            {/* Error/Notification Modal ... */}
+            {
+                errorModal.isOpen && (
+                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+                        <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl relative animate-fadeInUp overflow-hidden">
+                            <div className="bg-red-50 p-6 flex items-center justify-center border-b border-red-100">
+                                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center text-red-600 mb-2">
+                                    <AlertTriangle size={32} />
+                                </div>
+                            </div>
+
+                            <div className="p-8 text-center">
+                                <h3 className="text-xl font-black text-gray-800 mb-3">Thông báo</h3>
+                                <p className="text-gray-600 leading-relaxed">
+                                    {errorModal.message}
+                                </p>
+                            </div>
+
+                            <div className="p-6 border-t border-gray-100 bg-gray-50">
+                                <button
+                                    onClick={closeErrorModal}
+                                    className="w-full bg-gray-900 hover:bg-black text-white py-4 rounded-xl font-bold shadow-lg shadow-gray-200 transition transform hover:scale-[1.01]"
+                                >
+                                    Đã hiểu
+                                </button>
+                                <button
+                                    onClick={() => navigate('/contact')}
+                                    className="w-full mt-3 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 py-4 rounded-xl font-bold transition transform hover:scale-[1.01]"
+                                >
+                                    Liên hệ tư vấn
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+        </div >
     );
 };
 

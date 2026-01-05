@@ -99,7 +99,7 @@ const MyBookings = () => {
                         <div key={booking.donDatId} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition flex flex-col md:flex-row gap-6 relative">
                             <div className="w-full md:w-1/4">
                                 <img
-                                    src={booking.tour?.hinhAnhBia || "https://via.placeholder.com/300x200"}
+                                    src={booking.tour?.hinhAnhBia || "https://placehold.co/300x200"}
                                     alt={booking.tour?.tenTour}
                                     className="w-full h-48 object-cover rounded-xl"
                                 />

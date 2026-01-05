@@ -63,10 +63,10 @@ const PaymentTimer: React.FC<PaymentTimerProps> = ({ createdAt, onExpire, classN
     if (!timeLeft) return null;
 
     return (
-        <div className={`flex items-center gap-2 text-orange-600 font-bold ${className}`}>
-            <Clock size={18} />
-            <span>
-                Thanh toán trong: {String(timeLeft.hours).padStart(2, '0')}:{String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}
+        <div className={`flex items-center gap-1 text-orange-600 font-medium ${className}`}>
+            <Clock size={14} />
+            <span className="text-[11px]">
+                {String(timeLeft.hours).padStart(2, '0')}h {String(timeLeft.minutes).padStart(2, '0')}p
             </span>
         </div>
     );

@@ -125,10 +125,13 @@ const PaymentPage = () => {
                         </div>
                         <div className="flex justify-between pb-2">
                             <span>Nội dung chuyển khoản</span>
-                            <span className="font-bold text-blue-600 flex items-center gap-2">
-                                {DESCRIPTION}
-                                <Copy size={14} className="cursor-pointer hover:text-blue-800" onClick={() => navigator.clipboard.writeText(DESCRIPTION)} />
-                            </span>
+                            <div className="flex flex-col items-end">
+                                <span className="font-bold text-blue-600 flex items-center gap-2">
+                                    {DESCRIPTION}
+                                    <Copy size={14} className="cursor-pointer hover:text-blue-800" onClick={() => navigator.clipboard.writeText(DESCRIPTION)} />
+                                </span>
+                                <span className="text-xs text-gray-400 italic mt-1">(Cú pháp: TOUR + Mã đơn hàng)</span>
+                            </div>
                         </div>
                     </div>
 

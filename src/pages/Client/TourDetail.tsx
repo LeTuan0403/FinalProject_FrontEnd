@@ -575,7 +575,10 @@ const TourDetail = () => {
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-cyan-500"></div>
                 <div className="p-6 bg-slate-50 border-b border-gray-100 text-center">
                   <p className="text-gray-500 text-sm font-medium mb-1 uppercase tracking-wider">Giá trọn gói</p>
-                  <p className="text-4xl font-black text-red-600">{tour.tongGiaDuKien.toLocaleString()} <span className="text-sm text-gray-500 font-normal">₫/khách</span></p>
+                  <p className="text-4xl font-black text-red-600">
+                    {(tour.isTuChon ? Math.round(tour.tongGiaDuKien / (tour.soLuongCho || 1)) : tour.tongGiaDuKien).toLocaleString()}
+                    <span className="text-sm text-gray-500 font-normal"> ₫/khách</span>
+                  </p>
                 </div>
 
                 <div className="p-6 space-y-5">
@@ -608,7 +611,36 @@ const TourDetail = () => {
                       <UserCheck size={20} className="text-blue-500" />
                       <span>Số chỗ còn nhận</span>
                     </div>
-                    <span className="font-bold text-red-600">{tour.soLuongCho ?? 0}</span>
+                    {(() => {
+                      // Find next available date's remaining seats
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+
+                      let nextRem = 0;
+                      let nextDateStr = "";
+
+                      if (tour.availability) {
+                        const futureAvails = tour.availability
+                          .filter(a => new Date(a.date).getTime() >= today.getTime() && a.remainingSeats > 0)
+                          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+                        if (futureAvails.length > 0) {
+                          nextRem = futureAvails[0].remainingSeats;
+                          nextDateStr = new Date(futureAvails[0].date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+                        }
+                      } else {
+                        // Fallback if availability not loaded yet or legacy
+                        nextRem = tour.soLuongCho ?? 0;
+                      }
+
+                      // Determine display
+                      return (
+                        <div className="text-right">
+                          <span className="font-bold text-red-600 text-xl">{nextRem}</span>
+                          {nextDateStr && <span className="text-xs text-gray-500 block">({nextDateStr})</span>}
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   <div className="flex items-start justify-between group">
@@ -626,7 +658,18 @@ const TourDetail = () => {
 
                             const futureDates = tour.ngayKhoiHanh
                               .map(d => new Date(d))
-                              .filter(d => d.getTime() >= tomorrow.getTime())
+                              .filter(d => {
+                                // Basic future check
+                                if (d.getTime() < tomorrow.getTime()) return false;
+
+                                // Availability check
+                                if (tour.availability) {
+                                  const dateStr = d.toISOString().split('T')[0];
+                                  const avail = tour.availability.find(a => new Date(a.date).toISOString().split('T')[0] === dateStr);
+                                  if (avail && avail.remainingSeats <= 0) return false;
+                                }
+                                return true;
+                              })
                               .sort((a, b) => a.getTime() - b.getTime());
 
                             if (futureDates.length === 0) {
@@ -697,8 +740,28 @@ const TourDetail = () => {
                     Đặt Tour Ngay <Ticket size={18} />
                   </button>
 
-                  <button className="w-full bg-white border border-gray-200 text-gray-700 font-bold py-3 rounded-xl hover:bg-gray-50 transition text-sm">
-                    Tư Vấn Miễn Phí
+                  <button
+                    onClick={() => navigate('/contact')}
+                    className="w-full bg-white border border-gray-200 text-gray-700 font-bold py-3 rounded-xl hover:bg-gray-50 transition text-sm flex items-center justify-center gap-2 group"
+                  >
+                    <span>Liên Hệ Tư Vấn</span>
+                    {(() => {
+                      const tomorrow = new Date();
+                      tomorrow.setDate(tomorrow.getDate() + 1);
+                      tomorrow.setHours(0, 0, 0, 0);
+                      let nextRem = 0;
+                      if (tour.availability) {
+                        const futureAvails = tour.availability
+                          .filter(a => new Date(a.date).getTime() >= tomorrow.getTime() && a.remainingSeats > 0)
+                          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+                        if (futureAvails.length > 0) nextRem = futureAvails[0].remainingSeats;
+                      }
+
+                      if (nextRem > 0 && nextRem <= 5) {
+                        return <span className="bg-red-100 text-red-600 text-xs px-2 py-0.5 rounded-full animate-pulse">Còn {nextRem} chỗ!</span>
+                      }
+                      return null;
+                    })()}
                   </button>
                 </div>
               </div>

@@ -15,9 +15,9 @@ const Gallery = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {locations.map(loc => (
           <div key={loc.diaDiemId} className="relative group overflow-hidden rounded-lg shadow-lg">
-            <img 
-              src={loc.hinhAnh || "https://via.placeholder.com/400x300"} 
-              alt={loc.tenDiaDiem} 
+            <img
+              src={loc.hinhAnh || "https://placehold.co/400x300"}
+              alt={loc.tenDiaDiem}
               className="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-110"
             />
             <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white p-4">

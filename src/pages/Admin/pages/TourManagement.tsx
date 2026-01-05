@@ -79,7 +79,7 @@ const TourManagement = () => {
                             tours.map(tour => (
                                 <div key={tour.tourId} className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between hover:shadow-md transition">
                                     <div className="flex items-center gap-4">
-                                        <img src={tour.hinhAnhBia || "https://via.placeholder.com/150"} className="w-20 h-20 rounded-lg object-cover shadow-sm bg-gray-100" />
+                                        <img src={tour.hinhAnhBia || "https://placehold.co/150"} className="w-20 h-20 rounded-lg object-cover shadow-sm bg-gray-100" />
                                         <div>
                                             <div className="flex items-center gap-2">
                                                 <h3 className="font-bold text-lg text-gray-800 mb-1">{tour.tenTour}</h3>
