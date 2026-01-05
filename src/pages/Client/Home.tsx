@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShieldCheck, HeartHandshake, Phone, BadgePercent, Search, MapPin, Calendar } from 'lucide-react';
+import { ShieldCheck, HeartHandshake, Phone, BadgePercent, Search, MapPin, Calendar, Clock } from 'lucide-react';
 import { useTours } from '../../hooks/useTours';
 import TourCard from '../../components/common/TourCard';
 
@@ -113,6 +113,33 @@ const Home = () => {
     const kv = (t.khuVuc || '').toLowerCase();
     const isAsia = kv.includes('chau a') || kv.includes('châu á') || kv.includes('asia');
     return !isAsia;
+  });
+
+  // Get Last Minute Tours (within 3 days)
+  const lastMinuteTours = tours.filter(t => {
+    if (!t.daDuyet || t.isTuChon) return false;
+    if (!t.ngayKhoiHanh || !Array.isArray(t.ngayKhoiHanh)) return false;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const threeDaysLater = new Date(today);
+    threeDaysLater.setDate(today.getDate() + 3);
+
+    // Check if ANY departure date is within [tomorrow, tomorrow+3]
+    return t.ngayKhoiHanh.some(d => {
+      const date = new Date(d);
+      // We don't normalize 'date' to 0h here because 'd' from backend might have time component 
+      // or simply be UTC midnight. We trust getTime() comparison.
+
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
+
+      const threeDaysAfterTomorrow = new Date(tomorrow);
+      threeDaysAfterTomorrow.setDate(tomorrow.getDate() + 3);
+
+      return date.getTime() >= tomorrow.getTime() && date.getTime() <= threeDaysAfterTomorrow.getTime();
+    });
   });
 
   return (
@@ -233,6 +260,28 @@ const Home = () => {
 
       {/* Spacer for Support bar overlap */}
       <div className="hidden md:block h-24"></div>
+
+      {/* Last Minute Tours Section */}
+      {lastMinuteTours.length > 0 && (
+        <section className="py-12 bg-red-50">
+          <div className="container mx-auto px-4">
+            <div className="flex items-center gap-4 mb-8">
+              <h2 className="text-3xl font-black text-red-600 uppercase flex items-center gap-3 animate-pulse">
+                <Clock size={32} /> TOUR GIỜ CHÓT
+              </h2>
+              <span className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-bold">Sắp khởi hành</span>
+            </div>
+
+            <div className="flex overflow-x-auto gap-6 pb-6 custom-scrollbar scroll-smooth snap-x snap-mandatory">
+              {lastMinuteTours.map(tour => (
+                <div key={tour.tourId} className="w-[280px] md:w-[320px] shrink-0 snap-start">
+                  <TourCard tour={tour} variant="vertical" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Domestic Tours - Horizontal Scroll - APPLIED DRAGGABLE HERE */}
       <section className="py-12">

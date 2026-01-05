@@ -56,6 +56,8 @@ export interface Tour {
   anSang?: number;
   anTrua?: number;
   anToi?: number;
+  soLuongCho?: number; // [NEW]
+  ngayKhoiHanh?: string[]; // [UPDATED] - Array of ISO Date strings
   dichVuBaoGom?: string;
   dichVuKhongBaoGom?: string;
   chinhSachTour?: string; // DB: ChinhSachTour

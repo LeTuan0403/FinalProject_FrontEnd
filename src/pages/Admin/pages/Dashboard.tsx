@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { LayoutDashboard, Calendar, Loader, DollarSign, Users, TrendingUp } from 'lucide-react';
-import { tourService, bookingService } from '../../../services/tourService';
+import { tourService } from '../../../services/tourService';
+import { bookingService } from '../../../services/bookingService';
 import { Tour } from '../../../types';
 import Sidebar from '../components/Sidebar';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, Cell } from 'recharts';

@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Calendar, MapPin, User, Clock } from 'lucide-react';
-import { bookingService } from '../../services/tourService';
+import { bookingService } from '../../services/bookingService';
 import { useAuth } from '../../hooks/useAuth';
 import type { DonDatTour } from '../../types';
 import { Link } from 'react-router-dom';
 import StatusBadge from '../../components/booking/StatusBadge';
 import BookingEditModal from '../../components/booking/BookingEditModal';
+import PaymentTimer from '../../components/common/PaymentTimer';
 
 const MyBookings = () => {
     const { user } = useAuth();
@@ -127,6 +128,14 @@ const MyBookings = () => {
                                             <span>Đặt ngày: {booking.ngayDat ? new Date(booking.ngayDat).toLocaleDateString('vi-VN') : 'N/A'}</span>
                                         </div>
                                     </div>
+
+                                    {/* Timer for Pending Bookings */}
+                                    {['Pending', 'Chờ thanh toán'].includes(booking.trangThai) && booking.ngayDat && (
+                                        <div className="mb-3 bg-orange-50 p-2 rounded-lg inline-flex">
+                                            <PaymentTimer createdAt={booking.ngayDat} className="text-sm" />
+                                        </div>
+                                    )}
+
                                     {booking.ghiChu && <div className="text-sm bg-gray-50 p-2 rounded text-gray-600 italic mb-2">Ghi chú: {booking.ghiChu}</div>}
                                 </div>
                                 <div className="flex justify-between items-end border-t border-gray-100 pt-4 mt-2">
@@ -135,9 +144,21 @@ const MyBookings = () => {
                                         <div className="text-2xl font-bold text-blue-600">{Number(booking.tongTienThanhToan).toLocaleString()} ₫</div>
                                     </div>
                                     <div className="flex gap-3">
+                                        <Link
+                                            to={`/tours/${booking.tourId}`} // Use normalized tourId
+                                            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-bold hover:bg-gray-200 transition"
+                                        >
+                                            Xem Tour
+                                        </Link>
                                         {/* User Action Logic */}
                                         {['Pending', 'Chờ thanh toán'].includes(booking.trangThai) && ( // 'Chờ thanh toán'
                                             <>
+                                                <Link
+                                                    to={`/payment/${booking.donDatId}`}
+                                                    className="px-4 py-2 bg-orange-600 text-white rounded-lg font-bold hover:bg-orange-700 transition shadow-md shadow-orange-200"
+                                                >
+                                                    Thanh toán ngay
+                                                </Link>
                                                 <button
                                                     onClick={() => setEditBooking(booking)}
                                                     className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg font-bold hover:bg-blue-100 transition"

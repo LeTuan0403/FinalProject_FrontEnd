@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Loader, User, Mail, Phone, FileText, X } from 'lucide-react';
-import { bookingService } from '../../../services/tourService';
+import { bookingService } from '../../../services/bookingService';
 import Sidebar from '../components/Sidebar';
 import StatusBadge from '../../../components/booking/StatusBadge';
 import BookingEditModal from '../../../components/booking/BookingEditModal';
+import PaymentTimer from '../../../components/common/PaymentTimer';
 
 const BookingManagement = () => {
     const [bookings, setBookings] = useState<any[]>([]);
@@ -156,6 +157,11 @@ const BookingManagement = () => {
                                                     <div className="text-gray-400 text-xs mt-1">
                                                         Ngày đặt: {b.ngayDat ? new Date(b.ngayDat).toLocaleDateString('vi-VN') : 'N/A'}
                                                     </div>
+                                                    {['Pending', 'Chờ thanh toán'].includes(b.trangThai) && b.ngayDat && (
+                                                        <div className="mt-2">
+                                                            <PaymentTimer createdAt={b.ngayDat} className="text-xs" />
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </td>
                                             <td className="p-4 font-bold text-blue-600 text-nowrap">{Number(b.tongTienThanhToan).toLocaleString()} ₫</td>

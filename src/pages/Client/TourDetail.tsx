@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronDown, ChevronUp, Share2, Heart, Ticket, Clock, MapPin, Truck, Info, Map, CheckCircle, AlertCircle, Star, MessageSquare, Trash2, Edit, Reply, Check, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, Share2, Heart, Ticket, Clock, MapPin, Truck, Info, Map, CheckCircle, AlertCircle, Star, MessageSquare, Trash2, Edit, Reply, Check, X, Calendar, UserCheck, Utensils } from 'lucide-react';
 import { tourService } from '../../services/tourService';
 import { reviewService } from '../../services/reviewService';
 import type { Tour, Review } from '../../types';
@@ -605,6 +605,69 @@ const TourDetail = () => {
 
                   <div className="flex items-center justify-between group">
                     <div className="flex items-center gap-3 text-gray-600">
+                      <UserCheck size={20} className="text-blue-500" />
+                      <span>Số chỗ còn nhận</span>
+                    </div>
+                    <span className="font-bold text-red-600">{tour.soLuongCho ?? 0}</span>
+                  </div>
+
+                  <div className="flex items-start justify-between group">
+                    <div className="flex items-center gap-3 text-gray-600 shrink-0">
+                      <Calendar size={20} className="text-blue-500" />
+                      <span>Ngày đi</span>
+                    </div>
+                    <div className="text-right">
+                      {tour.ngayKhoiHanh && Array.isArray(tour.ngayKhoiHanh) && tour.ngayKhoiHanh.length > 0 ? (
+                        <div className="flex flex-col gap-1 items-end">
+                          {(() => {
+                            const tomorrow = new Date();
+                            tomorrow.setDate(tomorrow.getDate() + 1);
+                            tomorrow.setHours(0, 0, 0, 0);
+
+                            const futureDates = tour.ngayKhoiHanh
+                              .map(d => new Date(d))
+                              .filter(d => d.getTime() >= tomorrow.getTime())
+                              .sort((a, b) => a.getTime() - b.getTime());
+
+                            if (futureDates.length === 0) {
+                              return <span className="text-gray-500 italic">Đã hết lịch sắp tới</span>;
+                            }
+
+                            // Group by Month/Year
+                            const grouped = futureDates.reduce((acc, date) => {
+                              const key = `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+                              if (!acc[key]) acc[key] = [];
+                              acc[key].push(date.getDate().toString().padStart(2, '0'));
+                              return acc;
+                            }, {} as Record<string, string[]>);
+
+                            return Object.entries(grouped).slice(0, 3).map(([monthYear, days], idx) => (
+                              <div key={idx} className="font-bold text-blue-700 bg-blue-50 px-2 py-1 rounded text-sm text-right">
+                                <span className="text-blue-900">{days.join(', ')}</span>
+                                <span className="text-gray-400 font-normal mx-1">/</span>
+                                <span className="text-blue-600">{monthYear}</span>
+                              </div>
+                            ));
+                          })()}
+                          {tour.ngayKhoiHanh.filter(d => new Date(d).getTime() >= new Date().setHours(0, 0, 0, 0)).length > 0 &&
+                            Object.keys(tour.ngayKhoiHanh.reduce((acc, d) => {
+                              const date = new Date(d);
+                              if (date.getTime() < new Date().setHours(0, 0, 0, 0)) return acc;
+                              const key = `${date.getMonth()}/${date.getFullYear()}`;
+                              acc[key] = true;
+                              return acc;
+                            }, {} as any)).length > 3 &&
+                            <span className="text-xs text-gray-500 italic">+ các tháng sau</span>
+                          }
+                        </div>
+                      ) : (
+                        <span className="text-gray-500 italic">Liên hệ</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between group">
+                    <div className="flex items-center gap-3 text-gray-600">
                       <Truck size={20} className="text-blue-500" />
                       <span>Phương tiện</span>
                     </div>
@@ -613,7 +676,7 @@ const TourDetail = () => {
 
                   <div className="flex items-center justify-between group">
                     <div className="flex items-center gap-3 text-gray-600">
-                      <Truck size={20} className="text-blue-500" />
+                      <Utensils size={20} className="text-blue-500" />
                       <span>Bữa ăn</span>
                     </div>
                     <span className="font-bold text-gray-900 text-sm">

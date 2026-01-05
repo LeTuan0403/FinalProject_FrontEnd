@@ -41,7 +41,8 @@ const AuthPage = () => {
                 else navigate('/');
             } catch (err: any) {
                 console.error("Google Login Backend Error:", err);
-                const msg = err?.response?.data?.message || "Đăng nhập Google thất bại.";
+                // Backend trả về 'msg', nhưng cũng check 'message' để an toàn
+                const msg = err?.response?.data?.msg || err?.response?.data?.message || "Đăng nhập Google thất bại.";
                 setLoginError(typeof msg === 'string' ? msg : JSON.stringify(msg));
             }
         }
@@ -86,7 +87,8 @@ const AuthPage = () => {
             if (res.data.role === 'Admin') navigate('/admin');
             else navigate('/');
         } catch (err: any) {
-            setLoginError(err?.response?.data?.message || 'Đăng nhập thất bại.');
+            // Backend trả về 'msg'
+            setLoginError(err?.response?.data?.msg || err?.response?.data?.message || 'Đăng nhập thất bại.');
         }
     };
 
@@ -108,7 +110,7 @@ const AuthPage = () => {
             toggleMode('login');
         } catch (err: any) {
             console.error(err);
-            const msg = err?.response?.data?.message || err?.response?.data || "Đăng ký thất bại.";
+            const msg = err?.response?.data?.msg || err?.response?.data?.message || err?.response?.data || "Đăng ký thất bại.";
             setRegisterError(typeof msg === 'string' ? msg : JSON.stringify(msg));
         } finally {
             setIsRegisterLoading(false);

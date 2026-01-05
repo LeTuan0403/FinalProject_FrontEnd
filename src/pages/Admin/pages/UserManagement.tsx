@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Loader, Trash2, Search, ChevronLeft, ChevronRight, MapPin, ShoppingBag } from 'lucide-react';
 import { userService } from '../../../services/authService';
-import { bookingService } from '../../../services/tourService';
+import { bookingService } from '../../../services/bookingService';
 import Sidebar from '../components/Sidebar';
 
 const UserManagement = () => {

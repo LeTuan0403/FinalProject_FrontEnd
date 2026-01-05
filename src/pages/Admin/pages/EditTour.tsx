@@ -34,6 +34,8 @@ const AdminEditTour = () => {
         anSang: 0,
         anTrua: 0,
         anToi: 0,
+        soLuongCho: 0, // [NEW] Default
+        ngayKhoiHanh: [], // [NEW] Default - Array
         dichVuBaoGom: '',
         dichVuKhongBaoGom: '',
         chinhSachTour: '',
@@ -96,7 +98,12 @@ const AdminEditTour = () => {
                         // Map new fields explicitly
                         anSang: data.anSang ?? (data as any).AnSang ?? 0,
                         anTrua: data.anTrua ?? (data as any).AnTrua ?? 0,
+
                         anToi: data.anToi ?? (data as any).AnToi ?? 0,
+                        soLuongCho: data.soLuongCho ?? (data as any).SoLuongCho ?? 0,
+                        ngayKhoiHanh: Array.isArray(data.ngayKhoiHanh)
+                            ? data.ngayKhoiHanh.map((d: any) => new Date(d).toISOString().split('T')[0])
+                            : (data.ngayKhoiHanh ? [new Date(data.ngayKhoiHanh).toISOString().split('T')[0]] : []), // Ensure array
                         // If counts are 0, try to calculate from tourDetails (logic for Custom Tours)
                         ...(() => {
                             const as = Number(data.anSang ?? 0);
@@ -182,7 +189,10 @@ const AdminEditTour = () => {
                 // String conversions for consistency
                 anSang: String(formData.anSang || 0),
                 anTrua: String(formData.anTrua || 0),
+
                 anToi: String(formData.anToi || 0),
+                soLuongCho: Number(formData.soLuongCho || 0), // Ensure Number
+                ngayKhoiHanh: formData.ngayKhoiHanh || [], // Send array
                 dichVuBaoGom: formData.dichVuBaoGom || "Đang cập nhật",
                 dichVuKhongBaoGom: formData.dichVuKhongBaoGom || "Đang cập nhật",
                 chinhSachTour: formData.chinhSachTour || "Đang cập nhật",
@@ -373,6 +383,68 @@ const AdminEditTour = () => {
                                     placeholder="VD: 3 ngày 2 đêm"
                                     onChange={e => setFormData({ ...formData, thoiGian: e.target.value })}
                                 />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Số lượng chỗ</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    className="w-full p-3 border rounded-lg"
+                                    value={formData.soLuongCho || 0}
+                                    onChange={e => setFormData({ ...formData, soLuongCho: Number(e.target.value) })}
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Ngày khởi hành (Có thể chọn nhiều)</label>
+                                <div className="space-y-2">
+                                    <div className="flex flex-wrap gap-2">
+                                        {(formData.ngayKhoiHanh || []).map((date, idx) => (
+                                            <div key={idx} className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full flex items-center gap-2">
+                                                <span>{new Date(date).toLocaleDateString('vi-VN')}</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const newDates = [...(formData.ngayKhoiHanh || [])];
+                                                        newDates.splice(idx, 1);
+                                                        setFormData({ ...formData, ngayKhoiHanh: newDates });
+                                                    }}
+                                                    className="hover:text-red-500"
+                                                >
+                                                    <X size={14} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="date"
+                                            className="flex-1 p-3 border rounded-lg"
+                                            id="date-picker-input"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const input = document.getElementById('date-picker-input') as HTMLInputElement;
+                                                if (input && input.value) {
+                                                    const newDates = [...(formData.ngayKhoiHanh || [])];
+                                                    if (!newDates.includes(input.value)) {
+                                                        newDates.push(input.value);
+                                                        newDates.sort(); // Keep sorted
+                                                        setFormData({ ...formData, ngayKhoiHanh: newDates });
+                                                        input.value = ''; // Reset input
+                                                    } else {
+                                                        alert("Ngày này đã được chọn!");
+                                                    }
+                                                }
+                                            }}
+                                            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                                        >
+                                            <Plus size={20} />
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-2">Số lượng bữa ăn phục vụ</label>

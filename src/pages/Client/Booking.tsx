@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { tourService, bookingService } from '../../services/tourService';
+import { tourService } from '../../services/tourService';
+import { bookingService } from '../../services/bookingService';
 import type { Tour } from '../../types';
 import { X, Loader } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';

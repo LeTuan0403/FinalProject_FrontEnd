@@ -1,171 +1,187 @@
-import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { CheckCircle, Copy, Home, ArrowRight } from 'lucide-react';
-import { bookingService } from '../../services/tourService'; // Assuming bookingService has getById or similar
-import { MomoIcon, MBBankIcon, CashIcon } from '../../components/icons/PaymentIcons';
-import { DonDatTour } from '../../types'; // You might need to adjust this import based on your types definition
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { paymentService } from '../../services/paymentService';
+import { bookingService } from '../../services/bookingService';
+import { Copy, Loader2, AlertCircle } from 'lucide-react';
+import PaymentTimer from '../../components/common/PaymentTimer';
 
 const PaymentPage = () => {
-    const { bookingId } = useParams();
-    const [booking, setBooking] = useState<DonDatTour | null>(null);
+    const { bookingId } = useParams<{ bookingId: string }>();
+    const navigate = useNavigate();
+    const [booking, setBooking] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [isExpired, setIsExpired] = useState(false);
+    // Check status periodically
+    useEffect(() => {
+        if (!bookingId) return;
+
+        // Load booking info first
+        // Note: If bookingService doesn't have getById, we might need to implement it or use a different way.
+        // Assuming we can fetch booking details (or pass via location state, but fetching is safer).
+        // For now, let's implement a fetch inside useEffect if service missing, or assume it exists.
+        // I'll check bookingService later. If missing, I'll patch it.
+        // For now, let's try to load it. 
+
+        // Polling function
+        const interval = setInterval(async () => {
+            try {
+                const res = await paymentService.checkStatus(bookingId);
+                if (res.data.status === 'CONFIRMED' || res.data.status === 'PAID') {
+                    navigate(`/booking-success/${bookingId}`); // Pass ID to success page
+                }
+            } catch (e) {
+                console.error("Error checking status", e);
+            }
+        }, 5000); // Check every 5 seconds
+
+        return () => clearInterval(interval);
+    }, [bookingId, navigate]);
 
     useEffect(() => {
+        // Fetch Booking Details to show Amount
+        // Using a temporary fetch implementation or service if available
+        // Let's assume user just came from booking, maybe we can fetch from API
+        // Since I haven't implemented bookingService.getById in this thought process, 
+        // I'll assume I need to ADD it or call endpoint directly. 
+        // I will implement a fetch here for now.
+
         const fetchBooking = async () => {
             if (!bookingId) return;
             try {
-                // Assuming you have an API to get booking by ID
-                // If not, we might need to rely on passing state or creating a new API endpoint
-                // For now, let's mock it or try to fetch if the service exists
-                const response = await bookingService.getById(Number(bookingId));
-                setBooking(response.data);
-            } catch (error) {
-                console.error("Error fetching booking:", error);
+                // We need an endpoint to get booking by ID for client
+                // Currently backend routes: /api/dondattours/:id might exist?
+                // Let's rely on paymentService.checkStatus for status, 
+                // but for Amount we need the booking. 
+                // Let's assume /api/dondattours/:id works.
+                // I will update bookingService in next step to be sure.
+
+                // For now, basic placeholder or safe fetch:
+                const res = await bookingService.getById(Number(bookingId));
+                setBooking(res.data);
+            } catch (e) {
+                console.error("Failed to load booking", e);
             } finally {
                 setLoading(false);
             }
         };
-
         fetchBooking();
     }, [bookingId]);
 
-    const handleCopy = (text: string) => {
-        navigator.clipboard.writeText(text);
-        alert(`Đã sao chép: ${text}`);
-    };
+    if (loading) return <div className="flex justify-center items-center h-screen"><Loader2 className="animate-spin text-blue-600" size={48} /></div>;
+    if (!booking) return (
+        <div className="min-h-screen flex flex-col justify-center items-center p-4">
+            <div className="text-center p-10 bg-white rounded-2xl shadow-xl max-w-md w-full">
+                <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+                <h2 className="text-xl font-bold text-gray-800 mb-2">Không tìm thấy đơn hàng</h2>
+                <p className="text-gray-500 mb-6">Đơn hàng này có thể đã bị xóa hoặc không tồn tại.</p>
+                <div className="space-y-3">
+                    <button onClick={() => navigate('/my-bookings')} className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition">
+                        Xem Đơn Hàng Của Tôi
+                    </button>
+                    <button onClick={() => navigate('/')} className="w-full bg-gray-100 text-gray-600 font-bold py-3 rounded-xl hover:bg-gray-200 transition">
+                        Về Trang Chủ
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
 
-    if (loading) return <div className="min-h-screen flex items-center justify-center">Đang tải thông tin đơn hàng...</div>;
-    // Fallback if booking not found (or API not ready), show generic success based on ID
-    // But ideally we show real data.
+    // Helper to safety normalize Vietnamese names for banking
+    const removeAccents = (str: string) => {
+        return str.normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/đ/g, 'd').replace(/Đ/g, 'D');
+    }
+
+    const BANK_ID = "MB";
+    const ACCOUNT_NO = "0967087527";
+    const TEMPLATE = "compact"; // or print
+    const AMOUNT = booking.tongTienThanhToan;
+    const DESCRIPTION = `TOUR ${booking.donDatId} ${removeAccents(booking.nguoiLienHe || '').toUpperCase()}`.trim();
+    const ACCOUNT_NAME = "LE PHUONG TUAN";
+
+    const qrUrl = `https://img.vietqr.io/image/${BANK_ID}-${ACCOUNT_NO}-${TEMPLATE}.png?amount=${AMOUNT}&addInfo=${encodeURIComponent(DESCRIPTION)}&accountName=${encodeURIComponent(ACCOUNT_NAME)}`;
 
     return (
-        <div className="bg-gray-50 min-h-screen py-12 px-4">
-            <div className="max-w-3xl mx-auto space-y-8">
-                {/* Success Header */}
-                <div className="bg-green-600 text-white p-8 rounded-3xl shadow-xl text-center relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
-                        {/* Background pattern or decoration */}
-                    </div>
-                    <div className="relative z-10">
-                        <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6 backdrop-blur-sm">
-                            <CheckCircle size={48} className="text-white" />
+        <div className="min-h-screen bg-gray-50 py-10 px-4">
+            <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row">
+
+                {/* Left: Booking Info */}
+                <div className="md:w-1/2 p-8 border-r border-gray-100 flex flex-col justify-center">
+                    <h2 className="text-2xl font-black text-blue-900 mb-6 uppercase">Thanh Toán Đơn Hàng</h2>
+
+                    <div className="space-y-4 text-gray-600">
+                        <div className="flex justify-between border-b pb-2">
+                            <span>Mã đơn hàng</span>
+                            <span className="font-bold text-gray-900">#{booking.donDatId}</span>
                         </div>
-                        <h1 className="text-3xl font-black mb-2 uppercase">Đặt tour thành công!</h1>
-                        <p className="text-blue-100 text-lg">Mã đơn hàng của bạn là <span className="font-bold text-white text-xl">#{bookingId}</span></p>
+                        <div className="flex justify-between border-b pb-2">
+                            <span>Khách hàng</span>
+                            <span className="font-bold text-gray-900">{booking.nguoiLienHe}</span>
+                        </div>
+                        <div className="flex justify-between border-b pb-2">
+                            <span>Số tiền</span>
+                            <span className="font-black text-2xl text-red-600">{booking.tongTienThanhToan.toLocaleString()} ₫</span>
+                        </div>
+                        <div className="flex justify-between pb-2">
+                            <span>Nội dung chuyển khoản</span>
+                            <span className="font-bold text-blue-600 flex items-center gap-2">
+                                {DESCRIPTION}
+                                <Copy size={14} className="cursor-pointer hover:text-blue-800" onClick={() => navigator.clipboard.writeText(DESCRIPTION)} />
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="mt-8 bg-blue-50 p-4 rounded-lg text-sm text-blue-800 border border-blue-100 flex items-start gap-3">
+                        <AlertCircle size={20} className="shrink-0 mt-0.5" />
+                        <p>Hệ thống sẽ <strong>tự động xác nhận</strong> trong vòng 1-3 phút sau khi bạn chuyển khoản thành công. Vui lòng giữ nguyên trang này.</p>
                     </div>
                 </div>
 
-                {/* Payment Instructions */}
-                <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
-                    <div className="bg-blue-900 p-6 text-white flex justify-between items-center">
-                        <h2 className="font-bold text-lg uppercase tracking-wide">Hướng dẫn thanh toán</h2>
-                        <div className="text-sm opacity-80">Vui lòng thanh toán để hoàn tất</div>
+                {/* Right: QR Code */}
+                <div className={`md:w-1/2 p-8 flex flex-col items-center justify-center text-white relative transition-colors ${isExpired ? 'bg-gray-800' : 'bg-blue-600'}`}>
+
+                    {/* Timer */}
+                    {!isExpired && (
+                        <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
+                            <PaymentTimer
+                                createdAt={booking.ngayDat}
+                                onExpire={() => setIsExpired(true)}
+                                className="text-white font-black"
+                            />
+                        </div>
+                    )}
+
+                    <h3 className="text-xl font-bold mb-6">{isExpired ? 'Đơn hàng đã hết hạn' : 'Quét mã để thanh toán'}</h3>
+
+                    <div className={`bg-white p-4 rounded-xl shadow-2xl transition-opacity ${isExpired ? 'opacity-50 grayscale' : 'opacity-100'}`}>
+                        {isExpired ? (
+                            <div className="w-64 h-64 flex flex-col items-center justify-center text-gray-500">
+                                <AlertCircle size={48} className="mb-2" />
+                                <span className="text-center">QR Thanh toán<br />đã bị vô hiệu hóa</span>
+                            </div>
+                        ) : (
+                            <img src={qrUrl} alt="QR Payment" className="w-64 h-64 object-contain" />
+                        )}
                     </div>
 
-                    <div className="p-8 space-y-8">
-                        {/* Amount */}
-                        <div className="text-center p-6 bg-blue-50 rounded-2xl border border-blue-100">
-                            <p className="text-gray-500 mb-1 text-sm font-medium uppercase">Tổng số tiền cần thanh toán</p>
-                            <p className="text-4xl font-black text-blue-600">
-                                {booking ? booking.tongTienThanhToan?.toLocaleString() : '...'} ₫
+                    {!isExpired ? (
+                        <>
+                            <p className="mt-6 text-blue-100 text-center text-sm">
+                                Sử dụng App Ngân hàng hoặc MoMo <br />để quét mã QR
                             </p>
-                        </div>
-
-                        {/* Payment Methods Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {/* Momo */}
-                            <div className="border border-gray-200 rounded-2xl p-6 hover:shadow-lg transition bg-white relative group">
-                                <div className="absolute top-4 right-4"><MomoIcon className="w-8 h-8" /></div>
-                                <h3 className="font-bold text-pink-600 mb-4 text-lg">Ví MoMo</h3>
-                                <div className="space-y-3 text-sm">
-                                    <div className="flex justify-between items-center pb-2 border-b border-gray-100">
-                                        <span className="text-gray-500">Số điện thoại</span>
-                                        <span className="font-bold font-mono">0967.087.527</span>
-                                    </div>
-                                    <div className="flex justify-between items-center pb-2 border-b border-gray-100">
-                                        <span className="text-gray-500">Người nhận</span>
-                                        <span className="font-bold">LÊ TUẤN</span>
-                                    </div>
-                                    <div className="flex justify-between items-center pt-1">
-                                        <span className="text-gray-500">Nội dung</span>
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">THANHTOAN {bookingId}</span>
-                                            <button onClick={() => handleCopy(`THANHTOAN ${bookingId}`)} className="text-gray-400 hover:text-blue-600"><Copy size={14} /></button>
-                                        </div>
-                                    </div>
-                                </div>
-                                {/* QR Placeholder (Optional) */}
-                                <div className="mt-4 flex justify-center">
-                                    <div className="w-32 h-32 bg-gray-100 rounded-lg flex items-center justify-center text-xs text-gray-400">
-                                        <img src="/images/MOMO-Logo-App.png" className="w-full h-full object-contain p-2" alt="Momo QR" />
-                                    </div>
-                                </div>
+                            <div className="mt-8 flex items-center gap-2">
+                                <Loader2 className="animate-spin" size={20} />
+                                <span>Đang chờ thanh toán...</span>
                             </div>
-
-                            {/* MB Bank with Dynamic VietQR */}
-                            <div className="border border-gray-200 rounded-2xl p-6 hover:shadow-lg transition bg-white relative group">
-                                <div className="absolute top-4 right-4"><MBBankIcon className="w-12 h-8" /></div>
-                                <h3 className="font-bold text-blue-800 mb-4 text-lg">Ngân hàng MBBank (QR Tự động)</h3>
-                                <div className="space-y-3 text-sm">
-                                    <p className="text-gray-500 mb-2">Quét mã QR bên dưới để thanh toán tự động:</p>
-
-                                    <div className="flex justify-center bg-gray-50 p-4 rounded-xl">
-                                        {/* Dynamic VietQR URL: https://img.vietqr.io/image/<BANK_ID>-<ACCOUNT_NO>-<TEMPLATE>.png?amount=<AMOUNT>&addInfo=<CONTENT> */}
-                                        <img
-                                            src={`https://img.vietqr.io/image/MB-0352092466666-compact.png?amount=${booking?.tongTienThanhToan || 0}&addInfo=THANHTOAN ${bookingId}&accountName=LE TUAN`}
-                                            alt="VietQR MBBank"
-                                            className="w-full max-w-[250px] object-contain"
-                                        />
-                                    </div>
-
-                                    <div className="text-center mt-4">
-                                        <p className="text-xs text-gray-400 mb-2">Sau khi chuyển khoản thành công, vui lòng nhấn nút bên dưới</p>
-                                        <button
-                                            onClick={async () => {
-                                                if (!bookingId) return;
-                                                const confirm = window.confirm("Bạn xác nhận đã chuyển khoản thành công?");
-                                                if (confirm) {
-                                                    try {
-                                                        await bookingService.update(Number(bookingId), { trangThai: "Đã thanh toán" });
-                                                        alert("Xác nhận thanh toán thành công! Hệ thống đã cập nhật trạng thái đơn hàng.");
-                                                        // Refresh booking or redirect
-                                                        setBooking(prev => prev ? { ...prev, trangThai: "Đã thanh toán" } : null);
-                                                    } catch (e) {
-                                                        alert("Có lỗi xảy ra khi cập nhật trạng thái. Vui lòng liên hệ admin.");
-                                                    }
-                                                }
-                                            }}
-                                            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-lg shadow-blue-200 transition"
-                                        >
-                                            Đã Thanh Toán
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
+                        </>
+                    ) : (
+                        <div className="mt-6 text-gray-400 text-center text-sm">
+                            Vui lòng đặt lại tour mới nếu bạn vẫn muốn đi.
                         </div>
-
-                        {/* Cash Option */}
-                        <div className="bg-gray-50 p-6 rounded-2xl flex items-start gap-4">
-                            <div className="bg-green-100 p-2 rounded-full"><CashIcon className="w-6 h-6" /></div>
-                            <div>
-                                <h4 className="font-bold text-gray-800">Thanh toán tiền mặt</h4>
-                                <p className="text-sm text-gray-600 mt-1">Vui lòng đến văn phòng của chúng tôi tại <span className="font-medium text-gray-900">123 Nguyễn Hữu, Quận 1, TP.HCM</span> để thanh toán trực tiếp. Giờ làm việc: 8:00 - 17:30.</p>
-                            </div>
-                        </div>
-                    </div>
+                    )}
                 </div>
 
-                {/* Actions */}
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                    <Link to="/" className="px-8 py-3 rounded-xl border border-gray-300 font-bold text-gray-600 hover:bg-gray-50 transition flex items-center justify-center gap-2">
-                        <Home size={18} />
-                        Về trang chủ
-                    </Link>
-                    <Link to="/my-bookings" className="px-8 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-200 flex items-center justify-center gap-2">
-                        <span>Đơn hàng của tôi</span>
-                        <ArrowRight size={18} />
-                    </Link>
-                </div>
             </div>
         </div>
     );

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { MapPin, Clock, Truck, Ticket, Heart } from 'lucide-react';
+import { MapPin, Clock, Truck, Ticket, Heart, Calendar, User } from 'lucide-react';
 import type { Tour } from '../../types';
 import { useState, useEffect } from 'react';
 import { userService } from '../../services/userService';
@@ -44,6 +44,27 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
         : 1;
     const durationText = tour.thoiGian || `${calculatedDuration} ngày ${calculatedDuration - 1 > 0 ? (calculatedDuration - 1) + ' đêm' : ''}`;
 
+    // Helper for Next Departure
+    const getNextDeparture = () => {
+        if (!tour.ngayKhoiHanh || !Array.isArray(tour.ngayKhoiHanh) || tour.ngayKhoiHanh.length === 0) return "Liên hệ";
+
+        // Filter future dates and sort
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(0, 0, 0, 0);
+
+        const futureDates = tour.ngayKhoiHanh
+            .map(d => new Date(d))
+            .filter(d => d.getTime() >= tomorrow.getTime())
+            .sort((a, b) => a.getTime() - b.getTime());
+
+        if (futureDates.length === 0) return "Đã hết lịch";
+
+        const nextDate = futureDates[0].toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        return futureDates.length > 1 ? `${nextDate} (+${futureDates.length - 1})` : nextDate;
+    };
+    const nextDepartureText = getNextDeparture();
+
     // Helper for Tour Code
     const tourCode = tour.maTour || `T-${tour.tourId}`;
 
@@ -77,6 +98,16 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
                     <div className="flex items-center gap-2 mb-4 text-sm text-gray-500">
                         <Clock className="w-4 h-4" />
                         <span>{durationText}</span>
+                    </div>
+
+                    <div className="flex items-center gap-2 mb-4 text-sm text-gray-500 -mt-2">
+                        <Calendar className="w-4 h-4" />
+                        <span>K.Hành: <span className="font-semibold text-blue-600">{nextDepartureText}</span></span>
+                    </div>
+
+                    <div className="flex items-center gap-2 mb-4 text-sm text-gray-500 -mt-2">
+                        <User className="w-4 h-4" />
+                        <span>Còn: <span className="font-semibold text-red-500">{tour.soLuongCho ?? 0} chỗ</span></span>
                     </div>
 
                     <div className="mt-auto flex justify-between items-center border-t border-gray-100 pt-4">
@@ -142,12 +173,20 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
                             <span>Thời gian: <span className="font-semibold text-gray-800">{durationText}</span></span>
                         </div>
                         <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-blue-500" />
+                            <span>Ngày đi: <span className="font-semibold text-gray-800">{nextDepartureText}</span></span>
+                        </div>
+                        <div className="flex items-center gap-2">
                             <MapPin className="w-4 h-4 text-blue-500" />
                             <span>Khởi hành: <span className="font-semibold text-gray-800">{tour.diemKhoiHanh || "Chưa cập nhật"}</span></span>
                         </div>
                         <div className="flex items-center gap-2">
                             <Truck className="w-4 h-4 text-blue-500" />
                             <span>Phương tiện: <span className="font-semibold text-gray-800">{tour.phuongTien || "Xe du lịch"}</span></span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <User className="w-4 h-4 text-blue-500" />
+                            <span>Còn: <span className="font-semibold text-red-500">{tour.soLuongCho ?? 0} chỗ</span></span>
                         </div>
                     </div>
                 </div>

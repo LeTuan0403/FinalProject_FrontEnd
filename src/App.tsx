@@ -12,6 +12,7 @@ import MyBookings from './pages/Client/MyBookings';
 import MyFavorites from './pages/Client/MyFavorites';
 import Profile from './pages/Client/Profile';
 import PaymentPage from './pages/Client/PaymentPage';
+import BookingSuccess from './pages/Client/BookingSuccess';
 
 import AuthPage from './pages/Auth/AuthPage';
 import ForgotPassword from './pages/Auth/ForgotPassword';
@@ -49,6 +50,7 @@ function App() {
         <Route path="tours/:id" element={<TourDetail />} />
         <Route path="booking/:id" element={<Booking />} />
         <Route path="payment/:bookingId" element={<PaymentPage />} />
+        <Route path="booking-success/:bookingId" element={<BookingSuccess />} />
         <Route path="custom-tour" element={<CustomTour />} />
         <Route path="my-tours" element={<MyTours />} />
         <Route path="my-bookings" element={<MyBookings />} />
