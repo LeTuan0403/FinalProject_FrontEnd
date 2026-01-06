@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { isFutureDate, formatTimeRange, compareTimeStrings } from '../../utils/dateUtils';
 import { ChevronDown, ChevronUp, Share2, Heart, Ticket, Clock, MapPin, Truck, Info, Map, CheckCircle, AlertCircle, Star, MessageSquare, Trash2, Edit, Reply, Check, X, Calendar, UserCheck, Utensils } from 'lucide-react';
 import { tourService } from '../../services/tourService';
 import { reviewService } from '../../services/reviewService';
@@ -43,7 +44,7 @@ const TourDetail = () => {
   useEffect(() => {
     if (lastOpenedDay !== null) {
       setTimeout(() => {
-        const element = document.getElementById(`day-${lastOpenedDay}`);
+        const element = document.getElementById(`day - ${lastOpenedDay} `);
         if (element) {
           const yOffset = -100; // Adjust for sticky header
           const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
@@ -182,13 +183,13 @@ const TourDetail = () => {
   if (loading) return <div className="min-h-screen flex items-center justify-center text-gray-500">Đang tải thông tin tour...</div>;
   if (error || !tour) return <div className="min-h-screen flex items-center justify-center text-red-500">{error || "Tour không tồn tại"}</div>;
 
-  const tourCode = tour.maTour || `T-${tour.tourId}`;
+  const tourCode = tour.maTour || `T - ${tour.tourId} `;
 
   // Calculate duration accurately
   const maxDay = (tour.lichTrinh || tour.tourChiTiets)?.length
     ? Math.max(...(tour.lichTrinh || tour.tourChiTiets).map((ct: any) => ct.ngayThu))
     : 1;
-  const durationText = tour.thoiGian || `${maxDay} ngày ${maxDay - 1 > 0 ? (maxDay - 1) + ' đêm' : ''}`;
+  const durationText = tour.thoiGian || `${maxDay} ngày ${maxDay - 1 > 0 ? (maxDay - 1) + ' đêm' : ''} `;
 
   return (
     <div className="bg-gray-50 pb-20 pt-10">
@@ -213,7 +214,7 @@ const TourDetail = () => {
                   <button onClick={handleShare} className="p-2 rounded-full hover:bg-white hover:shadow-md text-gray-500 transition relative">
                     <Share2 size={20} />
                   </button>
-                  <button onClick={toggleFavorite} className={`p-2 rounded-full hover:bg-white hover:shadow-md transition ${isFavorite ? 'text-red-500 bg-red-50' : 'text-gray-400'}`}>
+                  <button onClick={toggleFavorite} className={`p - 2 rounded - full hover: bg - white hover: shadow - md transition ${isFavorite ? 'text-red-500 bg-red-50' : 'text-gray-400'} `}>
                     <Heart size={20} className={isFavorite ? 'fill-current' : ''} />
                   </button>
                 </div>
@@ -271,7 +272,7 @@ const TourDetail = () => {
                       // Map diaDiemId to diaDiem object if necessary (for populated data)
                       const dayItems = (tour.lichTrinh || tour.tourChiTiets)
                         .filter((ct: any) => ct.ngayThu === day)
-                        .sort((a: any, b: any) => a.thuTu - b.thuTu)
+                        .sort((a: any, b: any) => compareTimeStrings(a.thoiGian, b.thoiGian))
                         .map((item: any) => ({
                           ...item,
                           diaDiem: item.diaDiemId || item.diaDiem // Handle populated path (diaDiemId becomes the object)
@@ -292,7 +293,7 @@ const TourDetail = () => {
                               </div>
                               <div>
                                 <h3 className="font-bold text-gray-800 text-lg">
-                                  {Array.from(new Set(dayItems.map(i => i.diaDiem?.tenDiaDiem).filter(Boolean))).join(" - ") || `Khám phá ngày ${day}`}
+                                  {Array.from(new Set(dayItems.map(i => i.diaDiem?.tenDiaDiem).filter(Boolean))).join(" - ") || `Khám phá ngày ${day} `}
                                 </h3>
                                 <p className="text-sm text-gray-500 font-normal mt-1 flex items-center gap-2">
                                   <Clock size={14} /> Lịch trình gồm {dayItems.length} hoạt động
@@ -302,7 +303,7 @@ const TourDetail = () => {
                             {isOpen ? <ChevronUp className="text-blue-600" /> : <ChevronDown className="text-gray-400" />}
                           </button>
 
-                          <div className={`transition-all duration-300 ease-in-out ${isOpen ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                          <div className={`transition - all duration - 300 ease -in -out ${isOpen ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'} `}>
                             <div className="p-6 border-t border-gray-100 bg-white space-y-8 relative">
                               {/* Connector Line */}
                               <div className="absolute left-[29px] top-8 bottom-8 w-0.5 bg-gray-200"></div>
@@ -322,7 +323,7 @@ const TourDetail = () => {
                                     {/* Time Badge (Absolute or Flex) */}
                                     <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4 border-b border-gray-50 pb-3">
                                       <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-blue-100 text-blue-700 font-bold text-sm min-w-[80px]">
-                                        {item.thoiGian || `0${8 + idx}:30`}
+                                        {formatTimeRange(item.thoiGian || `0${8 + idx}: 30`)}
                                       </span>
                                       <h4 className="font-bold text-gray-800 text-lg flex-1">
                                         {item.tieuDe}
@@ -383,9 +384,9 @@ const TourDetail = () => {
                     ]).map((item, idx) => {
                       const isSubItem = item.trim().startsWith('-') || item.trim().startsWith('+');
                       return (
-                        <li key={idx} className={`flex gap-3 items-start ${isSubItem ? 'pl-8 text-sm' : ''}`}>
+                        <li key={idx} className={`flex gap - 3 items - start ${isSubItem ? 'pl-8 text-sm' : ''} `}>
                           {!isSubItem && <Check className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />}
-                          <span className={`${isSubItem ? 'text-gray-500' : 'text-gray-700'}`}>{item}</span>
+                          <span className={`${isSubItem ? 'text-gray-500' : 'text-gray-700'} `}>{item}</span>
                         </li>
                       );
                     })}
@@ -405,9 +406,9 @@ const TourDetail = () => {
                     ]).map((item, idx) => {
                       const isSubItem = item.trim().startsWith('-') || item.trim().startsWith('+');
                       return (
-                        <li key={idx} className={`flex gap-3 items-start ${isSubItem ? 'pl-8 text-sm' : ''}`}>
+                        <li key={idx} className={`flex gap - 3 items - start ${isSubItem ? 'pl-8 text-sm' : ''} `}>
                           {!isSubItem && <X className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />}
-                          <span className={`${isSubItem ? 'text-gray-500' : 'text-gray-700'}`}>{item}</span>
+                          <span className={`${isSubItem ? 'text-gray-500' : 'text-gray-700'} `}>{item}</span>
                         </li>
                       );
                     })}
@@ -503,7 +504,7 @@ const TourDetail = () => {
                             >
                               <Star
                                 size={28}
-                                className={`${star <= userRating ? "text-yellow-400 fill-current" : "text-gray-300"} transition-colors`}
+                                className={`${star <= userRating ? "text-yellow-400 fill-current" : "text-gray-300"} transition - colors`}
                               />
                             </button>
                           ))}
@@ -616,12 +617,16 @@ const TourDetail = () => {
                       const today = new Date();
                       today.setHours(0, 0, 0, 0);
 
+                      // For booking, we usually need at least 1 day in advance
+                      const tomorrow = new Date(today);
+                      tomorrow.setDate(tomorrow.getDate() + 1);
+
                       let nextRem = 0;
                       let nextDateStr = "";
 
                       if (tour.availability) {
                         const futureAvails = tour.availability
-                          .filter(a => new Date(a.date).getTime() >= today.getTime() && a.remainingSeats > 0)
+                          .filter(a => new Date(a.date).getTime() >= tomorrow.getTime() && a.remainingSeats > 0)
                           .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
                         if (futureAvails.length > 0) {
@@ -637,7 +642,7 @@ const TourDetail = () => {
                       return (
                         <div className="text-right">
                           <span className="font-bold text-red-600 text-xl">{nextRem}</span>
-                          {nextDateStr && <span className="text-xs text-gray-500 block">({nextDateStr})</span>}
+                          {nextDateStr && !tour.isTuChon && <span className="text-xs text-gray-500 block">({nextDateStr})</span>}
                         </div>
                       );
                     })()}
@@ -652,15 +657,12 @@ const TourDetail = () => {
                       {tour.ngayKhoiHanh && Array.isArray(tour.ngayKhoiHanh) && tour.ngayKhoiHanh.length > 0 ? (
                         <div className="flex flex-col gap-1 items-end">
                           {(() => {
-                            const tomorrow = new Date();
-                            tomorrow.setDate(tomorrow.getDate() + 1);
-                            tomorrow.setHours(0, 0, 0, 0);
-
                             const futureDates = tour.ngayKhoiHanh
                               .map(d => new Date(d))
                               .filter(d => {
-                                // Basic future check
-                                if (d.getTime() < tomorrow.getTime()) return false;
+                                // Robust String Check
+                                const dStr = d.toISOString().split('T')[0];
+                                if (!isFutureDate(dStr)) return false;
 
                                 // Availability check
                                 if (tour.availability) {
@@ -692,7 +694,8 @@ const TourDetail = () => {
                               </div>
                             ));
                           })()}
-                          {tour.ngayKhoiHanh.filter(d => new Date(d).getTime() >= new Date().setHours(0, 0, 0, 0)).length > 0 &&
+                          {
+                            tour.ngayKhoiHanh.filter(d => new Date(d).getTime() >= new Date().setHours(0, 0, 0, 0)).length > 0 &&
                             Object.keys(tour.ngayKhoiHanh.reduce((acc, d) => {
                               const date = new Date(d);
                               if (date.getTime() < new Date().setHours(0, 0, 0, 0)) return acc;
@@ -702,12 +705,12 @@ const TourDetail = () => {
                             }, {} as any)).length > 3 &&
                             <span className="text-xs text-gray-500 italic">+ các tháng sau</span>
                           }
-                        </div>
+                        </div >
                       ) : (
                         <span className="text-gray-500 italic">Liên hệ</span>
                       )}
-                    </div>
-                  </div>
+                    </div >
+                  </div >
 
                   <div className="flex items-center justify-between group">
                     <div className="flex items-center gap-3 text-gray-600">
@@ -763,25 +766,25 @@ const TourDetail = () => {
                       return null;
                     })()}
                   </button>
-                </div>
-              </div>
+                </div >
+              </div >
 
               {/* Quick Nav */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hidden lg:block">
+              < div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hidden lg:block" >
                 <h4 className="font-bold text-gray-800 mb-4 text-sm uppercase tracking-wide">Mục lục</h4>
                 <div className="flex flex-col gap-2">
                   <a href="#section-itinerary" className="text-gray-600 hover:text-blue-600 text-sm py-1 border-l-2 border-transparent hover:border-blue-500 pl-3 transition-all">Lịch trình chi tiết</a>
                   <a href="#section-services" className="text-gray-600 hover:text-blue-600 text-sm py-1 border-l-2 border-transparent hover:border-blue-500 pl-3 transition-all">Dịch vụ bao gồm</a>
                   <a href="#section-notes" className="text-gray-600 hover:text-blue-600 text-sm py-1 border-l-2 border-transparent hover:border-blue-500 pl-3 transition-all">Lưu ý</a>
                 </div>
-              </div>
+              </div >
 
-            </div>
-          </div>
+            </div >
+          </div >
 
-        </div>
-      </div>
-    </div>
+        </div >
+      </div >
+    </div >
   );
 };
 

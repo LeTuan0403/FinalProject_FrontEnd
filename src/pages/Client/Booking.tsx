@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { isFutureDate } from '../../utils/dateUtils';
 import { tourService } from '../../services/tourService';
 import { bookingService } from '../../services/bookingService';
 import type { Tour } from '../../types';
@@ -70,7 +71,9 @@ const Booking = () => {
 
                             return { date: dateObj, dateStr, remaining };
                         })
-                        .filter((item: any) => item.date.getTime() >= new Date().setHours(0, 0, 0, 0)) // Future only
+                        .filter((item: any) => {
+                            return isFutureDate(item.dateStr);
+                        })
                         .sort((a: any, b: any) => a.date.getTime() - b.date.getTime());
 
                     // Find first date with seats > 0
@@ -315,7 +318,10 @@ const Booking = () => {
                                             <option value="">-- Chọn ngày khởi hành --</option>
                                             {tour.ngayKhoiHanh
                                                 .map(d => new Date(d))
-                                                .filter(d => d.getTime() >= new Date().setHours(0, 0, 0, 0)) // Future only
+                                                .filter(d => {
+                                                    const dStr = d.toISOString().split('T')[0];
+                                                    return isFutureDate(dStr);
+                                                })
                                                 .sort((a, b) => a.getTime() - b.getTime())
                                                 .map((date, idx) => {
                                                     const dateStr = date.toISOString().split('T')[0];

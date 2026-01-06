@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { getLocalDateStr } from '../../utils/dateUtils';
 import { ShieldCheck, HeartHandshake, Phone, BadgePercent, Search, MapPin, Calendar, Clock } from 'lucide-react';
 import { useTours } from '../../hooks/useTours';
 import TourCard from '../../components/common/TourCard';
@@ -85,7 +86,7 @@ const Home = () => {
     params.append('type', searchTab);
     if (departurePoint) params.append('from', departurePoint);
 
-    navigate(`/tours?${params.toString()}`);
+    navigate(`/ tours ? ${params.toString()} `);
   };
 
   if (loading) return <div className="text-center py-20 text-gray-500">Đang tải tour...</div>;
@@ -115,30 +116,28 @@ const Home = () => {
     return !isAsia;
   });
 
-  // Get Last Minute Tours (within 3 days)
+  // Get Last Minute Tours (within 3 days from Tomorrow)
   const lastMinuteTours = tours.filter(t => {
     if (!t.daDuyet || t.isTuChon) return false;
     if (!t.ngayKhoiHanh || !Array.isArray(t.ngayKhoiHanh)) return false;
 
+    // Robust String Comparison
+
+    // Tomorrow String
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const threeDaysLater = new Date(today);
-    threeDaysLater.setDate(today.getDate() + 3);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = getLocalDateStr(tomorrow);
+
+    // End Date (Tomorrow + 3 days)
+    const endDate = new Date(tomorrow);
+    endDate.setDate(endDate.getDate() + 3);
+    const endDateStr = getLocalDateStr(endDate);
 
     // Check if ANY departure date is within [tomorrow, tomorrow+3]
     return t.ngayKhoiHanh.some(d => {
-      const date = new Date(d);
-      // We don't normalize 'date' to 0h here because 'd' from backend might have time component 
-      // or simply be UTC midnight. We trust getTime() comparison.
-
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      tomorrow.setHours(0, 0, 0, 0);
-
-      const threeDaysAfterTomorrow = new Date(tomorrow);
-      threeDaysAfterTomorrow.setDate(tomorrow.getDate() + 3);
-
-      return date.getTime() >= tomorrow.getTime() && date.getTime() <= threeDaysAfterTomorrow.getTime();
+      const dStr = new Date(d).toISOString().split('T')[0];
+      return dStr >= tomorrowStr && dStr <= endDateStr;
     });
   });
 
@@ -162,14 +161,14 @@ const Home = () => {
             <div className="flex gap-2 mb-4">
               <button
                 onClick={() => { setSearchTab('Trong Nước'); setDestination(''); }}
-                className={`flex items-center gap-2 px-6 py-3 rounded-t-lg font-bold text-lg transition-colors ${searchTab === 'Trong Nước' ? 'bg-white text-blue-900' : 'bg-black/50 text-white hover:bg-black/70'}`}
+                className={`flex items - center gap - 2 px - 6 py - 3 rounded - t - lg font - bold text - lg transition - colors ${searchTab === 'Trong Nước' ? 'bg-white text-blue-900' : 'bg-black/50 text-white hover:bg-black/70'} `}
               >
                 <div className="bg-blue-600 rounded-full p-1"><Search size={16} className="text-white" /></div>
                 Tour TRONG NƯỚC
               </button>
               <button
                 onClick={() => { setSearchTab('Nước Ngoài'); setDestination(''); }}
-                className={`flex items-center gap-2 px-6 py-3 rounded-t-lg font-bold text-lg transition-colors ${searchTab === 'Nước Ngoài' ? 'bg-white text-blue-900' : 'bg-black/50 text-white hover:bg-black/70'}`}
+                className={`flex items - center gap - 2 px - 6 py - 3 rounded - t - lg font - bold text - lg transition - colors ${searchTab === 'Nước Ngoài' ? 'bg-white text-blue-900' : 'bg-black/50 text-white hover:bg-black/70'} `}
               >
                 <div className="bg-blue-600 rounded-full p-1"><Search size={16} className="text-white" /></div>
                 Tour NƯỚC NGOÀI

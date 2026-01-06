@@ -2,10 +2,12 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { tourService, diaDiemService } from '../../../services/tourService';
 import type { Tour, DiaDiem } from '../../../types';
-import { X, Plus, Save, Trash2, ChevronDown } from 'lucide-react'; // Added ChevronDown
+import { compareTimeStrings } from '../../../utils/dateUtils';
+import { Plus, Trash2, Save, X, ChevronDown } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 import { useAuth } from '../../../hooks/useAuth';
 import UploadImage from '../components/UploadImage';
+import SearchableSelect from '../components/SearchableSelect.tsx';
 
 const AdminEditTour = () => {
     const { id } = useParams();
@@ -291,23 +293,45 @@ const AdminEditTour = () => {
         });
     };
 
-    const addDetail = () => {
+    const addDetail = (referenceDetail?: any) => {
         // Find first UNUSED location if possible, else default to first available
         const usedIds = formData.tourChiTiets?.map(d => d.diaDiemId) || [];
         const availableLoc = locations.find(l => !usedIds.includes(l.diaDiemId)) || locations[0];
 
-        setFormData({
-            ...formData,
-            tourChiTiets: [...(formData.tourChiTiets || []), {
-                diaDiemId: availableLoc?.diaDiemId || 0,
-                thuTu: (formData.tourChiTiets?.length || 0) + 1,
-                ngayThu: (formData.tourChiTiets?.length || 0) + 1,
-                tieuDe: '',
-                hinhAnh: '',
-                ghiChu: '',
-                thoiGian: '08:00'
-            }]
-        });
+        // Determine Day: if reference exists, use that day. Else increment max day.
+        const maxCurrentDay = formData.tourChiTiets?.reduce((max, item) => Math.max(max, item.ngayThu), 0) || 0;
+        const newDay = referenceDetail ? referenceDetail.ngayThu : (maxCurrentDay + 1);
+
+        // Smart Default Time: Inherit from reference or default to 08:00
+        const defaultTime = referenceDetail ? (referenceDetail.thoiGian || '08:00') : '08:00';
+
+        const newItem = {
+            diaDiemId: availableLoc?.diaDiemId || 0,
+            thuTu: (formData.tourChiTiets?.length || 0) + 1,
+            ngayThu: newDay,
+            tieuDe: '',
+            hinhAnh: '',
+            ghiChu: '',
+            thoiGian: defaultTime
+        };
+
+        if (referenceDetail) {
+            // Find index of referenceDetail in the ORIGINAL array if possible
+            // Note: referenceDetail passed from UI comes from sortedDetails, which has originalIndex
+            const insertIndex = typeof referenceDetail.originalIndex === 'number'
+                ? referenceDetail.originalIndex + 1
+                : (formData.tourChiTiets?.length || 0);
+
+            const newDetails = [...(formData.tourChiTiets || [])];
+            newDetails.splice(insertIndex, 0, newItem);
+            setFormData({ ...formData, tourChiTiets: newDetails });
+        } else {
+            // Append to end if no reference (e.g. big add button)
+            setFormData({
+                ...formData,
+                tourChiTiets: [...(formData.tourChiTiets || []), newItem]
+            });
+        }
     };
 
     const removeDetail = (index: number) => {
@@ -315,6 +339,23 @@ const AdminEditTour = () => {
         newDetails.splice(index, 1);
         setFormData({ ...formData, tourChiTiets: newDetails });
     };
+
+    // Insert Auto-Sorting Logic for Rendering
+    const sortedDetails = (formData.tourChiTiets || []).map((detail, index) => ({
+        ...detail,
+        originalIndex: index
+    })).sort((a, b) => {
+        if (a.ngayThu !== b.ngayThu) {
+            return a.ngayThu - b.ngayThu;
+        }
+        // Primary Sort: Time
+        const timeComparison = compareTimeStrings(a.thoiGian, b.thoiGian);
+        if (timeComparison !== 0) return timeComparison;
+
+        // Secondary Sort: Original Insertion Order (Stable Sort)
+        // This ensures items with SAME time stay in the order they were added
+        return a.originalIndex - b.originalIndex;
+    });
 
     if (loading) return <div className="min-h-screen flex justify-center items-center"><div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full"></div></div>;
 
@@ -607,205 +648,247 @@ const AdminEditTour = () => {
                         <div className="border-t pt-6">
                             <div className="flex justify-between items-center mb-4">
                                 <h3 className="text-xl font-bold text-gray-800">Lịch trình chi tiết <span className="text-red-500">*</span></h3>
-                                <button type="button" onClick={addDetail} className="flex items-center gap-2 text-blue-600 font-bold hover:bg-blue-50 px-3 py-2 rounded">
-                                    <Plus size={18} /> Thêm hoạt động
-                                </button>
+                                {(!formData.tourChiTiets || formData.tourChiTiets.length === 0) && (
+                                    <button type="button" onClick={() => addDetail()} className="flex items-center gap-2 text-blue-600 font-bold hover:bg-blue-50 px-3 py-2 rounded">
+                                        <Plus size={18} /> Thêm hoạt động
+                                    </button>
+                                )}
                             </div>
 
                             <div className="space-y-6">
-                                {(formData.tourChiTiets || []).map((detail, idx) => {
+                                {sortedDetails.map((detail) => {
+                                    const idx = detail.originalIndex; // Use original index for updates
                                     const handleLocChange = (newId: number) => {
                                         handleDetailChange(idx, 'diaDiemId', newId);
                                     };
 
                                     return (
-                                        <div key={idx} className="relative p-5 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow group mb-0">
-                                            {/* Delete Button - Absolute Top Right */}
-                                            <button
-                                                type="button"
-                                                onClick={() => removeDetail(idx)}
-                                                className="absolute top-4 right-4 text-gray-300 hover:text-red-500 transition p-1"
-                                                title="Xóa hoạt động này"
-                                            >
-                                                <Trash2 size={20} />
-                                            </button>
+                                        <div key={idx}>
+                                            <div className="relative p-5 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow group mb-0">
+                                                {/* Delete Button - Absolute Top Right */}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeDetail(idx)}
+                                                    className="absolute top-4 right-4 text-gray-300 hover:text-red-500 transition p-1"
+                                                    title="Xóa hoạt động này"
+                                                >
+                                                    <Trash2 size={20} />
+                                                </button>
 
-                                            <div className="grid grid-cols-12 gap-4">
-                                                {/* Header Row: Day & Time */}
-                                                <div className="col-span-12 md:col-span-1">
-                                                    <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Ngày</label>
-                                                    <div className="flex items-center">
-                                                        <input
-                                                            type="number"
-                                                            min="1"
-                                                            className="w-full p-2 border rounded font-bold text-center text-blue-600"
-                                                            value={detail.ngayThu}
-                                                            onChange={e => handleDetailChange(idx, 'ngayThu', Number(e.target.value))}
-                                                        />
+                                                <div className="grid grid-cols-12 gap-4">
+                                                    {/* Header Row: Day & Time */}
+                                                    <div className="col-span-12 md:col-span-1">
+                                                        <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Ngày</label>
+                                                        <div className="flex items-center">
+                                                            <input
+                                                                type="number"
+                                                                min="1"
+                                                                className="w-full p-2 border rounded font-bold text-center text-blue-600"
+                                                                value={detail.ngayThu}
+                                                                onChange={e => handleDetailChange(idx, 'ngayThu', Number(e.target.value))}
+                                                            />
+                                                        </div>
                                                     </div>
-                                                </div>
 
-                                                <div className="col-span-6 md:col-span-3">
-                                                    <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Bắt đầu</label>
-                                                    <div className="flex gap-1">
-                                                        <select
-                                                            className="w-1/2 p-2 border rounded bg-gray-50 cursor-pointer"
-                                                            value={detail.thoiGian ? detail.thoiGian.split(':')[0] : '08'}
-                                                            onChange={e => {
-                                                                const h = e.target.value;
-                                                                const m = detail.thoiGian ? detail.thoiGian.split(':')[1]?.split(' ')[0] || '00' : '00';
+                                                    <div className="col-span-6 md:col-span-3">
+                                                        <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Bắt đầu</label>
+                                                        <div className="flex gap-1">
+                                                            <select
+                                                                className="w-1/2 p-2 border rounded bg-gray-50 cursor-pointer"
+                                                                value={detail.thoiGian ? detail.thoiGian.split(':')[0] : '08'}
+                                                                onChange={e => {
+                                                                    const h = e.target.value;
+                                                                    const m = detail.thoiGian ? detail.thoiGian.split(':')[1]?.split(' ')[0] || '00' : '00';
 
-                                                                // Correct logic: maintain duration
-                                                                const currentStart = detail.thoiGian ? detail.thoiGian.split('-')[0].trim() : '08:00';
-                                                                const [sh, sm] = currentStart.split(':').map(Number);
-                                                                const [eh, em] = detail.thoiGian?.includes('-') ? detail.thoiGian.split('-')[1].trim().split(':').map(Number) : [sh + 2, sm]; // default 2h
-                                                                let durationMins = (eh * 60 + em) - (sh * 60 + sm);
-                                                                if (durationMins < 0) durationMins += 24 * 60; // Handle midnight crossing
+                                                                    // Correct logic: maintain duration
+                                                                    const currentStart = detail.thoiGian ? detail.thoiGian.split('-')[0].trim() : '08:00';
+                                                                    const [sh, sm] = currentStart.split(':').map(Number);
 
-                                                                const d = new Date();
-                                                                d.setHours(Number(h), Number(m) + durationMins, 0);
-                                                                const endStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} `;
-                                                                handleDetailChange(idx, 'thoiGian', `${h}:${m} - ${endStr} `);
-                                                            }}
-                                                        >
-                                                            {Array.from({ length: 24 }).map((_, i) => {
-                                                                const h = String(i).padStart(2, '0');
-                                                                return <option key={i} value={h}>{h} h</option>
-                                                            })}
-                                                        </select>
-                                                        <select
-                                                            className="w-1/2 p-2 border rounded bg-gray-50 cursor-pointer"
-                                                            value={detail.thoiGian ? detail.thoiGian.split(':')[1]?.split(' ')[0] : '00'}
-                                                            onChange={e => {
-                                                                const m = e.target.value;
-                                                                const h = detail.thoiGian ? detail.thoiGian.split(':')[0] : '08';
+                                                                    // If previously had duration, keep it
+                                                                    if (detail.thoiGian?.includes('-')) {
+                                                                        const [eh, em] = detail.thoiGian.split('-')[1].trim().split(':').map(Number);
+                                                                        let durationMins = (eh * 60 + em) - (sh * 60 + sm);
+                                                                        if (durationMins < 0) durationMins += 24 * 60;
 
-                                                                // Recalculate with new minute
-                                                                const currentStart = detail.thoiGian ? detail.thoiGian.split('-')[0].trim() : '08:00';
-                                                                const [sh, sm] = currentStart.split(':').map(Number);
-                                                                const [eh, em] = detail.thoiGian?.includes('-') ? detail.thoiGian.split('-')[1].trim().split(':').map(Number) : [sh + 2, sm];
-                                                                let durationMins = (eh * 60 + em) - (sh * 60 + sm);
-                                                                if (durationMins < 0) durationMins += 24 * 60;
+                                                                        const d = new Date();
+                                                                        d.setHours(Number(h), Number(m) + durationMins, 0);
+                                                                        const endStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} `;
+                                                                        handleDetailChange(idx, 'thoiGian', `${h}:${m} - ${endStr} `);
+                                                                    } else {
+                                                                        // Single time only
+                                                                        handleDetailChange(idx, 'thoiGian', `${h}:${m}`);
+                                                                    }
+                                                                }}
+                                                            >
+                                                                {Array.from({ length: 24 }).map((_, i) => {
+                                                                    const h = String(i).padStart(2, '0');
+                                                                    return <option key={i} value={h}>{h} h</option>
+                                                                })}
+                                                            </select>
+                                                            <select
+                                                                className="w-1/2 p-2 border rounded bg-gray-50 cursor-pointer"
+                                                                value={detail.thoiGian ? detail.thoiGian.split(':')[1]?.split(' ')[0] : '00'}
+                                                                onChange={e => {
+                                                                    const m = e.target.value;
+                                                                    const h = detail.thoiGian ? detail.thoiGian.split(':')[0] : '08';
 
-                                                                const d = new Date();
-                                                                d.setHours(Number(h), Number(m) + durationMins, 0);
-                                                                const endStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} `;
-                                                                handleDetailChange(idx, 'thoiGian', `${h}:${m} - ${endStr} `);
-                                                            }}
-                                                        >
-                                                            {['00', '15', '30', '45'].map(m => <option key={m} value={m}>{m} p</option>)}
-                                                        </select>
+                                                                    // Recalculate with new minute
+                                                                    const currentStart = detail.thoiGian ? detail.thoiGian.split('-')[0].trim() : '08:00';
+                                                                    const [sh, sm] = currentStart.split(':').map(Number);
+
+                                                                    if (detail.thoiGian?.includes('-')) {
+                                                                        const [eh, em] = detail.thoiGian.split('-')[1].trim().split(':').map(Number);
+                                                                        let durationMins = (eh * 60 + em) - (sh * 60 + sm);
+                                                                        if (durationMins < 0) durationMins += 24 * 60;
+
+                                                                        const d = new Date();
+                                                                        d.setHours(Number(h), Number(m) + durationMins, 0);
+                                                                        const endStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} `;
+                                                                        handleDetailChange(idx, 'thoiGian', `${h}:${m} - ${endStr} `);
+                                                                    } else {
+                                                                        handleDetailChange(idx, 'thoiGian', `${h}:${m}`);
+                                                                    }
+                                                                }}
+                                                            >
+                                                                {['00', '15', '30', '45'].map(m => <option key={m} value={m}>{m} p</option>)}
+                                                            </select>
+                                                        </div>
                                                     </div>
-                                                </div>
 
-                                                <div className="col-span-6 md:col-span-2">
-                                                    <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Thời lượng</label>
-                                                    <div className="relative">
-                                                        <input
-                                                            type="number"
-                                                            className="w-full p-2 border rounded pr-8"
-                                                            value={(() => {
-                                                                if (detail.thoiGian?.includes('-')) {
-                                                                    const [s, e] = detail.thoiGian.split('-').map(t => t.trim());
-                                                                    const [sh, sm] = s.split(':').map(Number);
-                                                                    const [eh, em] = e.split(':').map(Number);
-                                                                    let diff = (eh * 60 + em) - (sh * 60 + sm);
-                                                                    if (diff < 0) diff += 24 * 60;
-                                                                    return diff;
+                                                    <div className="col-span-6 md:col-span-2">
+                                                        <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Thời lượng</label>
+                                                        <div className="relative">
+                                                            <input
+                                                                type="number"
+                                                                className="w-full p-2 border rounded pr-8"
+                                                                value={(() => {
+                                                                    if (detail.thoiGian?.includes('-')) {
+                                                                        const [s, e] = detail.thoiGian.split('-').map(t => t.trim());
+                                                                        const [sh, sm] = s.split(':').map(Number);
+                                                                        const [eh, em] = e.split(':').map(Number);
+                                                                        let diff = (eh * 60 + em) - (sh * 60 + sm);
+                                                                        if (diff < 0) diff += 24 * 60;
+                                                                        return diff;
+                                                                    }
+                                                                    return 0; // If no range, duration is 0
+                                                                })()}
+                                                                onChange={(e) => {
+                                                                    const val = e.target.value;
+                                                                    const newDuration = val === '' ? 0 : Number(val);
+
+                                                                    const currentStart = detail.thoiGian ? detail.thoiGian.split('-')[0].trim() : '08:00';
+                                                                    const [sh, sm] = currentStart.split(':').map(Number);
+
+                                                                    if (newDuration > 0) {
+                                                                        const d = new Date();
+                                                                        d.setHours(sh, sm + newDuration, 0);
+                                                                        const endStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} `;
+                                                                        handleDetailChange(idx, 'thoiGian', `${currentStart} - ${endStr} `);
+                                                                    } else {
+                                                                        // If 0, remove end time
+                                                                        handleDetailChange(idx, 'thoiGian', currentStart);
+                                                                    }
+                                                                }}
+                                                            />
+                                                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">phút</span>
+                                                        </div>
+                                                        <div className="text-xs text-gray-400 mt-1 text-right">
+                                                            Kết thúc: <span className="font-bold text-blue-600">{detail.thoiGian?.includes('-') ? detail.thoiGian.split('-')[1].trim() : '--:--'}</span>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Location - Takes remaining space */}
+                                                    <div className="col-span-12 md:col-span-6">
+                                                        <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Địa điểm / Hoạt động</label>
+                                                        <SearchableSelect
+                                                            value={detail.diaDiemId}
+                                                            options={locations.map(loc => ({
+                                                                value: loc.diaDiemId,
+                                                                label: loc.tenDiaDiem,
+                                                                subLabel: `${loc.thoiGianThamQuanDuKien || 2} h`,
+                                                                disabled: false
+                                                            }))}
+                                                            onChange={(newId) => {
+                                                                const idNum = Number(newId);
+                                                                handleLocChange(idNum);
+                                                                const loc = locations.find(l => l.diaDiemId === idNum);
+                                                                if (loc) {
+                                                                    // Auto-fill Image (or clear if empty)
+                                                                    handleDetailChange(idx, 'hinhAnh', loc.hinhAnh || '');
+
+                                                                    // Auto-update Duration (End Time)
+                                                                    const currentStart = detail.thoiGian ? detail.thoiGian.split('-')[0].trim() : '08:00';
+                                                                    const [sh, sm] = currentStart.split(':').map(Number); // e.g. 08, 00
+
+                                                                    const durationMins = (loc.thoiGianThamQuanDuKien || 2) * 60; // Default 2h if missing
+
+                                                                    const d = new Date();
+                                                                    d.setHours(sh, sm + durationMins, 0); // Add duration to start time
+
+                                                                    const endStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} `;
+                                                                    handleDetailChange(idx, 'thoiGian', `${currentStart} - ${endStr} `);
+                                                                } else {
+                                                                    // If location cleared, clear image
+                                                                    handleDetailChange(idx, 'hinhAnh', '');
                                                                 }
-                                                                return (locations.find(l => l.diaDiemId === detail.diaDiemId)?.thoiGianThamQuanDuKien || 2) * 60;
-                                                            })()}
-                                                            onChange={(e) => {
-                                                                const newDuration = Number(e.target.value);
-                                                                const currentStart = detail.thoiGian ? detail.thoiGian.split('-')[0].trim() : '08:00';
-                                                                const [sh, sm] = currentStart.split(':').map(Number);
-                                                                const d = new Date();
-                                                                d.setHours(sh, sm + newDuration, 0);
-                                                                const endStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} `;
-                                                                handleDetailChange(idx, 'thoiGian', `${currentStart} - ${endStr} `);
                                                             }}
+                                                            placeholder="Chọn địa điểm hoặc để trống..."
                                                         />
-                                                        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">phút</span>
                                                     </div>
-                                                    <div className="text-xs text-gray-400 mt-1 text-right">
-                                                        Kết thúc: <span className="font-bold text-blue-600">{detail.thoiGian?.includes('-') ? detail.thoiGian.split('-')[1].trim() : '--:--'}</span>
+
+                                                    {/* Second Row: Additional Details */}
+                                                    {/* Second Row: Title & Note */}
+                                                    <div className="col-span-12 md:col-span-8">
+                                                        <div className="mb-3">
+                                                            <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Tiêu đề (Tùy chọn)</label>
+                                                            <input
+                                                                type="text"
+                                                                className="w-full p-2 border rounded text-sm placeholder-gray-400"
+                                                                value={detail.tieuDe || ''}
+                                                                placeholder="VD: Ăn trưa, Nghỉ ngơi..."
+                                                                onChange={e => handleDetailChange(idx, 'tieuDe', e.target.value)}
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Chi tiết / Hướng dẫn <span className="text-red-500">*</span></label>
+                                                            <textarea
+                                                                className="w-full p-2 border rounded h-24 resize-none text-sm"
+                                                                value={detail.ghiChu || ''}
+                                                                required
+                                                                placeholder="Mô tả chi tiết hoạt động..."
+                                                                onChange={e => handleDetailChange(idx, 'ghiChu', e.target.value)}
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Image Section - Right Column */}
+                                                    <div className="col-span-12 md:col-span-4 flex flex-col">
+                                                        <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Hình ảnh</label>
+                                                        <div className="flex-1 border border-dashed border-gray-300 rounded-lg bg-gray-50 relative hover:border-blue-400 transition min-h-[140px]">
+                                                            <UploadImage
+                                                                label=""
+                                                                currentImage={detail.hinhAnh === 'HIDDEN' ? '' : detail.hinhAnh}
+                                                                onUpload={(url) => handleDetailChange(idx, 'hinhAnh', url)}
+                                                            />
+                                                        </div>
                                                     </div>
                                                 </div>
+                                            </div>
 
-                                                {/* Location - Takes remaining space */}
-                                                <div className="col-span-12 md:col-span-6">
-                                                    <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Địa điểm / Hoạt động</label>
-                                                    <SearchableSelect
-                                                        value={detail.diaDiemId}
-                                                        options={locations.map(loc => ({
-                                                            value: loc.diaDiemId,
-                                                            label: loc.tenDiaDiem,
-                                                            subLabel: `${loc.thoiGianThamQuanDuKien || 2} h`,
-                                                            disabled: false
-                                                        }))}
-                                                        onChange={(newId) => {
-                                                            const idNum = Number(newId);
-                                                            handleLocChange(idNum);
-                                                            const loc = locations.find(l => l.diaDiemId === idNum);
-                                                            if (loc) {
-                                                                // Auto-fill Image (or clear if empty)
-                                                                handleDetailChange(idx, 'hinhAnh', loc.hinhAnh || '');
-
-                                                                // Auto-update Duration (End Time)
-                                                                const currentStart = detail.thoiGian ? detail.thoiGian.split('-')[0].trim() : '08:00';
-                                                                const [sh, sm] = currentStart.split(':').map(Number); // e.g. 08, 00
-
-                                                                const durationMins = (loc.thoiGianThamQuanDuKien || 2) * 60; // Default 2h if missing
-
-                                                                const d = new Date();
-                                                                d.setHours(sh, sm + durationMins, 0); // Add duration to start time
-
-                                                                const endStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} `;
-                                                                handleDetailChange(idx, 'thoiGian', `${currentStart} - ${endStr} `);
-                                                            } else {
-                                                                // If location cleared, clear image
-                                                                handleDetailChange(idx, 'hinhAnh', '');
-                                                            }
-                                                        }}
-                                                        placeholder="Chọn địa điểm hoặc để trống..."
-                                                    />
+                                            {/* Inline Add Button */}
+                                            <div className="flex justify-center my-4 group/add relative">
+                                                <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                                                    <div className="w-full border-t border-gray-200 group-hover/add:border-blue-200 transition-colors"></div>
                                                 </div>
-
-                                                {/* Second Row: Additional Details */}
-                                                {/* Second Row: Title & Note */}
-                                                <div className="col-span-12 md:col-span-8">
-                                                    <div className="mb-3">
-                                                        <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Tiêu đề (Tùy chọn)</label>
-                                                        <input
-                                                            type="text"
-                                                            className="w-full p-2 border rounded text-sm placeholder-gray-400"
-                                                            value={detail.tieuDe || ''}
-                                                            placeholder="VD: Ăn trưa, Nghỉ ngơi..."
-                                                            onChange={e => handleDetailChange(idx, 'tieuDe', e.target.value)}
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <label className="text-xs font-bold text-gray-500 uppercase block mb-1">Chi tiết / Hướng dẫn <span className="text-red-500">*</span></label>
-                                                        <textarea
-                                                            className="w-full p-2 border rounded h-24 resize-none text-sm"
-                                                            value={detail.ghiChu || ''}
-                                                            required
-                                                            placeholder="Mô tả chi tiết hoạt động..."
-                                                            onChange={e => handleDetailChange(idx, 'ghiChu', e.target.value)}
-                                                        />
-                                                    </div>
-                                                </div>
-
-                                                {/* Image Section - Right Column */}
-                                                <div className="col-span-12 md:col-span-4 flex flex-col">
-                                                    <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Hình ảnh</label>
-                                                    <div className="flex-1 border border-dashed border-gray-300 rounded-lg bg-gray-50 relative hover:border-blue-400 transition min-h-[140px]">
-                                                        <UploadImage
-                                                            label=""
-                                                            currentImage={detail.hinhAnh === 'HIDDEN' ? '' : detail.hinhAnh}
-                                                            onUpload={(url) => handleDetailChange(idx, 'hinhAnh', url)}
-                                                        />
-                                                    </div>
+                                                <div className="relative flex justify-center">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => addDetail(detail)}
+                                                        className="bg-white border-2 border-dashed border-gray-300 rounded-full p-1.5 text-gray-400 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50 transition-all shadow-sm group-hover/add:scale-110"
+                                                        title={`Thêm hoạt động tiếp theo vào Ngày ${detail.ngayThu}`}
+                                                    >
+                                                        <Plus size={20} />
+                                                    </button>
                                                 </div>
                                             </div>
                                         </div>
@@ -912,163 +995,6 @@ function CreatableSelect({
     );
 }
 
-// Helper Component for Searchable Select
-function SearchableSelect({
-    value,
-    onChange,
-    options,
-    placeholder = "Chọn địa điểm...",
-    required = false
-}: {
-    value: string | number;
-    onChange: (val: string | number) => void;
-    options: { value: string | number; label: string; subLabel?: string; disabled?: boolean }[];
-    placeholder?: string;
-    required?: boolean;
-}) {
-    const [isOpen, setIsOpen] = useState(false);
-    const [search, setSearch] = useState("");
-    const [isTyping, setIsTyping] = useState(false);
-    const [showAll, setShowAll] = useState(false); // New state to toggle full list
-    const blurTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    const prevValueRef = useRef(value);
-
-    // Sync search text with selected value ONLY when value changes or initial load
-    useEffect(() => {
-        if (!isTyping) {
-            // Only update if value actually changed or search is empty (initial)
-            // This prevents "reverting" when options change but value is still pending update
-            if (value !== prevValueRef.current || search === "") {
-                const selected = options.find(o => o.value == value);
-                if (selected) {
-                    setSearch(selected.label);
-                } else if (!value || value === 0) {
-                    setSearch("");
-                }
-                prevValueRef.current = value;
-            }
-        }
-    }, [value, options, isTyping, search]);
-
-    const filtered = showAll ? options : options.filter(o =>
-        o.label.toLowerCase().includes(search.toLowerCase())
-    );
-
-    const handleCommit = (val: string) => {
-        // Find exact or allow partial if strictly matches an option label or value
-        const found = options.find(o => o.label.toLowerCase() === val.toLowerCase() || String(o.value) === val);
-        if (found && !found.disabled) {
-            onChange(found.value);
-            setSearch(found.label);
-        } else {
-            // Check for numeric input (minutes, etc.)
-            const numeric = parseInt(val);
-            if (!isNaN(numeric)) {
-                const formatted = String(numeric).padStart(2, '0');
-                const foundNumeric = options.find(o => String(o.value) === formatted);
-                if (foundNumeric && !foundNumeric.disabled) {
-                    onChange(foundNumeric.value);
-                    setSearch(foundNumeric.label);
-                    return;
-                }
-            }
-
-            // Allow clearing input if not required
-            if (val === "" && !required) {
-                onChange("");
-                setSearch("");
-                return;
-            }
-
-            // Revert if invalid
-            const selected = options.find(o => o.value == value);
-            setSearch(selected ? selected.label : "");
-        }
-    };
-
-    return (
-        <div className="relative">
-            <input
-                type="text"
-                className="w-full p-2 pr-10 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
-                placeholder={placeholder}
-                value={search}
-                required={required && !value}
-                onChange={e => {
-                    setSearch(e.target.value);
-                    setIsTyping(true);
-                    setIsOpen(true);
-                    setShowAll(false); // Standard filtering when typing
-                }}
-                onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                        e.preventDefault(); // Prevent form submission
-                        handleCommit(search);
-                        setIsOpen(false);
-                        setIsTyping(false);
-                    }
-                }}
-                onFocus={() => {
-                    setIsOpen(true);
-                    setIsTyping(true);
-                }}
-                onBlur={() => {
-                    blurTimeoutRef.current = setTimeout(() => {
-                        handleCommit(search);
-                        setIsOpen(false);
-                        setIsTyping(false);
-                    }, 200);
-                }}
-            />
-
-            {/* Clickable Triangle Button - Added bg-white to mask backend elements */}
-            <div
-                className="absolute right-1 top-1 bottom-1 w-8 bg-white flex items-center justify-center cursor-pointer text-gray-400 hover:text-blue-600 rounded"
-                onMouseDown={(e) => {
-                    e.preventDefault(); // Prevent input blur
-                    // Toggle dropdown and forcing "Show All" check
-                    setIsOpen(!isOpen);
-                    setShowAll(!isOpen);
-                }}
-            >
-                <ChevronDown size={16} />
-            </div>
-
-            {isOpen && (
-                <div className="absolute z-20 w-full bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto mt-1 custom-scrollbar">
-                    {filtered.length > 0 ? (
-                        filtered.map((opt) => (
-                            <div
-                                key={opt.value}
-                                className={`p-3 cursor-pointer transition flex justify-between items-center ${opt.disabled ? 'opacity-50 bg-gray-50 cursor-not-allowed' : 'hover:bg-blue-50'} `}
-                                onMouseDown={(e) => {
-                                    e.preventDefault();
-                                    // Clear pending blur check
-                                    if (blurTimeoutRef.current) {
-                                        clearTimeout(blurTimeoutRef.current);
-                                        blurTimeoutRef.current = null;
-                                    }
-
-                                    if (!opt.disabled) {
-                                        onChange(opt.value);
-                                        setSearch(opt.label);
-                                        setIsOpen(false);
-                                        setIsTyping(false);
-                                    }
-                                }}
-                            >
-                                <span className="font-medium text-gray-800">{opt.label}</span>
-                                {opt.subLabel && <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">{opt.subLabel}</span>}
-                            </div>
-                        ))
-                    ) : (
-                        <div className="p-3 text-gray-500 text-center italic text-sm">Không tìm thấy</div>
-                    )}
-                </div>
-            )}
-        </div>
-    );
-}
 
 export default AdminEditTour;
