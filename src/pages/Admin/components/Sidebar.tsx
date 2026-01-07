@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Calendar, Settings, CheckCircle, LogOut, Mail, Star, MapPin } from 'lucide-react';
+import { LayoutDashboard, Users, Calendar, Settings, LogOut, Mail, Star, MapPin } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
 
 const Sidebar = () => {
@@ -15,7 +15,6 @@ const Sidebar = () => {
         { margin: false, id: '', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
         { margin: false, id: 'tours', label: 'Quản lý Tour', icon: <Calendar size={20} /> },
         { margin: false, id: 'locations', label: 'Quản lý Địa điểm', icon: <MapPin size={20} /> },
-        { margin: false, id: 'approvals', label: 'Duyệt Tour', icon: <CheckCircle size={20} /> },
         { margin: false, id: 'bookings', label: 'Đơn đặt tour', icon: <Users size={20} /> },
         { margin: false, id: 'users', label: 'Quản lý Người dùng', icon: <Users size={20} /> },
         { margin: false, id: 'reviews', label: 'Đánh giá', icon: <Star size={20} /> },

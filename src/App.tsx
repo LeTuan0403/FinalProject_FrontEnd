@@ -21,7 +21,6 @@ import ResetPassword from './pages/Auth/ResetPassword';
 
 import Dashboard from './pages/Admin/pages/Dashboard';
 import TourManagement from './pages/Admin/pages/TourManagement';
-import TourApproval from './pages/Admin/pages/TourApproval';
 import BookingManagement from './pages/Admin/pages/BookingManagement';
 import AdminEditTour from './pages/Admin/pages/EditTour';
 
@@ -73,7 +72,6 @@ function App() {
       <Route path="/admin">
         <Route index element={<AdminRoute><Dashboard /></AdminRoute>} />
         <Route path="tours" element={<AdminRoute><TourManagement /></AdminRoute>} />
-        <Route path="approvals" element={<AdminRoute><TourApproval /></AdminRoute>} />
         <Route path="bookings" element={<AdminRoute><BookingManagement /></AdminRoute>} />
         <Route path="users" element={<AdminRoute><UserManagement /></AdminRoute>} />
         <Route path="locations" element={<AdminRoute><LocationManagement /></AdminRoute>} />

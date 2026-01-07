@@ -113,4 +113,16 @@ export interface Review {
   ngayTraLoi?: string;
   nguoiDung?: NguoiDung;
   tour?: Tour;
+  isAnonymous?: boolean;
+  media?: { type: 'image' | 'video'; url: string; }[];
+  likes?: string[]; // Array of User IDs
+  replies?: {
+    _id?: string; // Mongoose Subdoc ID
+    userId: NguoiDung | string;
+    content: string;
+    createdAt: string;
+    isAnonymous?: boolean;
+    media?: { type: 'image' | 'video'; url: string; }[];
+    likes?: string[];
+  }[];
 }

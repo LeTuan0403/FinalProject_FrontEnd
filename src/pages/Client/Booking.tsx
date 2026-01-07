@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { isFutureDate } from '../../utils/dateUtils';
 import { tourService } from '../../services/tourService';
 import { bookingService } from '../../services/bookingService';
@@ -172,7 +172,6 @@ const Booking = () => {
 
             const bookingPayload = {
                 tourId: Number(id),
-                // userId: user.userId, // Backend extracts from token
                 ngayKhoiHanh: formData.departureDate,
                 soLuongNguoi: adultsCount + Number(formData.children || 0),
                 soLuongNguoiLon: adultsCount,
@@ -220,7 +219,6 @@ const Booking = () => {
                 errorMsg = error.response.data;
             }
 
-            // alert(errorMsg);
             setErrorModal({ isOpen: true, message: errorMsg });
         }
     };
