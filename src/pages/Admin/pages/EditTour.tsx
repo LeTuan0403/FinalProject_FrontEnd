@@ -663,6 +663,25 @@ const AdminEditTour = () => {
                                         handleDetailChange(idx, 'diaDiemId', newId);
                                     };
 
+                                    // Helper to calculate end time string
+                                    const calculateEndTimeString = (h: string, m: string, currentThoiGian: string) => {
+                                        const currentStart = currentThoiGian ? currentThoiGian.split('-')[0].trim() : '08:00';
+                                        const [sh, sm] = currentStart.split(':').map(Number);
+
+                                        if (currentThoiGian?.includes('-')) {
+                                            const [eh, em] = currentThoiGian.split('-')[1].trim().split(':').map(Number);
+                                            let durationMins = (eh * 60 + em) - (sh * 60 + sm);
+                                            if (durationMins < 0) durationMins += 24 * 60;
+
+                                            const d = new Date();
+                                            d.setHours(Number(h), Number(m) + durationMins, 0);
+                                            const endStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} `;
+                                            return `${h}:${m} - ${endStr} `;
+                                        } else {
+                                            return `${h}:${m}`;
+                                        }
+                                    };
+
                                     return (
                                         <div key={idx}>
                                             <div className="relative p-5 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-shadow group mb-0">
@@ -700,25 +719,8 @@ const AdminEditTour = () => {
                                                                 onChange={e => {
                                                                     const h = e.target.value;
                                                                     const m = detail.thoiGian ? detail.thoiGian.split(':')[1]?.split(' ')[0] || '00' : '00';
-
-                                                                    // Correct logic: maintain duration
-                                                                    const currentStart = detail.thoiGian ? detail.thoiGian.split('-')[0].trim() : '08:00';
-                                                                    const [sh, sm] = currentStart.split(':').map(Number);
-
-                                                                    // If previously had duration, keep it
-                                                                    if (detail.thoiGian?.includes('-')) {
-                                                                        const [eh, em] = detail.thoiGian.split('-')[1].trim().split(':').map(Number);
-                                                                        let durationMins = (eh * 60 + em) - (sh * 60 + sm);
-                                                                        if (durationMins < 0) durationMins += 24 * 60;
-
-                                                                        const d = new Date();
-                                                                        d.setHours(Number(h), Number(m) + durationMins, 0);
-                                                                        const endStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} `;
-                                                                        handleDetailChange(idx, 'thoiGian', `${h}:${m} - ${endStr} `);
-                                                                    } else {
-                                                                        // Single time only
-                                                                        handleDetailChange(idx, 'thoiGian', `${h}:${m}`);
-                                                                    }
+                                                                    const timeString = calculateEndTimeString(h, m, detail.thoiGian || '');
+                                                                    handleDetailChange(idx, 'thoiGian', timeString);
                                                                 }}
                                                             >
                                                                 {Array.from({ length: 24 }).map((_, i) => {
@@ -732,23 +734,8 @@ const AdminEditTour = () => {
                                                                 onChange={e => {
                                                                     const m = e.target.value;
                                                                     const h = detail.thoiGian ? detail.thoiGian.split(':')[0] : '08';
-
-                                                                    // Recalculate with new minute
-                                                                    const currentStart = detail.thoiGian ? detail.thoiGian.split('-')[0].trim() : '08:00';
-                                                                    const [sh, sm] = currentStart.split(':').map(Number);
-
-                                                                    if (detail.thoiGian?.includes('-')) {
-                                                                        const [eh, em] = detail.thoiGian.split('-')[1].trim().split(':').map(Number);
-                                                                        let durationMins = (eh * 60 + em) - (sh * 60 + sm);
-                                                                        if (durationMins < 0) durationMins += 24 * 60;
-
-                                                                        const d = new Date();
-                                                                        d.setHours(Number(h), Number(m) + durationMins, 0);
-                                                                        const endStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} `;
-                                                                        handleDetailChange(idx, 'thoiGian', `${h}:${m} - ${endStr} `);
-                                                                    } else {
-                                                                        handleDetailChange(idx, 'thoiGian', `${h}:${m}`);
-                                                                    }
+                                                                    const timeString = calculateEndTimeString(h, m, detail.thoiGian || '');
+                                                                    handleDetailChange(idx, 'thoiGian', timeString);
                                                                 }}
                                                             >
                                                                 {['00', '15', '30', '45'].map(m => <option key={m} value={m}>{m} p</option>)}

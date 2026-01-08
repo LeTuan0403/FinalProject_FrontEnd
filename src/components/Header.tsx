@@ -84,8 +84,8 @@ const Header = () => {
               <Link to="/custom-tour" className="hover:text-blue-600 transition">TỰ THIẾT KẾ</Link>
               <Link to="/gallery" className="hover:text-blue-600 transition">HÌNH ẢNH</Link>
               <Link to="/contact" className="hover:text-blue-600 transition">LIÊN HỆ</Link>
-              {user?.role === 'Admin' && (
-                <Link to="/admin" className="text-orange-500 hover:text-orange-600 transition">ADMIN</Link>
+              {(user?.role === 'Admin' || user?.role === '1') && (
+                <Link to="/admin" className="text-orange-500 hover:text-orange-600 transition font-black">ADMIN</Link>
               )}
               {/* Extra Menu Button (Hamburger) - Keeping as is */}
               <div className="relative">
@@ -143,7 +143,7 @@ const Header = () => {
               <Link to="/my-bookings" className="block px-4 py-3 hover:bg-gray-50 font-bold text-sm text-blue-600 border-b border-gray-100">ĐƠN ĐẶT CỦA TÔI</Link>
             </>
           )}
-          {user?.role === 'Admin' && (
+          {(user?.role === 'Admin' || user?.role === '1') && (
             <Link to="/admin" className="block px-4 py-3 hover:bg-gray-50 font-bold text-sm text-orange-600 border-b border-gray-100">ADMIN</Link>
           )}
         </div>

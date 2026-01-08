@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
-import { Lock, Key, CheckCircle, ArrowLeft, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { Lock, Key, ArrowLeft, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { authService } from '../../services/authService';
+import { useAuth } from '../../hooks/useAuth';
 
 const InputField = ({ icon: Icon, register, name, rules, placeholder, type = "text", error }: any) => (
     <div className="relative w-full">
@@ -47,51 +48,33 @@ const PasswordInput = ({ icon: Icon, register, name, rules, placeholder, error }
 const ResetPassword = () => {
     const { register, handleSubmit, formState: { errors, isSubmitting }, watch } = useForm<{ email: string; token: string; newPassword: string; confirmPassword: string }>();
     const navigate = useNavigate();
-    const [success, setSuccess] = useState(false);
     const [error, setError] = useState('');
+    const { login } = useAuth();
 
     const onSubmit = async (data: { email: string; token: string; newPassword: string }) => {
         try {
             setError('');
-            await authService.resetPassword({
+            const res = await authService.resetPassword({
                 email: data.email,
                 token: data.token,
                 newPassword: data.newPassword
             });
-            setSuccess(true);
+
+            // Auto login logic
+            login(res.data);
+            alert("Đổi mật khẩu thành công! Bạn đã được đăng nhập.");
+
+            if (res.data.role === 'Admin') navigate('/admin');
+            else navigate('/');
+
         } catch (err: any) {
             console.error(err);
-            const errorMessage = err?.response?.data?.message || err?.response?.data || 'Đặt lại mật khẩu thất bại. Vui lòng kiểm tra lại token hoặc email.';
+            const errorMessage = err?.response?.data?.message || err?.response?.data?.msg || err?.response?.data || 'Đặt lại mật khẩu thất bại. Vui lòng kiểm tra lại mã hoặc email.';
             setError(typeof errorMessage === 'string' ? errorMessage : 'Đặt lại mật khẩu thất bại.');
         }
     };
 
     const passwordVal = watch("newPassword");
-
-    if (success) {
-        return (
-            <div className="flex justify-center items-center font-sans py-10 min-h-[calc(100vh-80px)]"
-                style={{
-                    backgroundImage: 'url("https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?ixlib=rb-4.0.3&auto=format&fit=crop&w=2621&q=80")',
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center'
-                }}>
-                <div className="w-full max-w-md p-8 rounded-[20px] shadow-2xl bg-white text-center animate-fade-in-up">
-                    <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <CheckCircle size={40} className="text-green-600" />
-                    </div>
-                    <h2 className="text-2xl font-bold text-teal-800 mb-2">Thành công!</h2>
-                    <p className="text-gray-500 mb-8 text-sm">Mật khẩu của bạn đã được cập nhật thành công.</p>
-                    <button
-                        onClick={() => navigate('/login')}
-                        className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 rounded-lg transition-all shadow-md shadow-teal-200"
-                    >
-                        Đăng nhập ngay
-                    </button>
-                </div>
-            </div>
-        );
-    }
 
     return (
         <div className="flex justify-center items-center font-sans py-10 min-h-[calc(100vh-80px)]"
@@ -114,7 +97,7 @@ const ResetPassword = () => {
 
                 <div className="text-center mb-6">
                     <h2 className="text-2xl font-bold text-teal-800 mb-2">Đặt Lại Mật Khẩu</h2>
-                    <p className="text-gray-500 text-sm">Nhập token và mật khẩu mới của bạn.</p>
+                    <p className="text-gray-500 text-sm">Nhập mã xác nhận (đã gửi qua email) và mật khẩu mới.</p>
                 </div>
 
                 {error && (
@@ -133,7 +116,7 @@ const ResetPassword = () => {
                             register={register}
                             name="email"
                             rules={{ required: 'Vui lòng nhập Email' }}
-                            placeholder="Nhập lại email của bạn"
+                            placeholder="Nhập email của bạn"
                             error={errors.email}
                         />
                         {errors.email && <span className="text-xs text-red-500 pl-2">{errors.email.message}</span>}
@@ -141,15 +124,18 @@ const ResetPassword = () => {
 
                     {/* Token Field */}
                     <div className="space-y-1">
-                        <label className="text-gray-500 text-xs ml-1 font-semibold uppercase">Mã Token</label>
-                        <div className="relative group">
-                            <div className="absolute left-3 top-3 text-gray-400"><Key size={18} /></div>
-                            <textarea
-                                {...register('token', { required: 'Vui lòng nhập Token' })}
-                                className="w-full bg-gray-50 border border-gray-200 focus:border-teal-500 focus:ring-teal-100 text-gray-700 rounded-lg pl-10 pr-3 py-3 text-sm outline-none transition-all focus:ring-2 placeholder:text-gray-400 font-mono h-20 resize-none"
-                                placeholder="Dán mã token vào đây..."
-                            />
-                        </div>
+                        <label className="text-gray-500 text-xs ml-1 font-semibold uppercase">Mã Xác Nhận (OTP)</label>
+                        <InputField
+                            icon={Key}
+                            register={register}
+                            name="token"
+                            rules={{
+                                required: 'Vui lòng nhập Mã xác nhận',
+                                pattern: { value: /^[0-9]{6}$/, message: "Mã xác nhận gồm 6 chữ số" }
+                            }}
+                            placeholder="Nhập 6 chữ số mã xác nhận..."
+                            error={errors.token}
+                        />
                         {errors.token && <span className="text-xs text-red-500 pl-2">{errors.token.message}</span>}
                     </div>
 
@@ -195,7 +181,7 @@ const ResetPassword = () => {
                         disabled={isSubmitting}
                         className="w-full rounded-lg bg-teal-600 text-white text-sm font-bold py-3 hover:bg-teal-700 transition shadow-md shadow-teal-200 mt-2"
                     >
-                        {isSubmitting ? 'Đang xử lý...' : 'ĐỔI MẬT KHẨU'}
+                        {isSubmitting ? 'Đang xử lý...' : 'ĐỔI MẬT KHẨU & ĐĂNG NHẬP'}
                     </button>
                 </form>
             </div>

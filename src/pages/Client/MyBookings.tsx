@@ -61,14 +61,14 @@ const MyBookings = () => {
         }
     };
 
-    const handleDelete = async (id: number) => {
-        if (!window.confirm("Bạn có chắc chắn muốn xóa đơn này?")) return;
+    const handleCancel = async (id: number) => {
+        if (!window.confirm("Bạn có chắc chắn muốn hủy đơn này? Nếu hủy, bạn sẽ không thể đặt lại tour này trong 24 giờ.")) return;
         try {
-            await bookingService.delete(id);
-            alert("Đã xóa đơn thành công!");
+            await bookingService.cancel(id, "Khách hàng tự hủy");
+            alert("Đã hủy đơn thành công!");
             fetchMyBookings();
         } catch (error: any) {
-            alert(error.response?.data?.message || "Lỗi xóa đơn!");
+            alert(error.response?.data?.message || "Lỗi hủy đơn!");
         }
     };
 
@@ -166,10 +166,10 @@ const MyBookings = () => {
                                                     Sửa đơn
                                                 </button>
                                                 <button
-                                                    onClick={() => handleDelete(booking.donDatId)}
+                                                    onClick={() => handleCancel(booking.donDatId)}
                                                     className="px-4 py-2 bg-red-50 text-red-600 rounded-lg font-bold hover:bg-red-100 transition"
                                                 >
-                                                    Hủy đơn (Xóa)
+                                                    Hủy đơn
                                                 </button>
                                             </>
                                         )}

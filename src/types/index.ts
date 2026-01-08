@@ -7,6 +7,7 @@ export interface NguoiDung {
   soDienThoai?: string;
   diaChi?: string;
   isAdmin: boolean;
+  hanCheThanhToan?: boolean;
 }
 
 export interface DiaDiem {
@@ -100,6 +101,10 @@ export interface LoginResponse {
   hoTen: string;
   role: string;
   userId: number;
+  email?: string;
+  soDienThoai?: string;
+  diaChi?: string;
+  hanCheThanhToan?: boolean; // Added
 }
 
 export interface Review {

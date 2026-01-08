@@ -19,10 +19,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const hoTen = localStorage.getItem('hoTen');
     const role = localStorage.getItem('role');
     const userId = localStorage.getItem('userId');
+    const email = localStorage.getItem('email');
+    const soDienThoai = localStorage.getItem('soDienThoai');
+    const diaChi = localStorage.getItem('diaChi');
+    const hanCheThanhToan = localStorage.getItem('hanCheThanhToan') === 'true';
 
     if (token && hoTen && role) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setUser({ token, hoTen, role, userId: Number(userId) });
+      setUser({
+        token,
+        hoTen,
+        role,
+        userId: Number(userId),
+        email: email || undefined,
+        soDienThoai: soDienThoai || undefined,
+        diaChi: diaChi || undefined,
+        hanCheThanhToan
+      });
     }
 
     setIsLoading(false);
@@ -46,6 +59,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const token = data.token || data.Token || data.result?.token;
     const hoTen = data.hoTen || data.HoTen || data.fullName || data.FullName || data.result?.hoTen;
     const role = data.role || data.Role || data.result?.role;
+    const email = data.email || data.user?.email || data.result?.email;
+    const soDienThoai = data.soDienThoai || data.user?.soDienThoai || data.result?.soDienThoai;
+    const diaChi = data.diaChi || data.user?.diaChi || data.result?.diaChi;
+    const hanCheThanhToan = data.hanCheThanhToan || data.user?.hanCheThanhToan || false;
 
     // 1. Try to get ID from response body
     let rawId = data.userId || data.UserId || data.userID || data.id || data.Id ||
@@ -71,13 +88,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.setItem('hoTen', hoTen);
     localStorage.setItem('role', role);
     localStorage.setItem('userId', String(userId));
+    if (email) localStorage.setItem('email', email);
+    if (soDienThoai) localStorage.setItem('soDienThoai', soDienThoai);
+    if (diaChi) localStorage.setItem('diaChi', diaChi);
+    if (hanCheThanhToan) localStorage.setItem('hanCheThanhToan', 'true');
+    else localStorage.removeItem('hanCheThanhToan');
 
     // Update state
     setUser({
       token,
       hoTen,
       role,
-      userId
+      userId,
+      email,
+      soDienThoai,
+      diaChi,
+      hanCheThanhToan
     });
   };
 
@@ -86,6 +112,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.removeItem('hoTen');
     localStorage.removeItem('role');
     localStorage.removeItem('userId');
+    localStorage.removeItem('email');
+    localStorage.removeItem('soDienThoai');
+    localStorage.removeItem('diaChi');
+    localStorage.removeItem('hanCheThanhToan');
     setUser(null);
   };
 

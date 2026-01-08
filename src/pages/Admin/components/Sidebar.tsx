@@ -44,7 +44,14 @@ const Sidebar = () => {
                     </NavLink>
                 ))}
             </nav>
-            <div className="p-4 border-t">
+            <div className="p-4 border-t space-y-2">
+                <button
+                    onClick={() => navigate('/')}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-100 transition font-bold"
+                >
+                    <LogOut size={20} className="rotate-180" />
+                    <span>Về trang chủ</span>
+                </button>
                 <button
                     onClick={handleLogout}
                     className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition font-bold"

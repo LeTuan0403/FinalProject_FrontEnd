@@ -13,6 +13,9 @@ export const authService = {
   register: async (data: Record<string, unknown>) => {
     return axiosClient.post('/auth/register', data);
   },
+  verifyAccount: async (email: string, code: string) => {
+    return axiosClient.post<LoginResponse>('/auth/verify', { email, code });
+  },
   loginGoogle: async (idToken: string) => {
     return axiosClient.post<LoginResponse>('/auth/google-login', { idToken });
   },
@@ -36,5 +39,8 @@ export const userService = {
   },
   updateProfile: async (data: { hoTen: string; soDienThoai?: string; diaChi?: string; ngaySinh?: string }) => {
     return axiosClient.put('/users/profile', data);
+  },
+  updateRole: async (userId: number, isAdmin: number) => {
+    return axiosClient.put(`/users/${userId}/role`, { isAdmin });
   }
 };

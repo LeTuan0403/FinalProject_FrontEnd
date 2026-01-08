@@ -18,16 +18,19 @@ const Tours = () => {
   const [transport, setTransport] = useState<string>('all'); // New: Transport
   const [sortBy, setSortBy] = useState<string>('default'); // New: Sort
   const [searchTerm, setSearchTerm] = useState<string>(searchParams.get('search') || '');
+  const [startDate, setStartDate] = useState<string>(''); // New: Start Date
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     const search = searchParams.get('search');
     const type = searchParams.get('type');
     const region = searchParams.get('region');
+    const date = searchParams.get('date');
 
     if (search) setSearchTerm(search);
     if (type) setSelectedType(type);
     if (region) setSelectedRegion(region);
+    if (date) setStartDate(date);
   }, [searchParams]);
 
   useEffect(() => {
@@ -52,6 +55,18 @@ const Tours = () => {
         const selected = selectedRegion.toLowerCase();
 
         return kv.includes(selected);
+      });
+    }
+
+    // Filter by Date
+    if (startDate) {
+      result = result.filter(t => {
+        if (!t.ngayKhoiHanh || !Array.isArray(t.ngayKhoiHanh)) return false;
+        // Check if any available date MATCHES the selected start date EXACTLY
+        return t.ngayKhoiHanh.some(d => {
+          const tourDate = new Date(d).toISOString().split('T')[0];
+          return tourDate === startDate;
+        });
       });
     }
 
@@ -107,7 +122,7 @@ const Tours = () => {
     }
 
     setFilteredTours([...result]);
-  }, [selectedRegion, priceRange, searchTerm, selectedType, durationRange, transport, sortBy, tours]);
+  }, [selectedRegion, priceRange, searchTerm, selectedType, durationRange, transport, sortBy, startDate, tours]);
 
   if (loading) return <div className="text-center py-20 text-gray-500">Đang tải danh sách tour...</div>;
   if (error) return <div className="text-center py-20 text-red-500">{error}</div>;
@@ -136,6 +151,17 @@ const Tours = () => {
                 />
                 <Search className="w-4 h-4 text-gray-400 absolute left-3 top-3" />
               </div>
+            </div>
+
+            {/* Date Filter */}
+            <div className="mb-6">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Ngày khởi hành</label>
+              <input
+                type="date"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
             </div>
 
             {/* FILTER GROUP: TYPE (Domestic / International) */}
@@ -313,7 +339,7 @@ const Tours = () => {
                 <div className="text-6xl mb-4">🔍</div>
                 <p className="text-xl text-gray-600 font-medium">Không tìm thấy tour phù hợp</p>
                 <button
-                  onClick={() => { setSelectedRegion('all'); setPriceRange('all'); setSearchTerm(''); setTransport('all'); setSortBy('default'); }}
+                  onClick={() => { setSelectedRegion('all'); setPriceRange('all'); setSearchTerm(''); setTransport('all'); setSortBy('default'); setStartDate(''); }}
                   className="mt-4 text-blue-600 hover:underline"
                 >
                   Xóa bộ lọc

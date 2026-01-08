@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, FieldError } from 'react-hook-form';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { authService } from '../../services/authService';
 import { useAuth } from '../../hooks/useAuth';
 import { GoogleLogin } from '@react-oauth/google';
-import { AlertCircle, User, Mail, Lock, Phone, MapPin, ChevronRight, Calendar, Eye, EyeOff } from 'lucide-react';
+import { AlertCircle, User, Mail, Lock, Phone, MapPin, ChevronRight, Calendar } from 'lucide-react';
+
+import InputField from '../../components/common/InputField';
+import PasswordInput from '../../components/common/PasswordInput';
 
 const AuthPage = () => {
     const [isSignUp, setIsSignUp] = useState(false);
@@ -37,7 +40,7 @@ const AuthPage = () => {
             try {
                 const res = await authService.loginGoogle(credentialResponse.credential);
                 login(res.data);
-                if (res.data.role === 'Admin') navigate('/admin');
+                if (res.data.role === 'Admin') navigate('/');
                 else navigate('/');
             } catch (err: any) {
                 console.error("Google Login Backend Error:", err);
@@ -84,7 +87,7 @@ const AuthPage = () => {
             setLoginError('');
             const res = await authService.login(data);
             login(res.data);
-            if (res.data.role === 'Admin') navigate('/admin');
+            if (res.data.role === 'Admin') navigate('/');
             else navigate('/');
         } catch (err: any) {
             // Backend trả về 'msg'
@@ -106,8 +109,7 @@ const AuthPage = () => {
 
         try {
             await authService.register(payload);
-            alert("Đăng ký thành công! Vui lòng đăng nhập.");
-            toggleMode('login');
+            navigate(`/verify-account?email=${payload.email}`);
         } catch (err: any) {
             console.error(err);
             const msg = err?.response?.data?.msg || err?.response?.data?.message || err?.response?.data || "Đăng ký thất bại.";
@@ -117,45 +119,7 @@ const AuthPage = () => {
         }
     };
 
-    const InputField = ({ icon: Icon, register, name, rules, placeholder, type = "text", error }: any) => (
-        <div className="relative w-full">
-            <div className={`absolute left-3 top-2.5 transition-colors ${error ? 'text-red-400' : 'text-gray-400'}`}>
-                <Icon size={18} />
-            </div>
-            <input
-                {...register(name, rules)}
-                type={type}
-                placeholder={placeholder}
-                className={`w-full bg-gray-50 border ${error ? 'border-red-300 focus:ring-red-100' : 'border-gray-200 focus:border-teal-500 focus:ring-teal-100'} 
-                   rounded-lg px-10 py-2.5 text-sm outline-none transition-all focus:ring-2 placeholder:text-gray-400 text-gray-700`}
-            />
-        </div>
-    );
 
-    const PasswordInput = ({ icon: Icon, register, name, rules, placeholder, error }: any) => {
-        const [showPassword, setShowPassword] = useState(false);
-        return (
-            <div className="relative w-full">
-                <div className={`absolute left-3 top-2.5 transition-colors ${error ? 'text-red-400' : 'text-gray-400'}`}>
-                    <Icon size={18} />
-                </div>
-                <input
-                    {...register(name, rules)}
-                    type={showPassword ? "text" : "password"}
-                    placeholder={placeholder}
-                    className={`w-full bg-gray-50 border ${error ? 'border-red-300 focus:ring-red-100' : 'border-gray-200 focus:border-teal-500 focus:ring-teal-100'} 
-                       rounded-lg px-10 py-2.5 text-sm outline-none transition-all focus:ring-2 placeholder:text-gray-400 text-gray-700`}
-                />
-                <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-2.5 text-gray-400 hover:text-teal-600 transition-colors"
-                >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-            </div>
-        );
-    };
 
     return (
         <div className="relative flex justify-center items-center py-8 font-sans min-h-[calc(100vh-80px)]"
@@ -199,8 +163,8 @@ const AuthPage = () => {
                         </div>
 
                         <div className="w-full space-y-3">
-                            <InputField icon={Mail} register={loginRegister} name="email" rules={{ required: true }} type="email" placeholder="Email của bạn" error={loginErrors.email} />
-                            <PasswordInput icon={Lock} register={loginRegister} name="matKhau" rules={{ required: true }} placeholder="Mật khẩu" error={loginErrors.matKhau} />
+                            <InputField icon={Mail} register={loginRegister} name="email" rules={{ required: true }} type="email" placeholder="Email của bạn" error={loginErrors.email as FieldError} />
+                            <PasswordInput icon={Lock} register={loginRegister} name="matKhau" rules={{ required: true }} placeholder="Mật khẩu" error={loginErrors.matKhau as FieldError} />
                         </div>
 
                         <div className="w-full flex justify-between items-center mt-3 text-xs">
@@ -237,9 +201,9 @@ const AuthPage = () => {
                         {registerError && <div className="w-full text-red-500 text-xs mb-3 bg-red-50 p-2 rounded border border-red-100">{registerError}</div>}
 
                         <div className="w-full grid grid-cols-2 gap-2.5 pb-2">
-                            <div className="col-span-2"><InputField icon={User} register={registerForm} name="hoTen" rules={{ required: true }} placeholder="Họ và tên" error={registerErrors.hoTen} /></div>
-                            <div className="col-span-2"><InputField icon={Mail} register={registerForm} name="email" rules={{ required: true }} type="email" placeholder="Email" error={registerErrors.email} /></div>
-                            <div className="col-span-1"><InputField icon={Phone} register={registerForm} name="soDienThoai" rules={{ required: true }} placeholder="SĐT" error={registerErrors.soDienThoai} /></div>
+                            <div className="col-span-2"><InputField icon={User} register={registerForm} name="hoTen" rules={{ required: true }} placeholder="Họ và tên" error={registerErrors.hoTen as FieldError} /></div>
+                            <div className="col-span-2"><InputField icon={Mail} register={registerForm} name="email" rules={{ required: true }} type="email" placeholder="Email" error={registerErrors.email as FieldError} /></div>
+                            <div className="col-span-1"><InputField icon={Phone} register={registerForm} name="soDienThoai" rules={{ required: true }} placeholder="SĐT" error={registerErrors.soDienThoai as FieldError} /></div>
                             <div className="col-span-1">
                                 <div className="relative w-full">
                                     <div className="absolute left-3 top-2.5 text-gray-400"><Calendar size={18} /></div>
@@ -248,8 +212,8 @@ const AuthPage = () => {
                             </div>
                             <div className="col-span-1"><InputField icon={MapPin} register={registerForm} name="tinhThanh" placeholder="Tỉnh/Thành" /></div>
                             <div className="col-span-1"><InputField icon={MapPin} register={registerForm} name="quanHuyen" placeholder="Quận/Huyện" /></div>
-                            <div className="col-span-1"><PasswordInput icon={Lock} register={registerForm} name="matKhau" rules={{ required: true, minLength: 8 }} placeholder="Mật khẩu" error={registerErrors.matKhau} /></div>
-                            <div className="col-span-1"><PasswordInput icon={Lock} register={registerForm} name="confirmMatKhau" rules={{ validate: (v: string) => v === password }} placeholder="Xác nhận" error={registerErrors.confirmMatKhau} /></div>
+                            <div className="col-span-1"><PasswordInput icon={Lock} register={registerForm} name="matKhau" rules={{ required: true, minLength: 8 }} placeholder="Mật khẩu" error={registerErrors.matKhau as FieldError} /></div>
+                            <div className="col-span-1"><PasswordInput icon={Lock} register={registerForm} name="confirmMatKhau" rules={{ validate: (v: string) => v === password }} placeholder="Xác nhận" error={registerErrors.confirmMatKhau as FieldError} /></div>
                         </div>
 
                         <button type="submit" disabled={isRegisterLoading} className="w-full rounded-lg bg-teal-600 text-white text-sm font-bold py-2.5 hover:bg-teal-700 transition shadow-md shadow-teal-200 mt-2">

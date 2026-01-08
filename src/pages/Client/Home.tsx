@@ -85,8 +85,9 @@ const Home = () => {
     if (destination.trim()) params.append('search', destination.trim());
     params.append('type', searchTab);
     if (departurePoint) params.append('from', departurePoint);
+    if (departureDate) params.append('date', departureDate);
 
-    navigate(`/ tours ? ${params.toString()} `);
+    navigate(`/tours?${params.toString()}`);
   };
 
   if (loading) return <div className="text-center py-20 text-gray-500">Đang tải tour...</div>;
@@ -161,14 +162,16 @@ const Home = () => {
             <div className="flex gap-2 mb-4">
               <button
                 onClick={() => { setSearchTab('Trong Nước'); setDestination(''); }}
-                className={`flex items - center gap - 2 px - 6 py - 3 rounded - t - lg font - bold text - lg transition - colors ${searchTab === 'Trong Nước' ? 'bg-white text-blue-900' : 'bg-black/50 text-white hover:bg-black/70'} `}
+                className={`flex items-center gap-2 px-6 py-3 rounded-t-lg font-bold text-lg transition-colors ${searchTab === 'Trong Nước' ? 'bg-white text-blue-900' : 'bg-black/50 text-white hover:bg-black/70'} `}
+                type="button"
               >
                 <div className="bg-blue-600 rounded-full p-1"><Search size={16} className="text-white" /></div>
                 Tour TRONG NƯỚC
               </button>
               <button
                 onClick={() => { setSearchTab('Nước Ngoài'); setDestination(''); }}
-                className={`flex items - center gap - 2 px - 6 py - 3 rounded - t - lg font - bold text - lg transition - colors ${searchTab === 'Nước Ngoài' ? 'bg-white text-blue-900' : 'bg-black/50 text-white hover:bg-black/70'} `}
+                className={`flex items-center gap-2 px-6 py-3 rounded-t-lg font-bold text-lg transition-colors ${searchTab === 'Nước Ngoài' ? 'bg-white text-blue-900' : 'bg-black/50 text-white hover:bg-black/70'} `}
+                type="button"
               >
                 <div className="bg-blue-600 rounded-full p-1"><Search size={16} className="text-white" /></div>
                 Tour NƯỚC NGOÀI

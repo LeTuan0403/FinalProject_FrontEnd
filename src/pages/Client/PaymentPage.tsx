@@ -11,16 +11,11 @@ const PaymentPage = () => {
     const [booking, setBooking] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [isExpired, setIsExpired] = useState(false);
+    const [isCancelled, setIsCancelled] = useState(false);
+
     // Check status periodically
     useEffect(() => {
         if (!bookingId) return;
-
-        // Load booking info first
-        // Note: If bookingService doesn't have getById, we might need to implement it or use a different way.
-        // Assuming we can fetch booking details (or pass via location state, but fetching is safer).
-        // For now, let's implement a fetch inside useEffect if service missing, or assume it exists.
-        // I'll check bookingService later. If missing, I'll patch it.
-        // For now, let's try to load it. 
 
         // Polling function
         const interval = setInterval(async () => {
@@ -28,6 +23,11 @@ const PaymentPage = () => {
                 const res = await paymentService.checkStatus(bookingId);
                 if (res.data.status === 'CONFIRMED' || res.data.status === 'PAID') {
                     navigate(`/booking-success/${bookingId}`); // Pass ID to success page
+                }
+                // Also check if cancelled remotely
+                if (res.data.status === 'Đã hủy' || res.data.status === 'Cancelled') {
+                    setIsCancelled(true);
+                    clearInterval(interval);
                 }
             } catch (e) {
                 console.error("Error checking status", e);
@@ -38,26 +38,15 @@ const PaymentPage = () => {
     }, [bookingId, navigate]);
 
     useEffect(() => {
-        // Fetch Booking Details to show Amount
-        // Using a temporary fetch implementation or service if available
-        // Let's assume user just came from booking, maybe we can fetch from API
-        // Since I haven't implemented bookingService.getById in this thought process, 
-        // I'll assume I need to ADD it or call endpoint directly. 
-        // I will implement a fetch here for now.
-
         const fetchBooking = async () => {
             if (!bookingId) return;
             try {
-                // We need an endpoint to get booking by ID for client
-                // Currently backend routes: /api/dondattours/:id might exist?
-                // Let's rely on paymentService.checkStatus for status, 
-                // but for Amount we need the booking. 
-                // Let's assume /api/dondattours/:id works.
-                // I will update bookingService in next step to be sure.
-
-                // For now, basic placeholder or safe fetch:
                 const res = await bookingService.getById(Number(bookingId));
                 setBooking(res.data);
+                // Initial check
+                if (res.data.trangThai === 'Đã hủy' || res.data.trangThai === 'Cancelled') {
+                    setIsCancelled(true);
+                }
             } catch (e) {
                 console.error("Failed to load booking", e);
             } finally {
@@ -68,6 +57,28 @@ const PaymentPage = () => {
     }, [bookingId]);
 
     if (loading) return <div className="flex justify-center items-center h-screen"><Loader2 className="animate-spin text-blue-600" size={48} /></div>;
+
+    // Safety check for cancelled booking
+    if (isCancelled || booking?.trangThai === 'Đã hủy' || booking?.trangThai === 'Cancelled') return (
+        <div className="min-h-screen flex flex-col justify-center items-center p-4 bg-gray-50">
+            <div className="text-center p-10 bg-white rounded-2xl shadow-xl max-w-md w-full border border-red-100">
+                <div className="w-16 h-16 bg-red-100/50 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <AlertCircle className="w-8 h-8 text-red-500" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-800 mb-2">Đơn hàng đã bị hủy</h2>
+                <p className="text-gray-500 mb-6">Đơn hàng này đã bị hủy và không thể thực hiện thanh toán. Vui lòng đặt lại tour nếu bạn vẫn muốn tham gia.</p>
+                <div className="space-y-3">
+                    <button onClick={() => navigate(`/tours/${booking.tourId}`)} className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition">
+                        Đặt Lại Tour Này
+                    </button>
+                    <button onClick={() => navigate('/my-bookings')} className="w-full bg-gray-100 text-gray-600 font-bold py-3 rounded-xl hover:bg-gray-200 transition">
+                        Xem Danh Sách Đơn Hàng
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+
     if (!booking) return (
         <div className="min-h-screen flex flex-col justify-center items-center p-4">
             <div className="text-center p-10 bg-white rounded-2xl shadow-xl max-w-md w-full">
@@ -137,7 +148,35 @@ const PaymentPage = () => {
 
                     <div className="mt-8 bg-blue-50 p-4 rounded-lg text-sm text-blue-800 border border-blue-100 flex items-start gap-3">
                         <AlertCircle size={20} className="shrink-0 mt-0.5" />
-                        <p>Hệ thống sẽ <strong>tự động xác nhận</strong> trong vòng 1-3 phút sau khi bạn chuyển khoản thành công. Vui lòng giữ nguyên trang này.</p>
+                        <div>
+                            <p className="font-bold mb-1">Lưu ý quan trọng:</p>
+                            <p className="mb-2">Hệ thống sẽ <strong>tự động xác nhận</strong> trong vòng 1-3 phút sau khi chuyển khoản.</p>
+
+                            {/* Deadline Explanation */}
+                            {(() => {
+                                const created = new Date(booking.ngayDat).getTime();
+                                const departure = new Date(booking.ngayKhoiHanh).getTime();
+                                const standardDeadline = created + 12 * 60 * 60 * 1000;
+                                const deadlineTimestamp = Math.min(standardDeadline, departure);
+                                const deadlineDate = new Date(deadlineTimestamp);
+
+                                const isLastMinute = departure < standardDeadline;
+
+                                return (
+                                    <div className="mt-3 pt-3 border-t border-blue-200">
+                                        <p className="font-bold text-red-600">
+                                            Hạn chót thanh toán: {deadlineDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} {' '}
+                                            ngày {deadlineDate.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}
+                                        </p>
+                                        {isLastMinute && (
+                                            <p className="text-xs text-red-500 mt-1">
+                                                * Thời gian giữ chỗ được điều chỉnh ngắn hơn do tour sắp khởi hành.
+                                            </p>
+                                        )}
+                                    </div>
+                                );
+                            })()}
+                        </div>
                     </div>
                 </div>
 
@@ -149,6 +188,7 @@ const PaymentPage = () => {
                         <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
                             <PaymentTimer
                                 createdAt={booking.ngayDat}
+                                departureDate={booking.ngayKhoiHanh}
                                 onExpire={() => setIsExpired(true)}
                                 className="text-white font-black"
                             />

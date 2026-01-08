@@ -90,6 +90,38 @@ const UserManagement = () => {
         }
     };
 
+    const handleRoleChange = async (userId: number, newRole: number) => {
+        const roleName = newRole === 1 ? "QUẢN TRỊ VIÊN (Admin)" : "KHÁCH HÀNG (Customer)";
+        const confirmMsg = `⚠️ CẢNH BÁO QUAN TRỌNG ⚠️\n\nBạn đang thực hiện thay đổi quyền hạn của tài khoản này thành: ${roleName}.\n\n- Nếu cấp quyền Admin: Người dùng này sẽ có toàn quyền quản lý hệ thống.\n- Nếu hủy quyền Admin: Người dùng sẽ mất quyền truy cập trang quản trị.\n\nBạn có chắc chắn muốn tiếp tục không?`;
+
+        if (window.confirm(confirmMsg)) {
+            try {
+                await userService.updateRole(userId, newRole);
+                setUsers(prev => prev.map(u =>
+                    u.userId === userId ? { ...u, isAdmin: newRole } : u
+                ));
+                alert("Đã cập nhật vai trò thành công!");
+            } catch (error) {
+                console.error("Failed to update role", error);
+                alert("Cập nhật thất bại. Vui lòng thử lại.");
+                // Revert visual change if needed by forcing re-render or just fetching again, 
+                // but since we only update state on success, the UI might be out of sync if we used a controlled input without internal state management for the specific row?
+                // Actually, the Select value relies on `users` state. If this fails, `users` isn't updated, so it should snap back on re-render?
+                // Getting pure controlled component behavior requires the `value` prop to reflect `u.isAdmin`.
+                // If the user changed the select, standard React generic error handling usually requires a force update or keeping track of 'optimistic' UI.
+                // For simplicity: fetchUsers();
+                fetchUsers();
+            }
+        } else {
+            // If cancelled, we might need to force the select back to original value if it was a controlled input that already changed? 
+            // In React, if the state didn't change, the value prop didn't change, so the UI should remain/revert.
+            // But with native select onChange, sometimes it visually switches. 
+            // We can ensure it stays correct by explicit value binding, which we have.
+            // However, to be safe, we can just trigger a re-render or do nothing since state didn't change.
+            // A key trick is often adding a 'key' to the row or forcing update, but let's see.
+        }
+    };
+
     return (
         <div className="flex h-screen bg-gray-100">
             <Sidebar />
@@ -164,9 +196,22 @@ const UserManagement = () => {
                                                     </span>
                                                 </td>
                                                 <td className="p-4">
-                                                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${u.isAdmin ? 'bg-purple-100 text-purple-700' : 'bg-green-100 text-green-700'}`}>
-                                                        {u.isAdmin ? 'Admin' : 'Customer'}
-                                                    </span>
+                                                    <div className="relative w-32">
+                                                        <select
+                                                            value={u.isAdmin ? "1" : "0"}
+                                                            onChange={(e) => handleRoleChange(u.userId, Number(e.target.value))}
+                                                            className={`appearance-none w-full pl-3 pr-8 py-2 rounded-lg text-xs font-bold border cursor-pointer transition focus:outline-none focus:ring-2 focus:ring-opacity-50 ${u.isAdmin
+                                                                ? 'bg-purple-50 text-purple-700 border-purple-200 focus:ring-purple-400'
+                                                                : 'bg-green-50 text-green-700 border-green-200 focus:ring-green-400'
+                                                                }`}
+                                                        >
+                                                            <option value="0">Khách hàng</option>
+                                                            <option value="1">Admin</option>
+                                                        </select>
+                                                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                                                            <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
+                                                        </div>
+                                                    </div>
                                                 </td>
                                                 <td className="p-4">
                                                     <button

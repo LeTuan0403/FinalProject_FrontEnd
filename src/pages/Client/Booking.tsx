@@ -166,8 +166,10 @@ const Booking = () => {
             // Cash -> Show Success Modal
 
             // Ensure adults is a valid number
-            const adultsCount = typeof formData.adults === 'number' && formData.adults > 0
-                ? formData.adults
+            // Ensure adults is a valid number
+            const valAdults = Number(formData.adults);
+            const adultsCount = (!isNaN(valAdults) && valAdults > 0)
+                ? valAdults
                 : 1;
 
             const bookingPayload = {
@@ -249,7 +251,7 @@ const Booking = () => {
                             </div>
                             <div className="flex justify-between border-b border-blue-800 pb-2">
                                 <span>Thời gian:</span>
-                                <span className="font-bold">{tour.tourChiTiets?.length || 3} ngày</span>
+                                <span className="font-bold">{tour.thoiGian || `${tour.tourChiTiets?.length || 1} ngày`}</span>
                             </div>
                             <div className="flex justify-between border-b border-blue-800 pb-2">
                                 <span>Phương tiện:</span>
@@ -433,74 +435,108 @@ const Booking = () => {
                             {/* Payment Method Selection */}
                             <div className="bg-gray-50 p-6 rounded-xl border border-gray-200">
                                 <h3 className="font-bold text-gray-800 mb-4">Phương thức thanh toán</h3>
-                                <div className="space-y-3">
-                                    <label className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition ${paymentMethod === 'transfer' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-200'}`}>
-                                        <input
-                                            type="radio"
-                                            name="paymentMethod"
-                                            value="transfer"
-                                            checked={paymentMethod === 'transfer'}
-                                            onChange={() => setPaymentMethod('transfer')}
-                                            className="w-5 h-5 text-blue-600"
-                                        />
-                                        <div>
-                                            <div className="font-bold text-gray-800">Chuyển khoản ngân hàng (QR Code)</div>
-                                            <div className="text-sm text-gray-500">Quét mã QR để thanh toán nhanh chóng</div>
-                                        </div>
-                                    </label>
 
-                                    <div
-                                        className={`p-4 rounded-xl border-2 cursor-pointer transition ${paymentMethod === 'cash' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-200'}`}
-                                        onClick={() => setPaymentMethod('cash')}
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <input
-                                                type="radio"
-                                                name="paymentMethod"
-                                                value="cash"
-                                                checked={paymentMethod === 'cash'}
-                                                onChange={() => setPaymentMethod('cash')}
-                                                className="w-5 h-5 text-blue-600"
-                                            />
-                                            <div>
-                                                <div className="font-bold text-gray-800">Thanh toán tại văn phòng</div>
-                                                <div className="text-sm text-gray-500">Đến văn phòng để thanh toán trực tiếp</div>
-                                            </div>
-                                        </div>
+                                {(() => {
+                                    // Security Logic
+                                    const departure = new Date(formData.departureDate);
+                                    const now = new Date();
+                                    const diffTime = Math.abs(departure.getTime() - now.getTime());
+                                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                    const isLastMinute = diffDays <= 3 && isFutureDate(formData.departureDate);
 
-                                        {/* Show addresses if selected */}
-                                        {paymentMethod === 'cash' && (
-                                            <div className="mt-3 ml-9 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm animate-fadeIn">
-                                                <div className="bg-white p-3 rounded-lg border border-blue-100 shadow-sm">
-                                                    <div className="font-bold text-blue-800 mb-1">Văn phòng Hà Nội</div>
-                                                    <p className="text-gray-600 text-xs mb-2">123 Đường Trần Duy Hưng, Cầu Giấy, Hà Nội</p>
-                                                    <a
-                                                        href="https://www.google.com/maps/search/?api=1&query=123+Trần+Duy+Hưng+Hà+Nội"
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="text-blue-600 hover:underline text-xs flex items-center gap-1 font-medium"
-                                                        onClick={e => e.stopPropagation()}
-                                                    >
-                                                        Xem bản đồ &rarr;
-                                                    </a>
+                                    const isRestricted = user?.hanCheThanhToan;
+                                    const forceTransfer = isLastMinute || isRestricted;
+
+                                    if (forceTransfer && paymentMethod !== 'transfer') {
+                                        setPaymentMethod('transfer');
+                                    }
+
+                                    return (
+                                        <div className="space-y-3">
+                                            {forceTransfer && (
+                                                <div className="bg-yellow-50 p-4 rounded-xl border border-yellow-200 text-yellow-800 text-sm mb-4 flex gap-3 items-start">
+                                                    <AlertTriangle size={20} className="shrink-0 mt-0.5" />
+                                                    <div>
+                                                        <strong>Yêu cầu thanh toán chuyển khoản:</strong>
+                                                        <ul className="list-disc pl-5 mt-1 space-y-1">
+                                                            {isLastMinute && <li>Tour khởi hành gấp (dưới 3 ngày) cần thanh toán ngay để giữ chỗ.</li>}
+                                                            {isRestricted && <li>Tài khoản của bạn bị hạn chế trả sau do có lịch sử hủy đơn tự động nhiều lần.</li>}
+                                                        </ul>
+                                                    </div>
                                                 </div>
-                                                <div className="bg-white p-3 rounded-lg border border-blue-100 shadow-sm">
-                                                    <div className="font-bold text-blue-800 mb-1">Văn phòng TP.HCM</div>
-                                                    <p className="text-gray-600 text-xs mb-2">456 Đường Nguyễn Huệ, Quận 1, TP.HCM</p>
-                                                    <a
-                                                        href="https://www.google.com/maps/search/?api=1&query=Phố+đi+bộ+Nguyễn+Huệ"
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="text-blue-600 hover:underline text-xs flex items-center gap-1 font-medium"
-                                                        onClick={e => e.stopPropagation()}
-                                                    >
-                                                        Xem bản đồ &rarr;
-                                                    </a>
+                                            )}
+
+                                            <label className={`flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition ${paymentMethod === 'transfer' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-200'}`}>
+                                                <input
+                                                    type="radio"
+                                                    name="paymentMethod"
+                                                    value="transfer"
+                                                    checked={paymentMethod === 'transfer'}
+                                                    onChange={() => setPaymentMethod('transfer')}
+                                                    className="w-5 h-5 text-blue-600"
+                                                />
+                                                <div>
+                                                    <div className="font-bold text-gray-800">Chuyển khoản ngân hàng (QR Code)</div>
+                                                    <div className="text-sm text-gray-500">Quét mã QR để thanh toán nhanh chóng</div>
                                                 </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
+                                            </label>
+
+                                            {!forceTransfer && (
+                                                <div
+                                                    className={`p-4 rounded-xl border-2 cursor-pointer transition ${paymentMethod === 'cash' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-200'}`}
+                                                    onClick={() => setPaymentMethod('cash')}
+                                                >
+                                                    <div className="flex items-center gap-4">
+                                                        <input
+                                                            type="radio"
+                                                            name="paymentMethod"
+                                                            value="cash"
+                                                            checked={paymentMethod === 'cash'}
+                                                            onChange={() => setPaymentMethod('cash')}
+                                                            className="w-5 h-5 text-blue-600"
+                                                        />
+                                                        <div>
+                                                            <div className="font-bold text-gray-800">Thanh toán tại văn phòng</div>
+                                                            <div className="text-sm text-gray-500">Đến văn phòng để thanh toán trực tiếp</div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Show addresses if selected */}
+                                                    {paymentMethod === 'cash' && (
+                                                        <div className="mt-3 ml-9 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm animate-fadeIn">
+                                                            <div className="bg-white p-3 rounded-lg border border-blue-100 shadow-sm">
+                                                                <div className="font-bold text-blue-800 mb-1">Văn phòng Hà Nội</div>
+                                                                <p className="text-gray-600 text-xs mb-2">123 Đường Trần Duy Hưng, Cầu Giấy, Hà Nội</p>
+                                                                <a
+                                                                    href="https://www.google.com/maps/search/?api=1&query=123+Trần+Duy+Hưng+Hà+Nội"
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="text-blue-600 hover:underline text-xs flex items-center gap-1 font-medium"
+                                                                    onClick={e => e.stopPropagation()}
+                                                                >
+                                                                    Xem bản đồ &rarr;
+                                                                </a>
+                                                            </div>
+                                                            <div className="bg-white p-3 rounded-lg border border-blue-100 shadow-sm">
+                                                                <div className="font-bold text-blue-800 mb-1">Văn phòng TP.HCM</div>
+                                                                <p className="text-gray-600 text-xs mb-2">456 Đường Nguyễn Huệ, Quận 1, TP.HCM</p>
+                                                                <a
+                                                                    href="https://www.google.com/maps/search/?api=1&query=Phố+đi+bộ+Nguyễn+Huệ"
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="text-blue-600 hover:underline text-xs flex items-center gap-1 font-medium"
+                                                                    onClick={e => e.stopPropagation()}
+                                                                >
+                                                                    Xem bản đồ &rarr;
+                                                                </a>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })()}
                             </div>
 
                             <button

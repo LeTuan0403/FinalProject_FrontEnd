@@ -16,5 +16,8 @@ export const userService = {
     },
     toggleFavorite: async (tourId: number) => {
         return axiosClient.post(`/users/favorites/${tourId}`);
+    },
+    updateRole: async (userId: number, isAdmin: number) => {
+        return axiosClient.put(`/users/${userId}/role`, { isAdmin });
     }
 };

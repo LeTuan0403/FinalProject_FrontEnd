@@ -17,6 +17,7 @@ import BookingSuccess from './pages/Client/BookingSuccess';
 import AuthPage from './pages/Auth/AuthPage';
 import ForgotPassword from './pages/Auth/ForgotPassword';
 import ResetPassword from './pages/Auth/ResetPassword';
+import VerifyAccount from './pages/Auth/VerifyAccount';
 
 
 import Dashboard from './pages/Admin/pages/Dashboard';
@@ -59,6 +60,7 @@ function App() {
         <Route path="contact" element={<Contact />} />
         <Route path="login" element={<AuthPage />} />
         <Route path="register" element={<AuthPage />} />
+        <Route path="verify-account" element={<VerifyAccount />} />
         <Route path="forgot-password" element={<ForgotPassword />} />
         <Route path="reset-password" element={<ResetPassword />} />
       </Route>
