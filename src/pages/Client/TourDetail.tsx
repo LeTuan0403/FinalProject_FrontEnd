@@ -1,19 +1,50 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { isFutureDate, formatTimeRange, compareTimeStrings } from '../../utils/dateUtils';
-import { ChevronDown, ChevronUp, Share2, Heart, Ticket, Clock, MapPin, Truck, Info, Map, CheckCircle, AlertCircle, Star, MessageSquare, Trash2, Edit, Reply, Check, X, Calendar, UserCheck, Utensils, Image as ImageIcon, ThumbsUp, Camera } from 'lucide-react';
+import { ChevronDown, ChevronUp, Share2, Heart, Ticket, Clock, MapPin, Truck, Info, Map, CheckCircle, AlertCircle, Star, MessageSquare, Trash2, Edit, Reply, Check, X, Calendar, UserCheck, Utensils, Image as ImageIcon, ThumbsUp, Camera, Cloud } from 'lucide-react';
 import { tourService } from '../../services/tourService';
 import { reviewService } from '../../services/reviewService';
 import type { Tour, Review } from '../../types';
 
 import { userService } from '../../services/userService';
 import { useAuth } from '../../hooks/useAuth';
+import WeatherWidget from '../../components/common/WeatherWidget';
 
 // Helper to get full media URL
 const getMediaUrl = (url: string) => {
   if (!url) return '';
   if (url.startsWith('http') || url.startsWith('blob:')) return url;
   return `http://localhost:5000${url}`;
+};
+
+// Helper: Parse destinations from Tour Name
+const getLocationsFromTourName = (name: string) => {
+  if (!name) return [];
+  // 1. Isolate main part
+  let nameToParse = name.split('|')[0];
+
+  // 2. Remove prefixes and noise
+  nameToParse = nameToParse
+    .replace(/^(Tour\s+)/i, "")
+    .replace(/^(Du lịch\s+)/i, "")
+    .replace(/^(Khám phá\s+)/i, "")
+    .replace(/\(.*\)/g, "")
+    .replace(/\d+\s*(Ngày|Ngay|N)(\s*\d+\s*(Đêm|Dem|Đ|D))?/gi, "") // Remove durations
+    .trim();
+
+  // 3. Split and Filter
+  return nameToParse.split(/[-–,]/)
+    .map(s => s.trim())
+    .filter(s => {
+      if (s.length < 2) return false;
+      if (/\d+N\d+Đ/i.test(s)) return false;
+      if (/\d+\s*sao/i.test(s)) return false;
+      if (/trọn gói/i.test(s)) return false;
+      if (/khởi hành/i.test(s)) return false;
+      if (/giá/i.test(s)) return false;
+      return true;
+    })
+    .slice(0, 3);
 };
 
 // Reusable Media Grid Component
@@ -69,6 +100,7 @@ const TourDetail = () => {
   const { user } = useAuth();
   const [isFavorite, setIsFavorite] = useState(false);
   const [showShareToast, setShowShareToast] = useState(false);
+  const [selectedWeatherDate, setSelectedWeatherDate] = useState<Date | undefined>(undefined); // New State for Weather Date Selection
 
   // Review State
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -137,6 +169,11 @@ const TourDetail = () => {
       // But if I open 2, then scroll away, then click 2 again (close), then open 2... works.
     }
   };
+
+  // Scroll to top on mount/id change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [id]);
 
   useEffect(() => {
     const fetchTour = async () => {
@@ -549,6 +586,93 @@ const TourDetail = () => {
                 </div>
               </div>
             </div>
+
+            {/* Weather Widget */}
+            {/* Weather Widget */}
+            {/* Weather Widget */}
+            {(() => {
+              // 1. Get All Future Dates
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              const allFutureDates = (tour.ngayKhoiHanh || [])
+                .map((d: any) => new Date(d))
+                .filter((d: any) => new Date(d).getTime() >= today.getTime())
+                .sort((a: any, b: any) => new Date(a).getTime() - new Date(b).getTime());
+
+              // 2. Identify Selected Date (or default to first)
+              const displayDate = selectedWeatherDate || (allFutureDates.length > 0 ? allFutureDates[0] : undefined);
+
+              // 3. Check if forecastable (within 7 days)
+              const maxForecastDate = new Date(today);
+              maxForecastDate.setDate(today.getDate() + 7);
+              // If no date (e.g. no schedule), we assume forecastable (current weather)
+              // If date exists, check range.
+              const isForecastable = !displayDate || displayDate.getTime() <= maxForecastDate.getTime();
+
+              const validLocations = getLocationsFromTourName(tour.tenTour);
+              // Fallback to itinerary
+              if (validLocations.length === 0) {
+                const itineraryObj = tour.lichTrinh?.[0]?.diaDiem || tour.tourChiTiets?.[0]?.diaDiem;
+                if (itineraryObj?.tenDiaDiem) validLocations.push(itineraryObj.tenDiaDiem);
+              }
+              // Final fallback
+              if (validLocations.length === 0 && tour.diemKhoiHanh) validLocations.push(tour.diemKhoiHanh);
+
+              if (validLocations.length === 0) return null;
+
+              return (
+                <div className="mb-8 p-6 bg-blue-50/50 rounded-2xl border border-blue-100">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                    <h3 className="text-base font-bold text-blue-900 uppercase tracking-wide flex items-center gap-2">
+                      <Cloud className="text-blue-500" size={20} />
+                      Dự báo thời tiết điểm đến
+                    </h3>
+
+                    {/* Date Selector */}
+                    {allFutureDates.length > 0 && (
+                      <div className="relative min-w-[200px]">
+                        <select
+                          className="w-full appearance-none bg-white border border-blue-200 text-blue-900 text-sm font-bold py-2.5 pl-4 pr-10 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer hover:border-blue-400 transition-colors"
+                          value={displayDate?.toISOString() || ''}
+                          onChange={(e) => setSelectedWeatherDate(new Date(e.target.value))}
+                        >
+                          {allFutureDates.map((date, idx) => (
+                            <option key={idx} value={date.toISOString()}>
+                              Khởi hành: {date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                            </option>
+                          ))}
+                        </select>
+                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500 pointer-events-none" size={18} />
+                      </div>
+                    )}
+                  </div>
+
+                  {isForecastable ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-fade-in">
+                      {validLocations.map((loc, idx) => (
+                        <WeatherWidget
+                          key={idx}
+                          locationName={loc}
+                          departureDate={displayDate}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-10 text-center bg-white/60 rounded-xl border border-dashed border-gray-300">
+                      <div className="bg-gray-100 p-4 rounded-full mb-3">
+                        <Cloud size={32} className="text-gray-400" />
+                      </div>
+                      <p className="text-gray-600 font-bold text-lg">
+                        Chưa có dự báo cho ngày {displayDate?.toLocaleDateString('vi-VN')}
+                      </p>
+                      <p className="text-gray-500 mt-1 max-w-md">
+                        Hệ thống chỉ cung cấp dự báo thời tiết chính xác trong vòng <span className="font-bold text-blue-600">7 ngày</span> tới. Vui lòng quay lại sau!
+                      </p>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* Itinerary */}
             <div id="section-itinerary" className="scroll-mt-24 space-y-8">
@@ -1025,399 +1149,399 @@ const TourDetail = () => {
                                 )
                               })}
 
-                          {/* Reply Input Box */}
-                          {!editingReplyId && (
-                            <div className="flex gap-3 items-start mt-4 pt-4 border-t border-gray-200">
-                              <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center shrink-0">
-                                <Reply size={14} className="text-gray-500" />
-                              </div>
-                              <div className="flex-1">
-                                <textarea
-                                  value={replyContent}
-                                  onChange={(e) => setReplyContent(e.target.value)}
-                                  placeholder="Viết bình luận của bạn..."
-                                  className="w-full text-sm p-3 border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none"
-                                  rows={2}
-                                />
-
-                                {/* Reply Media Previews */}
-                                <MediaGrid
-                                  media={replyPreviewMedia}
-                                  onRemove={(idx) => removeReplyMedia(idx)}
-                                  size="sm"
-                                />
-
-                                <div className="flex items-center justify-between mt-2">
-                                  <div className="flex items-center gap-3">
-                                    <label className="cursor-pointer text-gray-500 hover:text-blue-600">
-                                      <ImageIcon size={18} />
-                                      <input type="file" multiple accept="image/*,video/*" className="hidden" onChange={handleReplyFileChange} />
-                                    </label>
-                                    <label className="flex items-center gap-1 text-xs text-gray-500 cursor-pointer">
-                                      <input type="checkbox" checked={replyAnonymous} onChange={e => setReplyAnonymous(e.target.checked)} className="rounded text-blue-600 w-3 h-3" />
-                                      Ẩn danh
-                                    </label>
+                              {/* Reply Input Box */}
+                              {!editingReplyId && (
+                                <div className="flex gap-3 items-start mt-4 pt-4 border-t border-gray-200">
+                                  <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center shrink-0">
+                                    <Reply size={14} className="text-gray-500" />
                                   </div>
-                                  <button
-                                    onClick={() => handleReplySubmit(rv.danhGiaId!)}
-                                    className="bg-blue-600 text-white text-xs px-4 py-1.5 rounded-full hover:bg-blue-700 transition font-medium"
-                                  >
-                                    Gửi bình luận
-                                  </button>
+                                  <div className="flex-1">
+                                    <textarea
+                                      value={replyContent}
+                                      onChange={(e) => setReplyContent(e.target.value)}
+                                      placeholder="Viết bình luận của bạn..."
+                                      className="w-full text-sm p-3 border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 outline-none"
+                                      rows={2}
+                                    />
+
+                                    {/* Reply Media Previews */}
+                                    <MediaGrid
+                                      media={replyPreviewMedia}
+                                      onRemove={(idx) => removeReplyMedia(idx)}
+                                      size="sm"
+                                    />
+
+                                    <div className="flex items-center justify-between mt-2">
+                                      <div className="flex items-center gap-3">
+                                        <label className="cursor-pointer text-gray-500 hover:text-blue-600">
+                                          <ImageIcon size={18} />
+                                          <input type="file" multiple accept="image/*,video/*" className="hidden" onChange={handleReplyFileChange} />
+                                        </label>
+                                        <label className="flex items-center gap-1 text-xs text-gray-500 cursor-pointer">
+                                          <input type="checkbox" checked={replyAnonymous} onChange={e => setReplyAnonymous(e.target.checked)} className="rounded text-blue-600 w-3 h-3" />
+                                          Ẩn danh
+                                        </label>
+                                      </div>
+                                      <button
+                                        onClick={() => handleReplySubmit(rv.danhGiaId!)}
+                                        className="bg-blue-600 text-white text-xs px-4 py-1.5 rounded-full hover:bg-blue-700 transition font-medium"
+                                      >
+                                        Gửi bình luận
+                                      </button>
+                                    </div>
+                                  </div>
                                 </div>
-                              </div>
+                              )}
+
+
                             </div>
-                          )}
-
-
+                          )
+                          }
                         </div>
                       )
-                    }
-                        </div>
-                )
                     })
-                ) : (
-                <div className="text-center py-8 text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-                  Chưa có đánh giá nào. Hãy là người đầu tiên!
-                </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                      Chưa có đánh giá nào. Hãy là người đầu tiên!
+                    </div>
                   )}
-              </div>
+                </div>
 
-              {/* Write Review Form */}
-              <div id="review-form" className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100">
-                <h4 className="font-bold text-blue-900 mb-4 flex items-center gap-2">
-                  <MessageSquare size={20} /> {editingReviewId ? 'Chỉnh sửa đánh giá của bạn' : 'Viết đánh giá của bạn'}
-                </h4>
+                {/* Write Review Form */}
+                <div id="review-form" className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100">
+                  <h4 className="font-bold text-blue-900 mb-4 flex items-center gap-2">
+                    <MessageSquare size={20} /> {editingReviewId ? 'Chỉnh sửa đánh giá của bạn' : 'Viết đánh giá của bạn'}
+                  </h4>
 
-                {user ? (
-                  <form onSubmit={handleSubmitReview} className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Đánh giá chung</label>
-                      <div className="flex gap-2">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <button
-                            key={star}
-                            type="button"
-                            onClick={() => setUserRating(star)}
-                            className="focus:outline-none transition-transform hover:scale-110"
-                          >
-                            <Star
-                              size={28}
-                              className={`${star <= userRating ? "text-yellow-400 fill-current" : "text-gray-300"} transition - colors`}
-                            />
-                          </button>
-                        ))}
-                        <span className="ml-2 text-sm font-medium text-gray-600 pt-1">
-                          {userRating === 5 ? '(Tuyệt vời)' : userRating === 4 ? '(Tốt)' : userRating === 3 ? '(Bình thường)' : userRating === 2 ? '(Tệ)' : '(Rất tệ)'}
-                        </span>
+                  {user ? (
+                    <form onSubmit={handleSubmitReview} className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Đánh giá chung</label>
+                        <div className="flex gap-2">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                              key={star}
+                              type="button"
+                              onClick={() => setUserRating(star)}
+                              className="focus:outline-none transition-transform hover:scale-110"
+                            >
+                              <Star
+                                size={28}
+                                className={`${star <= userRating ? "text-yellow-400 fill-current" : "text-gray-300"} transition - colors`}
+                              />
+                            </button>
+                          ))}
+                          <span className="ml-2 text-sm font-medium text-gray-600 pt-1">
+                            {userRating === 5 ? '(Tuyệt vời)' : userRating === 4 ? '(Tốt)' : userRating === 3 ? '(Bình thường)' : userRating === 2 ? '(Tệ)' : '(Rất tệ)'}
+                          </span>
+                        </div>
                       </div>
-                    </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Bình luận chi tiết</label>
-                      <textarea
-                        value={userComment}
-                        onChange={(e) => setUserComment(e.target.value)}
-                        placeholder="Chia sẻ trải nghiệm của bạn về chuyến đi..."
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none min-h-[100px]"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Thêm hình ảnh / video</label>
-                      <div className="flex flex-wrap gap-2 mb-2">
-                        <MediaGrid
-                          media={previewMedia}
-                          onRemove={(idx) => removeMedia(idx)}
-                          size="lg"
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Bình luận chi tiết</label>
+                        <textarea
+                          value={userComment}
+                          onChange={(e) => setUserComment(e.target.value)}
+                          placeholder="Chia sẻ trải nghiệm của bạn về chuyến đi..."
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none min-h-[100px]"
+                          required
                         />
-                        <label className="w-24 h-24 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 hover:border-blue-300 transition text-gray-400 hover:text-blue-500">
-                          <ImageIcon size={24} />
-                          <span className="text-xs mt-1">Thêm ảnh</span>
-                          <input
-                            type="file"
-                            multiple
-                            accept="image/*,video/*"
-                            onChange={handleFileChange}
-                            className="hidden"
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Thêm hình ảnh / video</label>
+                        <div className="flex flex-wrap gap-2 mb-2">
+                          <MediaGrid
+                            media={previewMedia}
+                            onRemove={(idx) => removeMedia(idx)}
+                            size="lg"
                           />
+                          <label className="w-24 h-24 flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 hover:border-blue-300 transition text-gray-400 hover:text-blue-500">
+                            <ImageIcon size={24} />
+                            <span className="text-xs mt-1">Thêm ảnh</span>
+                            <input
+                              type="file"
+                              multiple
+                              accept="image/*,video/*"
+                              onChange={handleFileChange}
+                              className="hidden"
+                            />
+                          </label>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          id="isAnonymous"
+                          checked={isAnonymous}
+                          onChange={(e) => setIsAnonymous(e.target.checked)}
+                          className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                        />
+                        <label htmlFor="isAnonymous" className="text-sm text-gray-700 select-none cursor-pointer flex items-center gap-1">
+                          <UserCheck size={16} /> Đánh giá ẩn danh
                         </label>
                       </div>
-                    </div>
 
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        id="isAnonymous"
-                        checked={isAnonymous}
-                        onChange={(e) => setIsAnonymous(e.target.checked)}
-                        className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                      />
-                      <label htmlFor="isAnonymous" className="text-sm text-gray-700 select-none cursor-pointer flex items-center gap-1">
-                        <UserCheck size={16} /> Đánh giá ẩn danh
-                      </label>
-                    </div>
-
-                    <div className="flex gap-3">
-                      <button
-                        type="submit"
-                        disabled={submittingReview}
-                        className="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex-1"
-                      >
-                        {submittingReview ? 'Đang xử lý...' : (editingReviewId ? 'Cập Nhật Đánh Giá' : 'Gửi Đánh Giá')}
-                      </button>
-
-                      {editingReviewId && (
+                      <div className="flex gap-3">
                         <button
-                          type="button"
-                          onClick={() => {
-                            setEditingReviewId(null);
-                            setUserComment('');
-                            setUserRating(5);
-                          }}
-                          className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-bold hover:bg-gray-300 transition"
+                          type="submit"
+                          disabled={submittingReview}
+                          className="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex-1"
                         >
-                          Hủy
+                          {submittingReview ? 'Đang xử lý...' : (editingReviewId ? 'Cập Nhật Đánh Giá' : 'Gửi Đánh Giá')}
                         </button>
-                      )}
+
+                        {editingReviewId && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingReviewId(null);
+                              setUserComment('');
+                              setUserRating(5);
+                            }}
+                            className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-bold hover:bg-gray-300 transition"
+                          >
+                            Hủy
+                          </button>
+                        )}
+                      </div>
+                    </form>
+                  ) : (
+                    <div className="text-center py-4">
+                      <p className="text-gray-600 mb-2">Vui lòng đăng nhập để viết đánh giá</p>
+                      <button
+                        type="button"
+                        onClick={() => navigate('/login')}
+                        className="text-blue-600 font-bold hover:underline"
+                      >
+                        Đăng nhập ngay
+                      </button>
                     </div>
-                  </form>
-                ) : (
-                  <div className="text-center py-4">
-                    <p className="text-gray-600 mb-2">Vui lòng đăng nhập để viết đánh giá</p>
-                    <button
-                      type="button"
-                      onClick={() => navigate('/login')}
-                      className="text-blue-600 font-bold hover:underline"
-                    >
-                      Đăng nhập ngay
-                    </button>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
+
           </div>
 
-        </div>
+          {/* RIGHT COLUMN: Sticky Sidebar */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-24 space-y-6">
 
-        {/* RIGHT COLUMN: Sticky Sidebar */}
-        <div className="lg:col-span-1">
-          <div className="sticky top-24 space-y-6">
-
-            {/* Info Card */}
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden relative">
-              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-cyan-500"></div>
-              <div className="p-6 bg-slate-50 border-b border-gray-100 text-center">
-                <p className="text-gray-500 text-sm font-medium mb-1 uppercase tracking-wider">Giá trọn gói</p>
-                <p className="text-4xl font-black text-red-600">
-                  {(tour.isTuChon ? Math.round(tour.tongGiaDuKien / (tour.soLuongCho || 1)) : tour.tongGiaDuKien).toLocaleString()}
-                  <span className="text-sm text-gray-500 font-normal"> ₫/khách</span>
-                </p>
-              </div>
-
-              <div className="p-6 space-y-5">
-                <div className="flex items-center justify-between group">
-                  <div className="flex items-center gap-3 text-gray-600">
-                    <Ticket size={20} className="text-blue-500" />
-                    <span>Mã Tour</span>
-                  </div>
-                  <span className="font-bold text-gray-900 bg-gray-100 px-2 py-1 rounded text-sm">{tourCode}</span>
+              {/* Info Card */}
+              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden relative">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-cyan-500"></div>
+                <div className="p-6 bg-slate-50 border-b border-gray-100 text-center">
+                  <p className="text-gray-500 text-sm font-medium mb-1 uppercase tracking-wider">Giá trọn gói</p>
+                  <p className="text-4xl font-black text-red-600">
+                    {(tour.isTuChon ? Math.round(tour.tongGiaDuKien / (tour.soLuongCho || 1)) : tour.tongGiaDuKien).toLocaleString()}
+                    <span className="text-sm text-gray-500 font-normal"> ₫/khách</span>
+                  </p>
                 </div>
 
-                <div className="flex items-center justify-between group">
-                  <div className="flex items-center gap-3 text-gray-600">
-                    <Clock size={20} className="text-blue-500" />
-                    <span>Thời gian</span>
+                <div className="p-6 space-y-5">
+                  <div className="flex items-center justify-between group">
+                    <div className="flex items-center gap-3 text-gray-600">
+                      <Ticket size={20} className="text-blue-500" />
+                      <span>Mã Tour</span>
+                    </div>
+                    <span className="font-bold text-gray-900 bg-gray-100 px-2 py-1 rounded text-sm">{tourCode}</span>
                   </div>
-                  <span className="font-bold text-gray-900">{durationText}</span>
-                </div>
 
-                <div className="flex items-center justify-between group">
-                  <div className="flex items-center gap-3 text-gray-600">
-                    <MapPin size={20} className="text-blue-500" />
-                    <span>Khởi hành</span>
+                  <div className="flex items-center justify-between group">
+                    <div className="flex items-center gap-3 text-gray-600">
+                      <Clock size={20} className="text-blue-500" />
+                      <span>Thời gian</span>
+                    </div>
+                    <span className="font-bold text-gray-900">{durationText}</span>
                   </div>
-                  <span className="font-bold text-gray-900 text-right max-w-[150px] truncate" title={tour.diemKhoiHanh}>{tour.diemKhoiHanh || "Hồ Chí Minh"}</span>
-                </div>
 
-                <div className="flex items-center justify-between group">
-                  <div className="flex items-center gap-3 text-gray-600">
-                    <UserCheck size={20} className="text-blue-500" />
-                    <span>Số chỗ còn nhận</span>
+                  <div className="flex items-center justify-between group">
+                    <div className="flex items-center gap-3 text-gray-600">
+                      <MapPin size={20} className="text-blue-500" />
+                      <span>Khởi hành</span>
+                    </div>
+                    <span className="font-bold text-gray-900 text-right max-w-[150px] truncate" title={tour.diemKhoiHanh}>{tour.diemKhoiHanh || "Hồ Chí Minh"}</span>
                   </div>
-                  {(() => {
-                    // Find next available date's remaining seats
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
 
-                    // For booking, we usually need at least 1 day in advance
-                    const tomorrow = new Date(today);
-                    tomorrow.setDate(tomorrow.getDate() + 1);
+                  <div className="flex items-center justify-between group">
+                    <div className="flex items-center gap-3 text-gray-600">
+                      <UserCheck size={20} className="text-blue-500" />
+                      <span>Số chỗ còn nhận</span>
+                    </div>
+                    {(() => {
+                      // Find next available date's remaining seats
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
 
-                    let nextRem = 0;
-                    let nextDateStr = "";
+                      // For booking, we usually need at least 1 day in advance
+                      const tomorrow = new Date(today);
+                      tomorrow.setDate(tomorrow.getDate() + 1);
 
-                    if (tour.availability) {
-                      const futureAvails = tour.availability
-                        .filter(a => new Date(a.date).getTime() >= tomorrow.getTime() && a.remainingSeats > 0)
-                        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+                      let nextRem = 0;
+                      let nextDateStr = "";
 
-                      if (futureAvails.length > 0) {
-                        nextRem = futureAvails[0].remainingSeats;
-                        nextDateStr = new Date(futureAvails[0].date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
-                      }
-                    } else {
-                      // Fallback if availability not loaded yet or legacy
-                      nextRem = tour.soLuongCho ?? 0;
-                    }
+                      if (tour.availability) {
+                        const futureAvails = tour.availability
+                          .filter(a => new Date(a.date).getTime() >= tomorrow.getTime() && a.remainingSeats > 0)
+                          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-                    // Determine display
-                    return (
-                      <div className="text-right">
-                        <span className="font-bold text-red-600 text-xl">{nextRem}</span>
-                        {nextDateStr && !tour.isTuChon && <span className="text-xs text-gray-500 block">({nextDateStr})</span>}
-                      </div>
-                    );
-                  })()}
-                </div>
-
-                <div className="flex items-start justify-between group">
-                  <div className="flex items-center gap-3 text-gray-600 shrink-0">
-                    <Calendar size={20} className="text-blue-500" />
-                    <span>Ngày đi</span>
-                  </div>
-                  <div className="text-right">
-                    {tour.ngayKhoiHanh && Array.isArray(tour.ngayKhoiHanh) && tour.ngayKhoiHanh.length > 0 ? (
-                      <div className="flex flex-col gap-1 items-end">
-                        {(() => {
-                          const futureDates = tour.ngayKhoiHanh
-                            .map(d => new Date(d))
-                            .filter(d => {
-                              // Robust String Check
-                              const dStr = d.toISOString().split('T')[0];
-                              if (!isFutureDate(dStr)) return false;
-
-                              // Availability check
-                              if (tour.availability) {
-                                const dateStr = d.toISOString().split('T')[0];
-                                const avail = tour.availability.find(a => new Date(a.date).toISOString().split('T')[0] === dateStr);
-                                if (avail && avail.remainingSeats <= 0) return false;
-                              }
-                              return true;
-                            })
-                            .sort((a, b) => a.getTime() - b.getTime());
-
-                          if (futureDates.length === 0) {
-                            return <span className="text-gray-500 italic">Đã hết lịch sắp tới</span>;
-                          }
-
-                          // Group by Month/Year
-                          const grouped = futureDates.reduce((acc, date) => {
-                            const key = `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
-                            if (!acc[key]) acc[key] = [];
-                            acc[key].push(date.getDate().toString().padStart(2, '0'));
-                            return acc;
-                          }, {} as Record<string, string[]>);
-
-                          return Object.entries(grouped).slice(0, 3).map(([monthYear, days], idx) => (
-                            <div key={idx} className="font-bold text-blue-700 bg-blue-50 px-2 py-1 rounded text-sm text-right">
-                              <span className="text-blue-900">{days.join(', ')}</span>
-                              <span className="text-gray-400 font-normal mx-1">/</span>
-                              <span className="text-blue-600">{monthYear}</span>
-                            </div>
-                          ));
-                        })()}
-                        {
-                          tour.ngayKhoiHanh.filter(d => new Date(d).getTime() >= new Date().setHours(0, 0, 0, 0)).length > 0 &&
-                          Object.keys(tour.ngayKhoiHanh.reduce((acc, d) => {
-                            const date = new Date(d);
-                            if (date.getTime() < new Date().setHours(0, 0, 0, 0)) return acc;
-                            const key = `${date.getMonth()}/${date.getFullYear()}`;
-                            acc[key] = true;
-                            return acc;
-                          }, {} as any)).length > 3 &&
-                          <span className="text-xs text-gray-500 italic">+ các tháng sau</span>
+                        if (futureAvails.length > 0) {
+                          nextRem = futureAvails[0].remainingSeats;
+                          nextDateStr = new Date(futureAvails[0].date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
                         }
-                      </div >
-                    ) : (
-                      <span className="text-gray-500 italic">Liên hệ</span>
-                    )}
+                      } else {
+                        // Fallback if availability not loaded yet or legacy
+                        nextRem = tour.soLuongCho ?? 0;
+                      }
+
+                      // Determine display
+                      return (
+                        <div className="text-right">
+                          <span className="font-bold text-red-600 text-xl">{nextRem}</span>
+                          {nextDateStr && !tour.isTuChon && <span className="text-xs text-gray-500 block">({nextDateStr})</span>}
+                        </div>
+                      );
+                    })()}
+                  </div>
+
+                  <div className="flex items-start justify-between group">
+                    <div className="flex items-center gap-3 text-gray-600 shrink-0">
+                      <Calendar size={20} className="text-blue-500" />
+                      <span>Ngày đi</span>
+                    </div>
+                    <div className="text-right">
+                      {tour.ngayKhoiHanh && Array.isArray(tour.ngayKhoiHanh) && tour.ngayKhoiHanh.length > 0 ? (
+                        <div className="flex flex-col gap-1 items-end">
+                          {(() => {
+                            const futureDates = tour.ngayKhoiHanh
+                              .map(d => new Date(d))
+                              .filter(d => {
+                                // Robust String Check
+                                const dStr = d.toISOString().split('T')[0];
+                                if (!isFutureDate(dStr)) return false;
+
+                                // Availability check
+                                if (tour.availability) {
+                                  const dateStr = d.toISOString().split('T')[0];
+                                  const avail = tour.availability.find(a => new Date(a.date).toISOString().split('T')[0] === dateStr);
+                                  if (avail && avail.remainingSeats <= 0) return false;
+                                }
+                                return true;
+                              })
+                              .sort((a, b) => a.getTime() - b.getTime());
+
+                            if (futureDates.length === 0) {
+                              return <span className="text-gray-500 italic">Đã hết lịch sắp tới</span>;
+                            }
+
+                            // Group by Month/Year
+                            const grouped = futureDates.reduce((acc, date) => {
+                              const key = `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+                              if (!acc[key]) acc[key] = [];
+                              acc[key].push(date.getDate().toString().padStart(2, '0'));
+                              return acc;
+                            }, {} as Record<string, string[]>);
+
+                            return Object.entries(grouped).slice(0, 3).map(([monthYear, days], idx) => (
+                              <div key={idx} className="font-bold text-blue-700 bg-blue-50 px-2 py-1 rounded text-sm text-right">
+                                <span className="text-blue-900">{days.join(', ')}</span>
+                                <span className="text-gray-400 font-normal mx-1">/</span>
+                                <span className="text-blue-600">{monthYear}</span>
+                              </div>
+                            ));
+                          })()}
+                          {
+                            tour.ngayKhoiHanh.filter(d => new Date(d).getTime() >= new Date().setHours(0, 0, 0, 0)).length > 0 &&
+                            Object.keys(tour.ngayKhoiHanh.reduce((acc, d) => {
+                              const date = new Date(d);
+                              if (date.getTime() < new Date().setHours(0, 0, 0, 0)) return acc;
+                              const key = `${date.getMonth()}/${date.getFullYear()}`;
+                              acc[key] = true;
+                              return acc;
+                            }, {} as any)).length > 3 &&
+                            <span className="text-xs text-gray-500 italic">+ các tháng sau</span>
+                          }
+                        </div >
+                      ) : (
+                        <span className="text-gray-500 italic">Liên hệ</span>
+                      )}
+                    </div >
                   </div >
+
+                  <div className="flex items-center justify-between group">
+                    <div className="flex items-center gap-3 text-gray-600">
+                      <Truck size={20} className="text-blue-500" />
+                      <span>Phương tiện</span>
+                    </div>
+                    <span className="font-bold text-gray-900">{tour.phuongTien || "Xe du lịch"}</span>
+                  </div>
+
+                  <div className="flex items-center justify-between group">
+                    <div className="flex items-center gap-3 text-gray-600">
+                      <Utensils size={20} className="text-blue-500" />
+                      <span>Bữa ăn</span>
+                    </div>
+                    <span className="font-bold text-gray-900 text-sm">
+                      {[
+                        (tour.anSang ? `${String(tour.anSang).padStart(2, '0')} Bữa sáng` : null),
+                        (tour.anTrua ? `${String(tour.anTrua).padStart(2, '0')} Bữa trưa` : null),
+                        (tour.anToi ? `${String(tour.anToi).padStart(2, '0')} Bữa tối` : null)
+                      ].filter(Boolean).join(' - ') || "Tự túc"}
+                    </span>
+                  </div>
+
+                  <hr className="border-gray-100" />
+
+                  <button
+                    onClick={() => navigate(`/booking/${tour.tourId}`)}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition shadow-lg shadow-blue-200 uppercase tracking-wide flex items-center justify-center gap-2 transform active:scale-95 duration-150"
+                  >
+                    Đặt Tour Ngay <Ticket size={18} />
+                  </button>
+
+                  <button
+                    onClick={() => navigate('/contact')}
+                    className="w-full bg-white border border-gray-200 text-gray-700 font-bold py-3 rounded-xl hover:bg-gray-50 transition text-sm flex items-center justify-center gap-2 group"
+                  >
+                    <span>Liên Hệ Tư Vấn</span>
+                    {(() => {
+                      const tomorrow = new Date();
+                      tomorrow.setDate(tomorrow.getDate() + 1);
+                      tomorrow.setHours(0, 0, 0, 0);
+                      let nextRem = 0;
+                      if (tour.availability) {
+                        const futureAvails = tour.availability
+                          .filter(a => new Date(a.date).getTime() >= tomorrow.getTime() && a.remainingSeats > 0)
+                          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+                        if (futureAvails.length > 0) nextRem = futureAvails[0].remainingSeats;
+                      }
+
+                      if (nextRem > 0 && nextRem <= 5) {
+                        return <span className="bg-red-100 text-red-600 text-xs px-2 py-0.5 rounded-full animate-pulse">Còn {nextRem} chỗ!</span>
+                      }
+                      return null;
+                    })()}
+                  </button>
                 </div >
-
-                <div className="flex items-center justify-between group">
-                  <div className="flex items-center gap-3 text-gray-600">
-                    <Truck size={20} className="text-blue-500" />
-                    <span>Phương tiện</span>
-                  </div>
-                  <span className="font-bold text-gray-900">{tour.phuongTien || "Xe du lịch"}</span>
-                </div>
-
-                <div className="flex items-center justify-between group">
-                  <div className="flex items-center gap-3 text-gray-600">
-                    <Utensils size={20} className="text-blue-500" />
-                    <span>Bữa ăn</span>
-                  </div>
-                  <span className="font-bold text-gray-900 text-sm">
-                    {[
-                      (tour.anSang ? `${String(tour.anSang).padStart(2, '0')} Bữa sáng` : null),
-                      (tour.anTrua ? `${String(tour.anTrua).padStart(2, '0')} Bữa trưa` : null),
-                      (tour.anToi ? `${String(tour.anToi).padStart(2, '0')} Bữa tối` : null)
-                    ].filter(Boolean).join(' - ') || "Tự túc"}
-                  </span>
-                </div>
-
-                <hr className="border-gray-100" />
-
-                <button
-                  onClick={() => navigate(`/booking/${tour.tourId}`)}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition shadow-lg shadow-blue-200 uppercase tracking-wide flex items-center justify-center gap-2 transform active:scale-95 duration-150"
-                >
-                  Đặt Tour Ngay <Ticket size={18} />
-                </button>
-
-                <button
-                  onClick={() => navigate('/contact')}
-                  className="w-full bg-white border border-gray-200 text-gray-700 font-bold py-3 rounded-xl hover:bg-gray-50 transition text-sm flex items-center justify-center gap-2 group"
-                >
-                  <span>Liên Hệ Tư Vấn</span>
-                  {(() => {
-                    const tomorrow = new Date();
-                    tomorrow.setDate(tomorrow.getDate() + 1);
-                    tomorrow.setHours(0, 0, 0, 0);
-                    let nextRem = 0;
-                    if (tour.availability) {
-                      const futureAvails = tour.availability
-                        .filter(a => new Date(a.date).getTime() >= tomorrow.getTime() && a.remainingSeats > 0)
-                        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-                      if (futureAvails.length > 0) nextRem = futureAvails[0].remainingSeats;
-                    }
-
-                    if (nextRem > 0 && nextRem <= 5) {
-                      return <span className="bg-red-100 text-red-600 text-xs px-2 py-0.5 rounded-full animate-pulse">Còn {nextRem} chỗ!</span>
-                    }
-                    return null;
-                  })()}
-                </button>
               </div >
-            </div >
 
-            {/* Quick Nav */}
-            < div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hidden lg:block" >
-              <h4 className="font-bold text-gray-800 mb-4 text-sm uppercase tracking-wide">Mục lục</h4>
-              <div className="flex flex-col gap-2">
-                <a href="#section-itinerary" className="text-gray-600 hover:text-blue-600 text-sm py-1 border-l-2 border-transparent hover:border-blue-500 pl-3 transition-all">Lịch trình chi tiết</a>
-                <a href="#section-services" className="text-gray-600 hover:text-blue-600 text-sm py-1 border-l-2 border-transparent hover:border-blue-500 pl-3 transition-all">Dịch vụ bao gồm</a>
-                <a href="#section-notes" className="text-gray-600 hover:text-blue-600 text-sm py-1 border-l-2 border-transparent hover:border-blue-500 pl-3 transition-all">Lưu ý</a>
-              </div>
-            </div >
+              {/* Quick Nav */}
+              < div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hidden lg:block" >
+                <h4 className="font-bold text-gray-800 mb-4 text-sm uppercase tracking-wide">Mục lục</h4>
+                <div className="flex flex-col gap-2">
+                  <a href="#section-itinerary" className="text-gray-600 hover:text-blue-600 text-sm py-1 border-l-2 border-transparent hover:border-blue-500 pl-3 transition-all">Lịch trình chi tiết</a>
+                  <a href="#section-services" className="text-gray-600 hover:text-blue-600 text-sm py-1 border-l-2 border-transparent hover:border-blue-500 pl-3 transition-all">Dịch vụ bao gồm</a>
+                  <a href="#section-notes" className="text-gray-600 hover:text-blue-600 text-sm py-1 border-l-2 border-transparent hover:border-blue-500 pl-3 transition-all">Lưu ý</a>
+                </div>
+              </div >
 
+            </div >
           </div >
-        </div >
 
+        </div >
       </div >
-    </div >
     </div >
   );
 };

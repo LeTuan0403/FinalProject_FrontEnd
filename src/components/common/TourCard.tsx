@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom';
-import { MapPin, Clock, Truck, Ticket, Heart, Calendar, User } from 'lucide-react';
+import { MapPin, Clock, Truck, Ticket, Heart, Calendar, User, Scale } from 'lucide-react';
 import type { Tour } from '../../types';
 import { useState, useEffect } from 'react';
 import { userService } from '../../services/userService';
 import { useAuth } from '../../hooks/useAuth';
+import { useComparison } from '../../context/ComparisonContext';
 
 interface TourCardProps {
     tour: Tour;
@@ -14,7 +15,9 @@ interface TourCardProps {
 
 const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavorite }: TourCardProps) => {
     const { user } = useAuth();
+    const { addToCompare, removeFromCompare, isInCompare } = useComparison();
     const [favorited, setFavorited] = useState(isFavorite);
+    const inCompare = isInCompare(tour.tourId);
 
     useEffect(() => {
         setFavorited(isFavorite);
@@ -38,11 +41,21 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
         }
     };
 
+    const handleToggleCompare = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (inCompare) {
+            removeFromCompare(tour.tourId);
+        } else {
+            addToCompare(tour.tourId);
+        }
+    };
+
     // Helper to calculate duration
     const calculatedDuration = tour.tourChiTiets?.length
         ? Math.max(...tour.tourChiTiets.map(t => t.ngayThu))
         : 1;
-    const durationText = tour.thoiGian || `${calculatedDuration} ngày ${calculatedDuration - 1 > 0 ? (calculatedDuration - 1) + ' đêm' : ''}`;
+    const durationText = tour.thoiGian || `${calculatedDuration} ngày${calculatedDuration - 1 > 0 ? ` ${calculatedDuration - 1} đêm` : ''}`;
 
     // Helper for Next Departure
     const getNextDeparture = () => {
@@ -85,7 +98,7 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
     const nextDepartureText = getNextDeparture();
 
     // Helper for Tour Code
-    const tourCode = tour.maTour || `T-${tour.tourId}`;
+    const tourCode = tour.maTour || `T - ${tour.tourId} `;
 
     if (variant === 'vertical') {
         return (
@@ -93,9 +106,19 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
                 {/* Favorite Button */}
                 <button
                     onClick={handleToggleFavorite}
-                    className={`absolute top-4 right-4 z-10 p-2 rounded-full backdrop-blur-md transition-all ${favorited ? 'bg-red-50 text-red-500' : 'bg-black/20 text-white hover:bg-black/40'}`}
+                    title="Yêu thích"
+                    className={`absolute top - 4 right - 4 z - 10 p - 2 rounded - full backdrop - blur - md transition - all ${favorited ? 'bg-red-50 text-red-500' : 'bg-black/20 text-white hover:bg-black/40'} `}
                 >
-                    <Heart className={`w-5 h-5 ${favorited ? 'fill-current' : ''}`} />
+                    <Heart className={`w - 5 h - 5 ${favorited ? 'fill-current' : ''} `} />
+                </button>
+
+                {/* Compare Button */}
+                <button
+                    onClick={handleToggleCompare}
+                    title="So sánh"
+                    className={`absolute top - 4 right - 16 z - 10 p - 2 rounded - full backdrop - blur - md transition - all ${inCompare ? 'bg-teal-50 text-teal-600' : 'bg-black/20 text-white hover:bg-black/40'} `}
+                >
+                    <Scale className={`w - 5 h - 5 ${inCompare ? 'fill-current' : ''} `} />
                 </button>
 
                 <div className="relative overflow-hidden h-60">
@@ -164,12 +187,22 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
     // Horizontal Variant
     return (
         <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all overflow-hidden flex flex-col md:flex-row border border-gray-100 group relative">
-            {/* Favorite Button (Horizontal) */}
+            {/* Favorite Button (Horizontal Mobile) */}
             <button
                 onClick={handleToggleFavorite}
-                className={`absolute top-4 right-4 z-10 p-2 rounded-full backdrop-blur-md transition-all md:hidden ${favorited ? 'bg-red-50 text-red-500' : 'bg-black/20 text-white hover:bg-black/40'}`}
+                title="Yêu thích"
+                className={`absolute top - 4 right - 4 z - 10 p - 2 rounded - full backdrop - blur - md transition - all md:hidden ${favorited ? 'bg-red-50 text-red-500' : 'bg-black/20 text-white hover:bg-black/40'} `}
             >
-                <Heart className={`w-5 h-5 ${favorited ? 'fill-current' : ''}`} />
+                <Heart className={`w - 5 h - 5 ${favorited ? 'fill-current' : ''} `} />
+            </button>
+
+            {/* Compare Button (Horizontal Mobile) */}
+            <button
+                onClick={handleToggleCompare}
+                title="So sánh"
+                className={`absolute top - 16 right - 4 z - 10 p - 2 rounded - full backdrop - blur - md transition - all md:hidden ${inCompare ? 'bg-teal-50 text-teal-600' : 'bg-black/20 text-white hover:bg-black/40'} `}
+            >
+                <Scale className={`w - 5 h - 5 ${inCompare ? 'fill-current' : ''} `} />
             </button>
 
             {/* Horizontal Image */}
@@ -188,13 +221,25 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
                         <h3 className="text-xl font-bold mb-3 text-blue-900 group-hover:text-blue-600 transition-colors pr-8">
                             <Link to={`/tours/${tour.tourId}`}>{tour.tenTour}</Link>
                         </h3>
-                        {/* Desktop Favorite Button */}
-                        <button
-                            onClick={handleToggleFavorite}
-                            className={`hidden md:block p-2 rounded-full transition-all ${favorited ? 'bg-red-50 text-red-500' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'}`}
-                        >
-                            <Heart className={`w-5 h-5 ${favorited ? 'fill-current' : ''}`} />
-                        </button>
+                        <div className="hidden md:flex gap-2">
+                            {/* Compare Button Desktop */}
+                            <button
+                                onClick={handleToggleCompare}
+                                title="So sánh"
+                                className={`p - 2 rounded - full transition - all ${inCompare ? 'bg-teal-50 text-teal-600' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'} `}
+                            >
+                                <Scale className={`w - 5 h - 5 ${inCompare ? 'fill-current' : ''} `} />
+                            </button>
+                            {/* Desktop Favorite Button */}
+                            <button
+                                onClick={handleToggleFavorite}
+                                title="Yêu thích"
+                                className={`p - 2 rounded - full transition - all ${favorited ? 'bg-red-50 text-red-500' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'} `}
+                            >
+                                <Heart className={`w - 5 h - 5 ${favorited ? 'fill-current' : ''} `} />
+                            </button>
+
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-4 text-sm text-gray-600 mb-4">
@@ -258,3 +303,4 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
 };
 
 export default TourCard;
+

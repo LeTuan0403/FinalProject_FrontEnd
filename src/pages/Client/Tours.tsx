@@ -108,8 +108,23 @@ const Tours = () => {
     if (sortBy !== 'default') {
       // Create a copy to sort
       result = [...result].sort((a, b) => {
-        const durationA = a.tourChiTiets?.length ? Math.max(...a.tourChiTiets.map(d => d.ngayThu)) : 1;
-        const durationB = b.tourChiTiets?.length ? Math.max(...b.tourChiTiets.map(d => d.ngayThu)) : 1;
+        const getDuration = (t: Tour) => {
+          // 1. Try detailed schedule (lichTrinh or tourChiTiets)
+          const schedule = t.lichTrinh || t.tourChiTiets;
+          if (schedule && schedule.length > 0) {
+            const maxDay = Math.max(...schedule.map((d: any) => d.ngayThu || 0));
+            if (maxDay > 1) return maxDay;
+          }
+          // 2. Parse string (fallback)
+          if (t.thoiGian) {
+            const match = t.thoiGian.match(/(\d+)\s*(ngày|ngay|n)/i); // Matches "3 ngày", "3N", "3 Ngay"
+            if (match) return parseInt(match[1]);
+          }
+          return 1;
+        };
+
+        const durationA = getDuration(a);
+        const durationB = getDuration(b);
 
         switch (sortBy) {
           case 'price-asc': return a.tongGiaDuKien - b.tongGiaDuKien;
