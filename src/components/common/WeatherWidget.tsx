@@ -41,11 +41,6 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ locationName, departureDa
                 let n = name.normalize("NFD")
                     .replace(/[\u0300-\u036f]/g, "") // Remove accents
                     .replace(/đ/g, "d").replace(/Đ/g, "D"); // Handle Vietnamese D
-
-                // Special cases for Open-Meteo
-                if (/Da Lat/i.test(n)) return "Dalat";
-                if (/Ha Long/i.test(n)) return "Halong";
-                if (/Nha Trang/i.test(n)) return "Nha Trang"; // Explicit keep
                 return n;
             };
 
@@ -62,7 +57,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ locationName, departureDa
                     return;
                 }
 
-                const { latitude, longitude, name } = geoData.results[0];
+                const { latitude, longitude } = geoData.results[0];
 
                 // 2. Weather Forecast
                 // If within range, get daily forecast. If far future, getting "current" weather as reference is better than nothing, OR we just show current weather with a disclaimer.

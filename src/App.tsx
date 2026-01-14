@@ -33,9 +33,11 @@ import LocationManagement from './pages/Admin/pages/LocationManagement';
 import ContactManagement from './pages/Admin/pages/ContactManagement';
 import Settings from './pages/Admin/pages/Settings';
 import AdminReviews from './pages/Admin/pages/AdminReviews';
+import AdminChat from './pages/Admin/pages/AdminChat';
 
 import { ComparisonProvider } from './context/ComparisonContext';
 import ComparisonFloatingBar from './components/common/ComparisonFloatingBar';
+import ChatWidget from './components/common/ChatWidget';
 
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, isLoading } = useAuth();
@@ -85,6 +87,7 @@ function App() {
           <Route path="locations" element={<AdminRoute><LocationManagement /></AdminRoute>} />
           <Route path="reviews" element={<AdminRoute><AdminReviews /></AdminRoute>} />
           <Route path="contacts" element={<AdminRoute><ContactManagement /></AdminRoute>} />
+          <Route path="chat" element={<AdminRoute><AdminChat /></AdminRoute>} />
           <Route path="settings" element={<AdminRoute><Settings /></AdminRoute>} />
 
           <Route path="tours/create" element={<AdminRoute><AdminEditTour /></AdminRoute>} />
@@ -93,6 +96,7 @@ function App() {
 
       </Routes>
       <ComparisonFloatingBar />
+      <ChatWidget />
     </ComparisonProvider>
   );
 }

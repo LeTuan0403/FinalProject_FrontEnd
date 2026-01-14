@@ -100,6 +100,25 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
     // Helper for Tour Code
     const tourCode = tour.maTour || `T - ${tour.tourId} `;
 
+    // Helper for Remaining Seats
+    const getRemainingSeats = () => {
+        let nextRem = tour.soLuongCho ?? 0;
+        if (tour.availability) {
+            // Availability for future
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(0, 0, 0, 0);
+
+            const avail = tour.availability
+                .filter(a => new Date(a.date).getTime() >= tomorrow.getTime() && a.remainingSeats > 0)
+                .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
+
+            if (avail) nextRem = avail.remainingSeats;
+        }
+        return nextRem;
+    };
+    const remainingSeats = getRemainingSeats();
+
     if (variant === 'vertical') {
         return (
             <div className="bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all overflow-hidden flex flex-col border border-gray-100 group relative">
@@ -149,22 +168,7 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
 
                     <div className="flex items-center gap-2 mb-4 text-sm text-gray-500 -mt-2">
                         <User className="w-4 h-4" />
-                        {(() => {
-                            let nextRem = tour.soLuongCho ?? 0;
-                            if (tour.availability) {
-                                // Availability for future
-                                const tomorrow = new Date();
-                                tomorrow.setDate(tomorrow.getDate() + 1);
-                                tomorrow.setHours(0, 0, 0, 0);
-
-                                const avail = tour.availability
-                                    .filter(a => new Date(a.date).getTime() >= tomorrow.getTime() && a.remainingSeats > 0)
-                                    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
-
-                                if (avail) nextRem = avail.remainingSeats;
-                            }
-                            return <span>Còn: <span className="font-semibold text-red-500">{nextRem} chỗ</span></span>;
-                        })()}
+                        <span>Còn: <span className="font-semibold text-red-500">{remainingSeats} chỗ</span></span>
                     </div>
 
                     <div className="mt-auto flex justify-between items-center border-t border-gray-100 pt-4">
@@ -265,22 +269,7 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
                         </div>
                         <div className="flex items-center gap-2">
                             <User className="w-4 h-4 text-blue-500" />
-                            {(() => {
-                                let nextRem = tour.soLuongCho ?? 0;
-                                if (tour.availability) {
-                                    // Availability for future
-                                    const tomorrow = new Date();
-                                    tomorrow.setDate(tomorrow.getDate() + 1);
-                                    tomorrow.setHours(0, 0, 0, 0);
-
-                                    const avail = tour.availability
-                                        .filter(a => new Date(a.date).getTime() >= tomorrow.getTime() && a.remainingSeats > 0)
-                                        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
-
-                                    if (avail) nextRem = avail.remainingSeats;
-                                }
-                                return <span>Còn: <span className="font-semibold text-red-500">{nextRem} chỗ</span></span>;
-                            })()}
+                            <span>Còn: <span className="font-semibold text-red-500">{remainingSeats} chỗ</span></span>
                         </div>
                     </div>
                 </div>

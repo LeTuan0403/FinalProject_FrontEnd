@@ -1,0 +1,1741 @@
+{
+  "statistics": {
+    "detectionDate": "2026-01-14T03:41:14.547Z",
+    "formats": {
+      "javascript": {
+        "sources": {
+          "src/pages/Admin/pages/UserManagement.tsx": {
+            "lines": 108,
+            "tokens": 1257,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Admin/pages/TourManagement.tsx": {
+            "lines": 93,
+            "tokens": 1121,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Admin/pages/LocationManagement.tsx": {
+            "lines": 211,
+            "tokens": 2290,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Admin/pages/EditTour.tsx": {
+            "lines": 525,
+            "tokens": 6106,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Admin/pages/Dashboard.tsx": {
+            "lines": 98,
+            "tokens": 1514,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Admin/pages/ContactManagement.tsx": {
+            "lines": 140,
+            "tokens": 1500,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Admin/pages/BookingManagement.tsx": {
+            "lines": 171,
+            "tokens": 1939,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Admin/pages/AdminReviews.tsx": {
+            "lines": 326,
+            "tokens": 3457,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Admin/pages/AdminChat.tsx": {
+            "lines": 144,
+            "tokens": 1477,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Admin/components/UploadImage.tsx": {
+            "lines": 37,
+            "tokens": 301,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Admin/components/Sidebar.tsx": {
+            "lines": 45,
+            "tokens": 641,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Admin/components/SearchableSelect.tsx": {
+            "lines": 71,
+            "tokens": 706,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Admin/components/CreatableSelect.tsx": {
+            "lines": 36,
+            "tokens": 274,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Client/Tours.tsx": {
+            "lines": 193,
+            "tokens": 2189,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Client/Profile.tsx": {
+            "lines": 81,
+            "tokens": 649,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Client/PaymentPage.tsx": {
+            "lines": 158,
+            "tokens": 2028,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Client/MyTours.tsx": {
+            "lines": 95,
+            "tokens": 1151,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Client/MyFavorites.tsx": {
+            "lines": 3,
+            "tokens": 23,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Client/MyBookings.tsx": {
+            "lines": 91,
+            "tokens": 966,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Client/Home.tsx": {
+            "lines": 339,
+            "tokens": 3868,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Client/Gallery.tsx": {
+            "lines": 3,
+            "tokens": 36,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Client/Contact.tsx": {
+            "lines": 83,
+            "tokens": 893,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Client/ComparePage.tsx": {
+            "lines": 166,
+            "tokens": 1984,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Client/BookingSuccess.tsx": {
+            "lines": 57,
+            "tokens": 741,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Client/Booking.tsx": {
+            "lines": 445,
+            "tokens": 5200,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Auth/VerifyAccount.tsx": {
+            "lines": 41,
+            "tokens": 337,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Auth/ResetPassword.tsx": {
+            "lines": 171,
+            "tokens": 1760,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Auth/ForgotPassword.tsx": {
+            "lines": 83,
+            "tokens": 772,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Auth/AuthPage.tsx": {
+            "lines": 129,
+            "tokens": 1923,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/components/icons/ZaloIcon.tsx": {
+            "lines": 0,
+            "tokens": 3,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/components/icons/PaymentIcons.tsx": {
+            "lines": 17,
+            "tokens": 143,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/components/common/WeatherWidget.tsx": {
+            "lines": 78,
+            "tokens": 1127,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/components/common/TourCard.tsx": {
+            "lines": 156,
+            "tokens": 1554,
+            "sources": 1,
+            "clones": 2,
+            "duplicatedLines": 48,
+            "duplicatedTokens": 422,
+            "percentage": 30.77,
+            "percentageTokens": 27.16,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/components/common/PaymentTimer.tsx": {
+            "lines": 11,
+            "tokens": 105,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/components/common/PasswordInput.tsx": {
+            "lines": 15,
+            "tokens": 163,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/components/common/InputField.tsx": {
+            "lines": 1,
+            "tokens": 26,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/components/common/FloatingContact.tsx": {
+            "lines": 45,
+            "tokens": 374,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/components/common/ComparisonFloatingBar.tsx": {
+            "lines": 7,
+            "tokens": 55,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/components/common/ChatWidget.tsx": {
+            "lines": 67,
+            "tokens": 651,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/components/chat/ChatBubble.tsx": {
+            "lines": 53,
+            "tokens": 526,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/components/booking/StatusBadge.tsx": {
+            "lines": 0,
+            "tokens": 7,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/components/booking/BookingEditModal.tsx": {
+            "lines": 104,
+            "tokens": 1328,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/components/booking/AdminBookingCreateModal.tsx": {
+            "lines": 153,
+            "tokens": 1788,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/context/ComparisonContext.tsx": {
+            "lines": 0,
+            "tokens": 13,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/context/ChatContext.tsx": {
+            "lines": 0,
+            "tokens": 5,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/context/AuthContextProvider.tsx": {
+            "lines": 0,
+            "tokens": 11,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/components/Header.tsx": {
+            "lines": 89,
+            "tokens": 1058,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/main.tsx": {
+            "lines": 0,
+            "tokens": 3,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/App.tsx": {
+            "lines": 40,
+            "tokens": 729,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          }
+        },
+        "total": {
+          "lines": 4979,
+          "tokens": 56772,
+          "sources": 49,
+          "clones": 1,
+          "duplicatedLines": 24,
+          "duplicatedTokens": 211,
+          "percentage": 0.48,
+          "percentageTokens": 0.37,
+          "newDuplicatedLines": 0,
+          "newClones": 0
+        }
+      },
+      "tsx": {
+        "sources": {
+          "src/pages/Admin/pages/UserManagement.tsx": {
+            "lines": 257,
+            "tokens": 2749,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Admin/pages/TourManagement.tsx": {
+            "lines": 187,
+            "tokens": 2156,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Admin/pages/Settings.tsx": {
+            "lines": 27,
+            "tokens": 270,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Admin/pages/LocationManagement.tsx": {
+            "lines": 346,
+            "tokens": 3607,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Admin/pages/EditTour.tsx": {
+            "lines": 908,
+            "tokens": 10850,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Admin/pages/Dashboard.tsx": {
+            "lines": 236,
+            "tokens": 3257,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Admin/pages/ContactManagement.tsx": {
+            "lines": 248,
+            "tokens": 2581,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Admin/pages/BookingManagement.tsx": {
+            "lines": 306,
+            "tokens": 3431,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Admin/pages/AdminReviews.tsx": {
+            "lines": 482,
+            "tokens": 5215,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Admin/pages/AdminChat.tsx": {
+            "lines": 427,
+            "tokens": 4382,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Admin/components/UploadImage.tsx": {
+            "lines": 120,
+            "tokens": 1079,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Admin/components/Sidebar.tsx": {
+            "lines": 67,
+            "tokens": 884,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Admin/components/SearchableSelect.tsx": {
+            "lines": 129,
+            "tokens": 1318,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Admin/components/CreatableSelect.tsx": {
+            "lines": 86,
+            "tokens": 759,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Client/Tours.tsx": {
+            "lines": 370,
+            "tokens": 4330,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Client/Profile.tsx": {
+            "lines": 161,
+            "tokens": 1471,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Client/PaymentPage.tsx": {
+            "lines": 232,
+            "tokens": 2855,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Client/MyTours.tsx": {
+            "lines": 160,
+            "tokens": 1828,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Client/MyFavorites.tsx": {
+            "lines": 73,
+            "tokens": 749,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Client/MyBookings.tsx": {
+            "lines": 196,
+            "tokens": 2152,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Client/Home.tsx": {
+            "lines": 373,
+            "tokens": 4282,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Client/Gallery.tsx": {
+            "lines": 32,
+            "tokens": 325,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Client/Contact.tsx": {
+            "lines": 144,
+            "tokens": 1572,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Client/ComparePage.tsx": {
+            "lines": 254,
+            "tokens": 3022,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Client/BookingSuccess.tsx": {
+            "lines": 92,
+            "tokens": 1142,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Client/Booking.tsx": {
+            "lines": 710,
+            "tokens": 8300,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Auth/VerifyAccount.tsx": {
+            "lines": 145,
+            "tokens": 1424,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Auth/ResetPassword.tsx": {
+            "lines": 191,
+            "tokens": 1990,
+            "sources": 1,
+            "clones": 3,
+            "duplicatedLines": 34,
+            "duplicatedTokens": 409,
+            "percentage": 17.8,
+            "percentageTokens": 20.55,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Auth/ForgotPassword.tsx": {
+            "lines": 124,
+            "tokens": 1319,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 12,
+            "duplicatedTokens": 156,
+            "percentage": 9.68,
+            "percentageTokens": 11.83,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/pages/Auth/AuthPage.tsx": {
+            "lines": 263,
+            "tokens": 3368,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/components/icons/ZaloIcon.tsx": {
+            "lines": 16,
+            "tokens": 158,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/components/icons/PaymentIcons.tsx": {
+            "lines": 26,
+            "tokens": 299,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/components/common/WeatherWidget.tsx": {
+            "lines": 191,
+            "tokens": 2373,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/components/common/TourCard.tsx": {
+            "lines": 293,
+            "tokens": 3129,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/components/common/PaymentTimer.tsx": {
+            "lines": 95,
+            "tokens": 955,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/components/common/PasswordInput.tsx": {
+            "lines": 38,
+            "tokens": 429,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 12,
+            "duplicatedTokens": 143,
+            "percentage": 31.58,
+            "percentageTokens": 33.33,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/components/common/InputField.tsx": {
+            "lines": 28,
+            "tokens": 315,
+            "sources": 1,
+            "clones": 1,
+            "duplicatedLines": 10,
+            "duplicatedTokens": 110,
+            "percentage": 35.71,
+            "percentageTokens": 34.92,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/components/common/FloatingContact.tsx": {
+            "lines": 67,
+            "tokens": 586,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/components/common/ComparisonFloatingBar.tsx": {
+            "lines": 44,
+            "tokens": 416,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/components/common/ChatWidget.tsx": {
+            "lines": 271,
+            "tokens": 2597,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/components/chat/ChatBubble.tsx": {
+            "lines": 74,
+            "tokens": 738,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/components/booking/StatusBadge.tsx": {
+            "lines": 36,
+            "tokens": 352,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/components/booking/BookingEditModal.tsx": {
+            "lines": 146,
+            "tokens": 1708,
+            "sources": 1,
+            "clones": 3,
+            "duplicatedLines": 38,
+            "duplicatedTokens": 431,
+            "percentage": 26.03,
+            "percentageTokens": 25.23,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/components/booking/AdminBookingCreateModal.tsx": {
+            "lines": 257,
+            "tokens": 2779,
+            "sources": 1,
+            "clones": 3,
+            "duplicatedLines": 38,
+            "duplicatedTokens": 431,
+            "percentage": 14.79,
+            "percentageTokens": 15.51,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/context/ComparisonContext.tsx": {
+            "lines": 63,
+            "tokens": 678,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/context/ChatContext.tsx": {
+            "lines": 34,
+            "tokens": 287,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/context/AuthContextProvider.tsx": {
+            "lines": 126,
+            "tokens": 1537,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/components/Layout.tsx": {
+            "lines": 18,
+            "tokens": 146,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/components/Header.tsx": {
+            "lines": 154,
+            "tokens": 1910,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/components/Footer.tsx": {
+            "lines": 87,
+            "tokens": 1154,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/main.tsx": {
+            "lines": 24,
+            "tokens": 177,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/App.tsx": {
+            "lines": 103,
+            "tokens": 1262,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          }
+        },
+        "total": {
+          "lines": 9537,
+          "tokens": 106652,
+          "sources": 52,
+          "clones": 6,
+          "duplicatedLines": 72,
+          "duplicatedTokens": 840,
+          "percentage": 0.75,
+          "percentageTokens": 0.79,
+          "newDuplicatedLines": 0,
+          "newClones": 0
+        }
+      },
+      "typescript": {
+        "sources": {
+          "src/utils/dateUtils.ts": {
+            "lines": 24,
+            "tokens": 392,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/types/index.ts": {
+            "lines": 132,
+            "tokens": 1106,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/types/chat.ts": {
+            "lines": 25,
+            "tokens": 190,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/services/userService.ts": {
+            "lines": 22,
+            "tokens": 243,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/services/tourService.ts": {
+            "lines": 55,
+            "tokens": 719,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/services/reviewService.ts": {
+            "lines": 55,
+            "tokens": 715,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/services/paymentService.ts": {
+            "lines": 9,
+            "tokens": 85,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/services/contactService.ts": {
+            "lines": 25,
+            "tokens": 262,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/services/bookingService.ts": {
+            "lines": 53,
+            "tokens": 531,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/services/authService.ts": {
+            "lines": 45,
+            "tokens": 603,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/hooks/useTours.ts": {
+            "lines": 27,
+            "tokens": 306,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/hooks/useAuth.ts": {
+            "lines": 7,
+            "tokens": 81,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/context/authContext.ts": {
+            "lines": 3,
+            "tokens": 51,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/constants/LocationCoordinates.ts": {
+            "lines": 66,
+            "tokens": 752,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          },
+          "src/api/axiosClient.ts": {
+            "lines": 33,
+            "tokens": 318,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          }
+        },
+        "total": {
+          "lines": 581,
+          "tokens": 6354,
+          "sources": 15,
+          "clones": 0,
+          "duplicatedLines": 0,
+          "duplicatedTokens": 0,
+          "percentage": 0,
+          "percentageTokens": 0,
+          "newDuplicatedLines": 0,
+          "newClones": 0
+        }
+      },
+      "css": {
+        "sources": {
+          "src/index.css": {
+            "lines": 58,
+            "tokens": 273,
+            "sources": 1,
+            "clones": 0,
+            "duplicatedLines": 0,
+            "duplicatedTokens": 0,
+            "percentage": 0,
+            "percentageTokens": 0,
+            "newDuplicatedLines": 0,
+            "newClones": 0
+          }
+        },
+        "total": {
+          "lines": 58,
+          "tokens": 273,
+          "sources": 1,
+          "clones": 0,
+          "duplicatedLines": 0,
+          "duplicatedTokens": 0,
+          "percentage": 0,
+          "percentageTokens": 0,
+          "newDuplicatedLines": 0,
+          "newClones": 0
+        }
+      }
+    },
+    "total": {
+      "lines": 15155,
+      "tokens": 170051,
+      "sources": 117,
+      "clones": 7,
+      "duplicatedLines": 96,
+      "duplicatedTokens": 1051,
+      "percentage": 0.63,
+      "percentageTokens": 0.62,
+      "newDuplicatedLines": 0,
+      "newClones": 0
+    }
+  },
+  "duplicates": [
+    {
+      "format": "tsx",
+      "lines": 13,
+      "fragment": ";\r\n\r\n    const InputField = ({ icon: Icon, register, name, rules, placeholder, type = \"text\", error }: any) => (\r\n        <div className=\"relative w-full\">\r\n            <div className={`absolute left-3 top-2.5 transition-colors ${error ? 'text-red-400' : 'text-gray-400'}`}>\r\n                <Icon size={18} />\r\n            </div>\r\n            <input\r\n                {...register(name, rules)}\r\n                type={type}\r\n                placeholder={placeholder}\r\n                className={`w-full bg-gray-50 border ${error ? 'border-red-300 focus:ring-red-100' : 'border-gray-200 focus:border-teal-500 focus:ring-teal-100'} \r\n                   rounded-lg px-10 py-2.5 text-sm outline-none transition-all focus:ring-2 placeholder:text-gray-400 text-gray-700`",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src\\pages\\Auth\\ForgotPassword.tsx",
+        "start": 29,
+        "end": 41,
+        "startLoc": {
+          "line": 29,
+          "column": 2,
+          "position": 416
+        },
+        "endLoc": {
+          "line": 41,
+          "column": 133,
+          "position": 572
+        }
+      },
+      "secondFile": {
+        "name": "src\\pages\\Auth\\ResetPassword.tsx",
+        "start": 6,
+        "end": 18,
+        "startLoc": {
+          "line": 6,
+          "column": 22,
+          "position": 96
+        },
+        "endLoc": {
+          "line": 18,
+          "column": 127,
+          "position": 251
+        }
+      }
+    },
+    {
+      "format": "javascript",
+      "lines": 25,
+      "fragment": "${inCompare ? 'bg-teal-50 text-teal-600' : 'bg-black/20 text-white hover:bg-black/40'} `}\r\n            >\r\n                <Scale className={`w - 5 h - 5 ${inCompare ? 'fill-current' : ''} `} />\r\n            </button>\r\n\r\n            {/* Horizontal Image */}\r\n            <div className=\"md:w-1/3 relative overflow-hidden h-64 md:h-auto\">\r\n                <img\r\n                    src={tour.hinhAnhBia || \"https://placehold.co/400x300?text=Tour\"}\r\n                    alt={tour.tenTour}\r\n                    className=\"w-full h-full object-cover group-hover:scale-110 transition-transform duration-500\"\r\n                />\r\n            </div>\r\n\r\n            {/* Horizontal Content */}\r\n            <div className=\"p-6 md:w-2/3 flex flex-col justify-between\">\r\n                <div>\r\n                    <div className=\"flex justify-between items-start\">\r\n                        <h3 className=\"text-xl font-bold mb-3 text-blue-900 group-hover:text-blue-600 transition-colors pr-8\">\r\n                            <Link to={`/tours/${tour.tourId}`}>{tour.tenTour}</Link>\r\n                        </h3>\r\n                        <div className=\"hidden md:flex gap-2\">\r\n                            {/* Compare Button Desktop */}\r\n                            <button\r\n                                onClick={handleToggleCompare",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src\\components\\common\\TourCard.tsx",
+        "start": 207,
+        "end": 231,
+        "startLoc": {
+          "line": 207,
+          "column": 106,
+          "position": 2218
+        },
+        "endLoc": {
+          "line": 231,
+          "column": 20,
+          "position": 2429
+        }
+      },
+      "secondFile": {
+        "name": "src\\components\\common\\TourCard.tsx",
+        "start": 138,
+        "end": 180,
+        "startLoc": {
+          "line": 138,
+          "column": 96,
+          "position": 1605
+        },
+        "endLoc": {
+          "line": 180,
+          "column": 9,
+          "position": 2033
+        }
+      }
+    },
+    {
+      "format": "tsx",
+      "lines": 13,
+      "fragment": ") => {\r\n    const [showPassword, setShowPassword] = useState(false);\r\n    return (\r\n        <div className=\"relative w-full\">\r\n            <div className={`absolute left-3 top-2.5 transition-colors ${error ? 'text-red-400' : 'text-gray-400'}`}>\r\n                <Icon size={18} />\r\n            </div>\r\n            <input\r\n                {...register(name, rules)}\r\n                type={showPassword ? \"text\" : \"password\"}\r\n                placeholder={placeholder}\r\n                className={`w-full bg-gray-50 border ${error ? 'border-red-300 focus:ring-red-100' : 'border-gray-200 focus:border-teal-500 focus:ring-teal-100'} \r\n                   rounded-lg px-10 py-2.5 text-sm outline-none transition-all focus:ring-2 placeholder:text-gray-400 text-gray-700`",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src\\components\\common\\PasswordInput.tsx",
+        "start": 14,
+        "end": 26,
+        "startLoc": {
+          "line": 14,
+          "column": 2,
+          "position": 183
+        },
+        "endLoc": {
+          "line": 26,
+          "column": 133,
+          "position": 326
+        }
+      },
+      "secondFile": {
+        "name": "src\\pages\\Auth\\ResetPassword.tsx",
+        "start": 23,
+        "end": 35,
+        "startLoc": {
+          "line": 23,
+          "column": 4,
+          "position": 305
+        },
+        "endLoc": {
+          "line": 35,
+          "column": 131,
+          "position": 448
+        }
+      }
+    },
+    {
+      "format": "tsx",
+      "lines": 11,
+      "fragment": ") => (\r\n    <div className=\"relative w-full\">\r\n        <div className={`absolute left-3 top-2.5 transition-colors ${error ? 'text-red-400' : 'text-gray-400'}`}>\r\n            <Icon size={18} />\r\n        </div>\r\n        <input\r\n            {...register(name, rules)}\r\n            type={type}\r\n            placeholder={placeholder}\r\n            className={`w-full bg-gray-50 border ${error ? 'border-red-300 focus:ring-red-100' : 'border-gray-200 focus:border-teal-500 focus:ring-teal-100'} \r\n               rounded-lg px-10 py-2.5 text-sm outline-none transition-all focus:ring-2 placeholder:text-gray-400 text-gray-700`",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src\\components\\common\\InputField.tsx",
+        "start": 14,
+        "end": 24,
+        "startLoc": {
+          "line": 14,
+          "column": 2,
+          "position": 179
+        },
+        "endLoc": {
+          "line": 24,
+          "column": 129,
+          "position": 289
+        }
+      },
+      "secondFile": {
+        "name": "src\\pages\\Auth\\ResetPassword.tsx",
+        "start": 8,
+        "end": 18,
+        "startLoc": {
+          "line": 8,
+          "column": 4,
+          "position": 141
+        },
+        "endLoc": {
+          "line": 18,
+          "column": 127,
+          "position": 251
+        }
+      }
+    },
+    {
+      "format": "tsx",
+      "lines": 10,
+      "fragment": ") => new Date(d))\r\n                                        .filter((d: Date) => d.getTime() >= new Date().setHours(0, 0, 0, 0))\r\n                                        .sort((a: Date, b: Date) => a.getTime() - b.getTime())\r\n                                        .map((date: Date, idx: number) => {\r\n                                            const dateStr = date.toISOString().split('T')[0];\r\n                                            const displayStr = date.toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'numeric', day: 'numeric' });\r\n                                            return <option key={idx} value={dateStr}>{displayStr}</option>;\r\n                                        })\r\n                                    }\r\n                                    <option value=\"other\">",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src\\components\\booking\\AdminBookingCreateModal.tsx",
+        "start": 190,
+        "end": 199,
+        "startLoc": {
+          "line": 190,
+          "column": 4,
+          "position": 2028
+        },
+        "endLoc": {
+          "line": 199,
+          "column": 2,
+          "position": 2253
+        }
+      },
+      "secondFile": {
+        "name": "src\\components\\booking\\BookingEditModal.tsx",
+        "start": 96,
+        "end": 105,
+        "startLoc": {
+          "line": 96,
+          "column": 7,
+          "position": 1136
+        },
+        "endLoc": {
+          "line": 105,
+          "column": 2,
+          "position": 1361
+        }
+      }
+    },
+    {
+      "format": "tsx",
+      "lines": 15,
+      "fragment": "</option>\r\n                                </select>\r\n                            ) : (\r\n                                <input\r\n                                    type=\"date\"\r\n                                    className=\"w-full p-3 border rounded-lg\"\r\n                                    value={formData.ngayKhoiHanh}\r\n                                    onChange={e => setFormData({ ...formData, ngayKhoiHanh: e.target.value })}\r\n                                    min={new Date().toISOString().split('T')[0]}\r\n                                />\r\n                            )}\r\n                        </div>\r\n\r\n                        <div className=\"col-span-2\">\r\n                            <label className=\"block text-sm font-bold text-gray-700 mb-1\">Trạng",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src\\components\\booking\\AdminBookingCreateModal.tsx",
+        "start": 199,
+        "end": 213,
+        "startLoc": {
+          "line": 199,
+          "column": 2,
+          "position": 2261
+        },
+        "endLoc": {
+          "line": 213,
+          "column": 6,
+          "position": 2388
+        }
+      },
+      "secondFile": {
+        "name": "src\\components\\booking\\BookingEditModal.tsx",
+        "start": 105,
+        "end": 118,
+        "startLoc": {
+          "line": 105,
+          "column": 5,
+          "position": 1377
+        },
+        "endLoc": {
+          "line": 118,
+          "column": 4,
+          "position": 1518
+        }
+      }
+    },
+    {
+      "format": "tsx",
+      "lines": 16,
+      "fragment": "\r\n                            />\r\n                        </div>\r\n                    </div>\r\n\r\n                    <div className=\"flex justify-end gap-3 pt-4 border-t border-gray-100\">\r\n                        <button\r\n                            type=\"button\"\r\n                            onClick={onClose}\r\n                            className=\"px-4 py-2 border rounded-lg text-gray-600 font-bold hover:bg-gray-100\"\r\n                        >\r\n                            Hủy\r\n                        </button>\r\n                        <button\r\n                            type=\"submit\"\r\n                            className=\"px-6 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 shadow-lg shadow-blue-200",
+      "tokens": 0,
+      "firstFile": {
+        "name": "src\\components\\booking\\AdminBookingCreateModal.tsx",
+        "start": 232,
+        "end": 247,
+        "startLoc": {
+          "line": 232,
+          "column": 2,
+          "position": 2641
+        },
+        "endLoc": {
+          "line": 247,
+          "column": 98,
+          "position": 2720
+        }
+      },
+      "secondFile": {
+        "name": "src\\components\\booking\\BookingEditModal.tsx",
+        "start": 122,
+        "end": 136,
+        "startLoc": {
+          "line": 122,
+          "column": 2,
+          "position": 1570
+        },
+        "endLoc": {
+          "line": 136,
+          "column": 98,
+          "position": 1647
+        }
+      }
+    }
+  ]
+}

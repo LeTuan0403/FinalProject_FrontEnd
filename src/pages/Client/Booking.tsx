@@ -33,6 +33,15 @@ const Booking = () => {
     const [touched, setTouched] = useState<Record<string, boolean>>({});
     const [paymentMethod, setPaymentMethod] = useState<'cash' | 'transfer'>('transfer');
 
+    const handleQuantityChange = (field: 'adults' | 'children', value: string) => {
+        if (value === '') {
+            setFormData(prev => ({ ...prev, [field]: '' }));
+            return;
+        }
+        const num = parseInt(value);
+        setFormData(prev => ({ ...prev, [field]: isNaN(num) ? '' : num }));
+    };
+
     useEffect(() => {
         const fetchTour = async () => {
             if (!id) return;
@@ -375,21 +384,12 @@ const Booking = () => {
                                         className={`w-full p-3 border rounded-xl font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500 ${touched.adults && errors.adults ? 'border-red-500 bg-red-50' : 'border-gray-200 bg-gray-50'}`}
                                         value={formData.adults}
                                         onKeyDown={(e) => ["-", "e", "E", "+"].includes(e.key) && e.preventDefault()}
-                                        onChange={e => {
-                                            const val = e.target.value;
-                                            if (val === '') {
-                                                setFormData({ ...formData, adults: '' });
-                                                return;
-                                            }
-                                            const num = parseInt(val);
-                                            // Allow typing freely, enforce min on blur
-                                            setFormData({ ...formData, adults: isNaN(num) ? '' : num });
-                                        }}
+                                        onChange={e => handleQuantityChange('adults', e.target.value)}
                                         onBlur={() => {
                                             setTouched({ ...touched, adults: true });
                                             // Enforce minimum 1 on blur
                                             if (formData.adults === '' || Number(formData.adults) < 1) {
-                                                setFormData({ ...formData, adults: 1 });
+                                                setFormData(prev => ({ ...prev, adults: 1 }));
                                             }
                                         }}
                                     />
@@ -403,19 +403,10 @@ const Booking = () => {
                                         className="w-full p-3 border border-gray-200 rounded-xl font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50"
                                         value={formData.children}
                                         onKeyDown={(e) => ["-", "e", "E", "+"].includes(e.key) && e.preventDefault()}
-                                        onChange={e => {
-                                            const val = e.target.value;
-                                            if (val === '') {
-                                                setFormData({ ...formData, children: '' });
-                                                return;
-                                            }
-                                            const num = parseInt(val);
-                                            setFormData({ ...formData, children: isNaN(num) ? '' : num });
-                                        }}
+                                        onChange={e => handleQuantityChange('children', e.target.value)}
                                         onBlur={() => {
-                                            // Enforce minimum 0 on blur
                                             if (formData.children === '' || typeof formData.children !== 'number') {
-                                                setFormData({ ...formData, children: 0 });
+                                                setFormData(prev => ({ ...prev, children: 0 }));
                                             }
                                         }}
                                     />

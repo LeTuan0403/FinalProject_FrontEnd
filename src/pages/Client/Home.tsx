@@ -47,16 +47,7 @@ const Home = () => {
       slider.style.userSelect = 'none'; // Prevent text selection
     };
 
-    const onMouseLeave = (e: React.MouseEvent) => {
-      if (isDragging) {
-        setIsDragging(false);
-        const slider = e.currentTarget as HTMLElement;
-        slider.style.cursor = 'grab';
-        slider.style.removeProperty('user-select');
-      }
-    };
-
-    const onMouseUp = (e: React.MouseEvent) => {
+    const stopDragging = (e: React.MouseEvent) => {
       if (isDragging) {
         setIsDragging(false);
         const slider = e.currentTarget as HTMLElement;
@@ -74,7 +65,7 @@ const Home = () => {
       slider.scrollLeft = scrollLeft - walk;
     };
 
-    return { events: { onMouseDown, onMouseLeave, onMouseUp, onMouseMove }, style: { cursor: 'grab' as const } };
+    return { events: { onMouseDown, onMouseLeave: stopDragging, onMouseUp: stopDragging, onMouseMove }, style: { cursor: 'grab' as const } };
   };
 
   const draggable = useDraggableScroll();
@@ -99,22 +90,19 @@ const Home = () => {
   );
 
   // Get Asia tours
-  const asiaTours = tours.filter(t => {
-    if (!t.daDuyet || t.isTuChon || !t.loaiTour) return false;
-    const isIntl = t.loaiTour.includes('Nước Ngoài');
-    if (!isIntl) return false;
+  // Pre-filter valid international tours to avoid repetition
+  const validIntlTours = tours.filter(t => t.daDuyet && !t.isTuChon && t.loaiTour?.includes('Nước Ngoài'));
+
+  // Get Asia tours
+  const asiaTours = validIntlTours.filter(t => {
     const kv = (t.khuVuc || '').toLowerCase();
     return kv.includes('chau a') || kv.includes('châu á') || kv.includes('asia');
   });
 
   // Get other continent tours
-  const otherTours = tours.filter(t => {
-    if (!t.daDuyet || t.isTuChon || !t.loaiTour) return false;
-    const isIntl = t.loaiTour.includes('Nước Ngoài');
-    if (!isIntl) return false;
+  const otherTours = validIntlTours.filter(t => {
     const kv = (t.khuVuc || '').toLowerCase();
-    const isAsia = kv.includes('chau a') || kv.includes('châu á') || kv.includes('asia');
-    return !isAsia;
+    return !(kv.includes('chau a') || kv.includes('châu á') || kv.includes('asia'));
   });
 
   // Get Last Minute Tours (within 3 days from Tomorrow)
