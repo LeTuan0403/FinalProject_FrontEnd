@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { toast } from 'react-hot-toast';
 import { Plus, Edit, Trash2, MapPin, Calendar, Loader, Search, CheckCircle } from 'lucide-react';
 import { tourService } from '../../../services/tourService';
 import { useNotification } from '../../../context/NotificationContext';
@@ -60,7 +61,7 @@ const TourManagement = () => {
                 setTours(prev => prev.filter(t => t.tourId !== id));
                 refreshCounts();
             } catch (error) {
-                alert('Xóa thất bại');
+                toast.error('Xóa thất bại');
             }
         }
     };
@@ -71,10 +72,10 @@ const TourManagement = () => {
                 await tourService.approveTour(id);
                 // Update local state to reflect approval
                 setTours(prev => prev.map(t => t.tourId === id ? { ...t, daDuyet: true } : t));
-                alert('Đã duyệt tour!');
+                toast.success('Đã duyệt tour!');
                 refreshCounts();
             } catch (error) {
-                alert('Duyệt thất bại');
+                toast.error('Duyệt thất bại');
             }
         }
     };

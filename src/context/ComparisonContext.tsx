@@ -1,5 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { toast } from 'react-hot-toast';
 
 interface ComparisonContextType {
     selectedTourIds: number[];
@@ -29,7 +30,7 @@ export const ComparisonProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     const addToCompare = (tourId: number) => {
         if (selectedTourIds.length >= 3) {
-            alert("Bạn chỉ có thể so sánh tối đa 3 tour!");
+            toast.error("Bạn chỉ có thể so sánh tối đa 3 tour!");
             return;
         }
         if (!selectedTourIds.includes(tourId)) {

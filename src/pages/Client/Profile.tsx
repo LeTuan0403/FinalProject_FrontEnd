@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { userService } from '../../services/authService';
 import { User, Mail, Phone, MapPin, Calendar, Save, Loader } from 'lucide-react';
 
+import toast from 'react-hot-toast';
+
 const Profile = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -49,17 +51,17 @@ const Profile = () => {
                 diaChi: formData.diaChi,
                 ngaySinh: formData.ngaySinh || undefined
             });
-            alert("Cập nhật hồ sơ thành công!");
+            toast.success("Cập nhật hồ sơ thành công!");
             // Optionally refresh user context if AuthProvider supports it
         } catch (error) {
             console.error("Update failed", error);
-            alert("Cập nhật thất bại.");
+            toast.error("Cập nhật thất bại.");
         } finally {
             setSaving(false);
         }
     };
 
-    if (loading) {return <div className="min-h-screen pt-24 flex justify-center"><Loader className="animate-spin" /></div>;}
+    if (loading) { return <div className="min-h-screen pt-24 flex justify-center"><Loader className="animate-spin" /></div>; }
 
     return (
         <div className="min-h-screen pt-24 pb-12 bg-gray-50">

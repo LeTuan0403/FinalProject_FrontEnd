@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { toast } from 'react-hot-toast';
 import { Calendar, MapPin, User, Clock } from 'lucide-react';
 import { bookingService } from '../../services/bookingService';
 import { useAuth } from '../../hooks/useAuth';
@@ -55,25 +56,61 @@ const MyBookings = () => {
                 soLuongNguoi: Number(data.soLuongNguoiLon || 0) + Number(data.soLuongTreEm || 0)
             };
             await bookingService.update(payload.donDatId, payload);
-            alert("Cập nhật đơn đặt tour thành công!");
+            toast.success("Cập nhật đơn đặt tour thành công!");
             setEditBooking(null);
             fetchMyBookings();
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
-            alert(error.response?.data?.message || "Lỗi cập nhật!");
+            // Prioritize 'msg' or 'error' from backend, then 'message', then fallback
+            const backendMsg = error.response?.data?.msg || error.response?.data?.error || error.response?.data?.message || "Lỗi cập nhật! Vui lòng thử lại.";
+            toast.error(backendMsg);
+            // Re-throw if we want the Modal to also catch it, but here we handled it.
+            // If Modal calls onSubmit and expects it to fail to keep modal open, we should rethrow
+            throw error;
         }
     };
 
-    const handleCancel = async (id: number) => {
-        if (!window.confirm("Bạn có chắc chắn muốn hủy đơn này? Nếu hủy, bạn sẽ không thể đặt lại tour này trong 24 giờ.")) { return; }
-        try {
-            await bookingService.cancel(id, "Khách hàng tự hủy");
-            alert("Đã hủy đơn thành công!");
-            fetchMyBookings();
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
-            alert(error.response?.data?.message || "Lỗi hủy đơn!");
-        }
+    const handleCancel = (id: number) => {
+        toast((t) => (
+            <div>
+                <p className="font-bold text-gray-800">Xác nhận hủy đơn?</p>
+                <p className="text-sm text-gray-600 mt-1 mb-3">Nếu hủy, bạn sẽ không thể đặt lại tour này trong 24 giờ.</p>
+                <div className="flex justify-end gap-2">
+                    <button
+                        onClick={() => toast.dismiss(t.id)}
+                        className="px-3 py-1 bg-gray-100 text-gray-600 rounded-md text-sm font-medium hover:bg-gray-200"
+                    >
+                        Đóng
+                    </button>
+                    <button
+                        onClick={async () => {
+                            toast.dismiss(t.id);
+                            try {
+                                await bookingService.cancel(id, "Khách hàng tự hủy");
+                                toast.success("Đã hủy đơn thành công!");
+                                fetchMyBookings();
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            } catch (error: any) {
+                                toast.error(error.response?.data?.message || "Lỗi hủy đơn!");
+                            }
+                        }}
+                        className="px-3 py-1 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700"
+                    >
+                        Hủy đơn
+                    </button>
+                </div>
+            </div>
+        ), {
+            duration: 5000,
+            style: {
+                background: '#fff',
+                color: '#333',
+                padding: '16px',
+                borderRadius: '12px',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                border: '1px solid #f3f4f6',
+            },
+        });
     };
 
     if (loading) { return <div className="min-h-screen pt-24 pb-12 flex justify-center items-center">Loading...</div>; }

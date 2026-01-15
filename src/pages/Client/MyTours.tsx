@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { toast } from 'react-hot-toast';
 import { tourService } from '../../services/tourService';
 import { useAuth } from '../../hooks/useAuth';
 import type { Tour } from '../../types';
@@ -30,7 +31,7 @@ const MyTours = () => {
 
     const handleEdit = (tour: Tour) => {
         if (tour.daDuyet) {
-            alert("Tour đã được duyệt/xác nhận, không thể chỉnh sửa.");
+            toast.error("Tour đã được duyệt/xác nhận, không thể chỉnh sửa.");
             return;
         }
         navigate('/custom-tour', { state: { tourData: tour } });
@@ -114,18 +115,39 @@ const MyTours = () => {
                                                 <Edit size={16} /> Chỉnh sửa
                                             </button>
                                             <button
-                                                onClick={async () => {
-                                                    if (window.confirm("Bạn có chắc chắn muốn hủy yêu cầu thiết kế tour này không? Hành động này không thể hoàn tác.")) {
-                                                        try {
-                                                            await tourService.deleteCustom(tour.tourId);
-                                                            setTours(prev => prev.filter(t => t.tourId !== tour.tourId));
-                                                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                                        } catch (error: any) {
-                                                            console.error("Delete tour failed:", error);
-                                                            const errMsg = error.response?.data?.message || error.message || "Lỗi không xác định";
-                                                            alert(`Không thể hủy tour. Chi tiết: ${errMsg}`);
-                                                        }
-                                                    }
+                                                onClick={() => {
+                                                    toast((t) => (
+                                                        <div>
+                                                            <p className="font-bold text-gray-800">Hủy yêu cầu thiết kế tour?</p>
+                                                            <p className="text-sm text-gray-600 mt-1 mb-3">Hành động này không thể hoàn tác.</p>
+                                                            <div className="flex justify-end gap-2">
+                                                                <button
+                                                                    onClick={() => toast.dismiss(t.id)}
+                                                                    className="px-3 py-1 bg-gray-100 text-gray-600 rounded-md text-sm font-medium hover:bg-gray-200"
+                                                                >
+                                                                    Đóng
+                                                                </button>
+                                                                <button
+                                                                    onClick={async () => {
+                                                                        toast.dismiss(t.id);
+                                                                        try {
+                                                                            await tourService.deleteCustom(tour.tourId);
+                                                                            setTours(prev => prev.filter(t => t.tourId !== tour.tourId));
+                                                                            toast.success("Đã hủy yêu cầu tour thành công");
+                                                                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                                                        } catch (error: any) {
+                                                                            console.error("Delete tour failed:", error);
+                                                                            const errMsg = error.response?.data?.message || error.message || "Lỗi không xác định";
+                                                                            toast.error(`Không thể hủy tour. Chi tiết: ${errMsg}`);
+                                                                        }
+                                                                    }}
+                                                                    className="px-3 py-1 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700"
+                                                                >
+                                                                    Xác nhận hủy
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    ), { duration: 5000 });
                                                 }}
                                                 className="flex items-center gap-2 px-4 py-2 border border-red-500 text-red-500 font-bold rounded-lg hover:bg-red-50 transition whitespace-nowrap"
                                             >

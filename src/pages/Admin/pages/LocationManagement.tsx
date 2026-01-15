@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { toast } from 'react-hot-toast';
 import { Plus, Edit2, Trash2, Search, MapPin, Clock, DollarSign, X } from 'lucide-react';
 import { diaDiemService } from '../../../services/tourService';
 import type { DiaDiem } from '../../../types';
@@ -44,12 +45,12 @@ const LocationManagement = () => {
                 // Optimistic Update
                 await diaDiemService.update(editingLoc.diaDiemId, formData);
                 setLocations(prev => prev.map(l => l.diaDiemId === editingLoc.diaDiemId ? { ...l, ...formData } as DiaDiem : l));
-                alert("Cập nhật địa điểm thành công!");
+                toast.success("Cập nhật địa điểm thành công!");
             } else {
                 const res = await diaDiemService.create(formData);
                 if (res.data) {
                     setLocations(prev => [res.data, ...prev]);
-                    alert("Thêm địa điểm thành công!");
+                    toast.success("Thêm địa điểm thành công!");
                 }
             }
             setShowModal(false);
@@ -65,18 +66,18 @@ const LocationManagement = () => {
             // DO NOT fetchLocations() to enable silent update
         } catch (error) {
             console.error("Submit failed", error);
-            alert("Có lỗi xảy ra!");
+            toast.error("Có lỗi xảy ra!");
         }
     };
 
     const handleDelete = async (id: number) => {
-        if (!window.confirm("Bạn có chắc chắn muốn xóa địa điểm này?")) {return;}
+        if (!window.confirm("Bạn có chắc chắn muốn xóa địa điểm này?")) { return; }
         try {
             await diaDiemService.delete(id);
             setLocations(prev => prev.filter(l => l.diaDiemId !== id));
         } catch (error) {
             console.error("Delete failed", error);
-            alert("Không thể xóa địa điểm (có thể đang được sử dụng trong Tour).");
+            toast.error("Không thể xóa địa điểm (có thể đang được sử dụng trong Tour).");
         }
     };
 

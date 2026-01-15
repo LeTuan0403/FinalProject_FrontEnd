@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { toast } from "react-hot-toast";
 import { MessageCircle, Search, Send, MoreVertical, MapPin, X, Trash2 } from "lucide-react";
 import axios from "axios";
 import { useChat } from "../../../context/ChatContext";
@@ -207,7 +208,7 @@ const AdminChat = () => {
             setMessages([]);
         } catch (e) {
             console.error("Delete conversation failed", e);
-            alert("Có lỗi xảy ra khi xóa cuộc trò chuyện");
+            toast.error("Có lỗi xảy ra khi xóa cuộc trò chuyện");
         }
     };
 

@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
+import { toast } from 'react-hot-toast';
 import { useParams, useNavigate } from 'react-router-dom';
 import { isFutureDate, formatTimeRange, compareTimeStrings } from '../../utils/dateUtils';
 import { ChevronDown, ChevronUp, Share2, Heart, Ticket, Clock, MapPin, Truck, Info, Map, CheckCircle, AlertCircle, Star, MessageSquare, Trash2, Edit, Reply, Check, X, Calendar, UserCheck, Utensils, Image as ImageIcon, ThumbsUp, Camera, Cloud, Bell, BellOff } from 'lucide-react';
@@ -207,14 +208,14 @@ const TourDetail = () => {
 
   const toggleFavorite = async () => {
     if (!user) {
-      alert("Vui lòng đăng nhập!");
+      toast.error("Vui lòng đăng nhập!");
       return;
     }
     try {
       await userService.toggleFavorite(Number(id));
       setIsFavorite(!isFavorite);
     } catch (e) {
-      alert("Lỗi khi thêm vào yêu thích");
+      toast.error("Lỗi khi thêm vào yêu thích");
     }
   };
 
@@ -290,7 +291,7 @@ const TourDetail = () => {
         await reviewService.update(editingReviewId, reviewData);
         // Optimistic update
         setReviews(prev => prev.map(rv => rv.danhGiaId === editingReviewId ? { ...rv, ...reviewData } : rv));
-        alert("Cập nhật đánh giá thành công!");
+        toast.success("Cập nhật đánh giá thành công!");
         setEditingReviewId(null);
       } else {
         // CREATE New Review
@@ -299,7 +300,7 @@ const TourDetail = () => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const newReview: any = { ...res.data, nguoiDung: { hoTen: user.hoTen } };
           setReviews(prev => [newReview, ...prev]);
-          alert("Cảm ơn bạn đã đánh giá!");
+          toast.success("Cảm ơn bạn đã đánh giá!");
         }
       }
 
@@ -310,7 +311,7 @@ const TourDetail = () => {
       setPreviewMedia([]);
     } catch (error) {
       console.error("Failed to submit review", error);
-      alert("Thao tác thất bại.");
+      toast.error("Thao tác thất bại.");
     } finally {
       setSubmittingReview(false);
     }
@@ -332,26 +333,45 @@ const TourDetail = () => {
   };
 
   const handleDeleteReview = async (reviewId: number) => {
-    if (window.confirm("Bạn có chắc chắn muốn xóa đánh giá này?")) {
-      try {
-        await reviewService.delete(reviewId);
-        setReviews(prev => prev.filter(rv => rv.danhGiaId !== reviewId));
-        // If deleting the currently edited review, reset form
-        if (editingReviewId === reviewId) {
-          setEditingReviewId(null);
-          setUserComment('');
-          setUserRating(5);
-        }
-      } catch (error) {
-        console.error("Failed to delete review", error);
-        alert("Xóa đánh giá thất bại!");
-      }
-    }
+    toast((t) => (
+      <div>
+        <p className="font-bold text-gray-800">Xác nhận xóa đánh giá?</p>
+        <div className="flex justify-end gap-2 mt-2">
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="px-3 py-1 bg-gray-100 text-gray-600 rounded-md text-sm font-medium hover:bg-gray-200"
+          >
+            Hủy
+          </button>
+          <button
+            onClick={async () => {
+              toast.dismiss(t.id);
+              try {
+                await reviewService.delete(reviewId);
+                setReviews(prev => prev.filter(rv => rv.danhGiaId !== reviewId));
+                if (editingReviewId === reviewId) {
+                  setEditingReviewId(null);
+                  setUserComment('');
+                  setUserRating(5);
+                }
+                toast.success("Đã xóa đánh giá!");
+              } catch (error) {
+                console.error("Failed to delete review", error);
+                toast.error("Xóa đánh giá thất bại!");
+              }
+            }}
+            className="px-3 py-1 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700"
+          >
+            Xóa
+          </button>
+        </div>
+      </div>
+    ), { duration: 5000 });
   };
 
   const handleLike = async (reviewId: number) => {
     if (!user) {
-      alert("Vui lòng đăng nhập để thích đánh giá!");
+      toast.error("Vui lòng đăng nhập để thích đánh giá!");
       return;
     }
     try {
@@ -371,7 +391,7 @@ const TourDetail = () => {
 
   const handleLikeReply = async (reviewId: number, replyId: string) => {
     if (!user) {
-      alert("Vui lòng đăng nhập!");
+      toast.error("Vui lòng đăng nhập!");
       return;
     }
     try {
@@ -395,10 +415,10 @@ const TourDetail = () => {
       setReviews(prev => prev.map(rv => rv.danhGiaId === reviewId ? { ...rv, subscribers: res.data.subscribers } : rv));
 
       const isNowSubscribed = res.data.subscribers && res.data.subscribers.includes(String(user.userId));
-      alert(isNowSubscribed ? "Đã bật thông báo cho luồng thảo luận này" : "Đã tắt thông báo cho luồng thảo luận này");
+      toast.success(isNowSubscribed ? "Đã bật thông báo cho luồng thảo luận này" : "Đã tắt thông báo cho luồng thảo luận này");
     } catch (error) {
       console.error("Toggle subscription failed", error);
-      alert("Lỗi khi thay đổi trạng thái thông báo");
+      toast.error("Lỗi khi thay đổi trạng thái thông báo");
     }
   };
 
@@ -459,13 +479,35 @@ const TourDetail = () => {
   };
 
   const handleDeleteReply = async (reviewId: number, replyId: string) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa bình luận này?")) { return; }
-    try {
-      const res = await reviewService.deleteReply(reviewId, replyId);
-      setReviews(prev => prev.map(rv => rv.danhGiaId === reviewId ? { ...rv, replies: res.data } : rv));
-    } catch (error) {
-      console.error("Delete reply failed", error);
-    }
+    toast((t) => (
+      <div>
+        <p className="font-bold text-gray-800">Xác nhận xóa bình luận?</p>
+        <div className="flex justify-end gap-2 mt-2">
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="px-3 py-1 bg-gray-100 text-gray-600 rounded-md text-sm font-medium hover:bg-gray-200"
+          >
+            Hủy
+          </button>
+          <button
+            onClick={async () => {
+              toast.dismiss(t.id);
+              try {
+                const res = await reviewService.deleteReply(reviewId, replyId);
+                setReviews(prev => prev.map(rv => rv.danhGiaId === reviewId ? { ...rv, replies: res.data } : rv));
+                toast.success("Đã xóa bình luận!");
+              } catch (error) {
+                console.error("Delete reply failed", error);
+                toast.error("Xóa thất bại!");
+              }
+            }}
+            className="px-3 py-1 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700"
+          >
+            Xóa
+          </button>
+        </div>
+      </div>
+    ), { duration: 5000 });
   };
 
   const handleReplySubmit = async (reviewId: number) => {

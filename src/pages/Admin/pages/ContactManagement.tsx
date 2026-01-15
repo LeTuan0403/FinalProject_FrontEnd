@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { toast } from 'react-hot-toast';
 import { contactService, Contact } from '../../../services/contactService';
 import { useNotification } from '../../../context/NotificationContext';
 import { useChat } from '../../../context/ChatContext';
@@ -73,13 +74,13 @@ const ContactManagement = () => {
         setSending(true);
         try {
             await contactService.replyContact(selectedContact.lienHeId, replyContent);
-            alert("Đã gửi phản hồi thành công!");
+            toast.success("Đã gửi phản hồi thành công!");
             setReplyModalOpen(false);
             fetchContacts();
             refreshCounts(); // Update notification badge
         } catch (error) {
             console.error(error);
-            alert("Gửi thất bại.");
+            toast.error("Gửi thất bại.");
         } finally {
             setSending(false);
         }
@@ -93,7 +94,7 @@ const ContactManagement = () => {
                 fetchContacts();
                 refreshCounts(); // Update notification badge
             } catch (error) {
-                alert("Xóa thất bại!");
+                toast.error("Xóa thất bại!");
             }
         }
     };

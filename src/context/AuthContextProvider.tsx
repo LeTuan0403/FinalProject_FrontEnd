@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { LoginResponse } from '../types';
 import { AuthContext } from './authContext';
+import { toast } from 'react-hot-toast';
 
 export interface AuthContextType {
   user: LoginResponse | null;
@@ -84,7 +85,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const userId = Number(rawId);
 
     if (userId === 0) {
-      alert("Cảnh báo: Không tìm thấy ID người dùng. Vui lòng liên hệ hỗ trợ hoặc thử lại.");
+      toast.error("Cảnh báo: Không tìm thấy ID người dùng. Vui lòng liên hệ hỗ trợ hoặc thử lại.");
     }
 
     localStorage.setItem('token', token);

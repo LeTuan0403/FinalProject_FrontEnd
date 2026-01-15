@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from 'react-hot-toast';
 import { X, Loader, Plus } from 'lucide-react';
 import { tourService } from '../../services/tourService';
 import type { Tour } from '../../types';
@@ -61,11 +62,11 @@ const AdminBookingCreateModal: React.FC<AdminBookingCreateModalProps> = ({ isOpe
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!selectedTour) {
-            alert("Vui lòng chọn tour!");
+            toast.error("Vui lòng chọn tour!");
             return;
         }
         if (!formData.ngayKhoiHanh) {
-            alert("Vui lòng chọn ngày khởi hành!");
+            toast.error("Vui lòng chọn ngày khởi hành!");
             return;
         }
 

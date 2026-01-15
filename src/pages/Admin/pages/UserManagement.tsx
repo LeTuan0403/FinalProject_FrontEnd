@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { toast } from 'react-hot-toast';
 import { Loader, Trash2, Search, ChevronLeft, ChevronRight, MapPin, ShoppingBag } from 'lucide-react';
 import { userService } from '../../../services/authService';
 import { bookingService } from '../../../services/bookingService';
@@ -78,7 +79,7 @@ const UserManagement = () => {
             }
         } catch (error) {
             console.error("Failed to fetch users", error);
-            alert("Không thể tải danh sách người dùng. Vui lòng thử lại sau.");
+            toast.error("Không thể tải danh sách người dùng. Vui lòng thử lại sau.");
         } finally {
             setLoading(false);
         }
@@ -89,10 +90,10 @@ const UserManagement = () => {
             try {
                 await userService.delete(id);
                 setUsers(prev => prev.filter(u => u.userId !== id));
-                alert('Đã xóa người dùng!');
+                toast.success('Đã xóa người dùng!');
                 fetchUsers(); // Refresh to update count/pagination
             } catch (error) {
-                alert('Xóa thất bại (Có thể do ràng buộc dữ liệu)');
+                toast.error('Xóa thất bại (Có thể do ràng buộc dữ liệu)');
             }
         }
     };
@@ -107,10 +108,10 @@ const UserManagement = () => {
                 setUsers(prev => prev.map(u =>
                     u.userId === userId ? { ...u, isAdmin: newRole } : u
                 ));
-                alert("Đã cập nhật vai trò thành công!");
+                toast.success("Đã cập nhật vai trò thành công!");
             } catch (error) {
                 console.error("Failed to update role", error);
-                alert("Cập nhật thất bại. Vui lòng thử lại.");
+                toast.error("Cập nhật thất bại. Vui lòng thử lại.");
                 // Revert visual change if needed by forcing re-render or just fetching again, 
                 // but since we only update state on success, the UI might be out of sync if we used a controlled input without internal state management for the specific row?
                 // Actually, the Select value relies on `users` state. If this fails, `users` isn't updated, so it should snap back on re-render?

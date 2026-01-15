@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { toast } from 'react-hot-toast';
 import { reviewService } from '../../../services/reviewService';
 import { useNotification } from '../../../context/NotificationContext';
 import { Review } from '../../../types';
@@ -69,7 +70,7 @@ const AdminReviews = () => {
                 setReviews(reviews.filter(r => r.danhGiaId !== id));
                 refreshCounts();
             } catch (error) {
-                alert("Xóa thất bại");
+                toast.error("Xóa thất bại");
             }
         }
     };
@@ -87,12 +88,12 @@ const AdminReviews = () => {
             setReviews(reviews.map(r =>
                 r.danhGiaId === id ? { ...r, traLoi: replyText, ngayTraLoi: new Date().toISOString() } : r
             ));
-            alert("Đã gửi phản hồi thành công!");
+            toast.success("Đã gửi phản hồi thành công!");
             setReplyingId(null);
             setReplyText('');
             refreshCounts();
         } catch (error) {
-            alert("Gửi trả lời thất bại");
+            toast.error("Gửi trả lời thất bại");
         }
     };
 
@@ -120,7 +121,7 @@ const AdminReviews = () => {
             // setActiveDiscussionId(null); // Optional: keep open to chat more
         } catch (error) {
             console.error(error);
-            alert("Lỗi khi gửi bình luận");
+            toast.error("Lỗi khi gửi bình luận");
         }
     };
 

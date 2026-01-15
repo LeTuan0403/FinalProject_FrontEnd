@@ -1,5 +1,6 @@
 /* eslint-disable max-depth */
 import { useState, useEffect, useMemo } from 'react';
+import { toast } from 'react-hot-toast';
 import { MapPin, Navigation, Loader, Plus, Info, X, Calendar, Clock, Users, AlertTriangle, FileText } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { tourService, diaDiemService } from '../../services/tourService';
@@ -59,7 +60,7 @@ const CustomTour = () => {
     startDate: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString().split('T')[0],
     duration: 3,
     startTime: '08:00',
-    adults: 1 as number | '',
+    adults: 5 as number | '',
     children: 0,
     transport: 'Oto',
     isSelfCatering: false,
@@ -105,7 +106,7 @@ const CustomTour = () => {
       let parsedAdults = 1;
       const adultsMatch = description.match(/(\d+)\s*người/i);
       if (adultsMatch) {
-        parsedAdults = parseInt(adultsMatch[1]);
+        parsedAdults = Math.max(5, parseInt(adultsMatch[1]));
       }
 
       // Parse Free Day status
@@ -220,7 +221,7 @@ const CustomTour = () => {
       });
     });
     // Multiply by number of adults (default to 1 if empty/0 during input)
-    const pax = (typeof formData.adults === 'number' && formData.adults > 0) ? formData.adults : 1;
+    const pax = (typeof formData.adults === 'number' && formData.adults > 0) ? formData.adults : 5;
     return total * pax;
   }, [formData.selectedLocations, formData.adults]);
 
@@ -267,7 +268,7 @@ const CustomTour = () => {
     if ((duplicateDay || existingInCurrentDay) && !tempSelectedLocations.find(t => t.diaDiemId === loc.diaDiemId)) {
       // If we are ADDING (not removing)
       const dayName = duplicateDay ? `Ngày ${duplicateDay}` : "ngày hiện tại";
-      alert(`Lưu ý: Địa điểm "${loc.tenDiaDiem}" đã được chọn trong lịch trình (${dayName}).`);
+      toast.error(`Lưu ý: Địa điểm "${loc.tenDiaDiem}" đã được chọn trong lịch trình (${dayName}).`);
     }
 
     setTempSelectedLocations(prev => {
@@ -357,16 +358,16 @@ const CustomTour = () => {
   // eslint-disable-next-line complexity
   const handleSubmit = async () => {
     if (!user) {
-      alert("Vui lòng đăng nhập để tạo tour!");
+      toast.error("Vui lòng đăng nhập để tạo tour!");
       navigate('/login');
       return;
     }
     if (formData.destinations.length === 0) {
-      alert("Vui lòng chọn ít nhất 1 điểm đến!");
+      toast.error("Vui lòng chọn ít nhất 1 điểm đến!");
       return;
     }
-    if (!formData.adults || (typeof formData.adults === 'number' && formData.adults <= 0)) {
-      alert("Số lượng khách phải lớn hơn 0!");
+    if (!formData.adults || (typeof formData.adults === 'number' && formData.adults < 5)) {
+      toast.error("Số lượng khách tối thiểu là 5 người!");
       return;
     }
 
@@ -378,7 +379,7 @@ const CustomTour = () => {
       const hasNote = config.note && config.note.trim().length > 0;
 
       if (locs.length === 0 && !hasNote && !isFree) {
-        alert(`Ngày ${d} chưa có thông tin! Vui lòng chọn địa điểm, nhập ghi chú hoặc chọn 'Tự do hoạt động'.`);
+        toast.error(`Ngày ${d} chưa có thông tin! Vui lòng chọn địa điểm, nhập ghi chú hoặc chọn 'Tự do hoạt động'.`);
         return;
       }
     }
@@ -454,18 +455,18 @@ const CustomTour = () => {
       if (editData?.tourId) {
         // Update existing
         await tourService.updateCustom(editData.tourId, payload);
-        alert("Cập nhật tour thành công!");
+        toast.success("Cập nhật tour thành công!");
         navigate('/my-tours');
       } else {
         // Create NEW (Single Call)
         await tourService.createCustom(payload);
 
-        alert("Yêu cầu thiết kế tour đã được gửi! Vui lòng kiểm tra 'Tour của tôi'.");
+        toast.success("Yêu cầu thiết kế tour đã được gửi! Vui lòng kiểm tra 'Tour của tôi'.");
         navigate('/my-tours');
       }
     } catch (error) {
       console.error(error);
-      alert("Có lỗi xảy ra, vui lòng thử lại.");
+      toast.error("Có lỗi xảy ra, vui lòng thử lại.");
     } finally {
       setLoading(false);
     }
@@ -667,7 +668,7 @@ const CustomTour = () => {
                     <div className="relative">
                       <input
                         type="number"
-                        min="1"
+                        min="5"
                         value={formData.adults}
                         onKeyDown={(e) => ["-", "e", "E", "+"].includes(e.key) && e.preventDefault()}
                         onChange={e => {
@@ -675,7 +676,10 @@ const CustomTour = () => {
                           setFormData({ ...formData, adults: val === '' ? '' : Math.max(1, parseInt(val)) });
                         }}
                         onBlur={() => {
-                          if (formData.adults === '') { setFormData({ ...formData, adults: 1 }); }
+                          if (formData.adults === '' || (typeof formData.adults === 'number' && formData.adults < 5)) {
+                            setFormData({ ...formData, adults: 5 });
+                            toast.error("Số lượng khách tối thiểu là 5 người");
+                          }
                         }}
                         className="w-full p-3 pl-9 bg-gray-50 border border-gray-200 rounded-xl font-bold text-sm outline-none"
                       />
@@ -748,11 +752,16 @@ const CustomTour = () => {
                   <div className="flex justify-between items-end mb-2">
                     <div className="flex flex-col">
                       <span className="text-sm font-bold text-gray-600">Tổng chi phí vé tham quan</span>
-                      <span className="text-xs text-gray-500 italic font-normal">(Chưa bao gồm ăn ở, đi lại)</span>
+                      <span className="text-xs text-gray-500 italic font-normal">(Chưa bao gồm ăn ở. Chi phí đi lại tính theo đầu người)</span>
                     </div>
-                    <span className="text-3xl font-black text-red-600">
-                      {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalTicketPrice)}
-                    </span>
+                    <div className="text-right">
+                      <div className="text-sm text-gray-600 font-semibold">
+                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalTicketPrice / ((typeof formData.adults === 'number' && formData.adults > 0) ? formData.adults : 5))} / khách
+                      </div>
+                      <div className="text-3xl font-black text-red-600">
+                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(totalTicketPrice)}
+                      </div>
+                    </div>
                   </div>
                   <p className="text-xs text-gray-400 text-right mb-4 italic">*Chi phí cuối cùng sẽ được nhân viên báo giá sau.</p>
 

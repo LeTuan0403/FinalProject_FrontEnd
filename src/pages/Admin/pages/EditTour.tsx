@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { toast } from 'react-hot-toast';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AxiosError } from 'axios';
 import { tourService, diaDiemService } from '../../../services/tourService';
@@ -177,7 +178,7 @@ const AdminEditTour = () => {
                 }
             } catch (error) {
                 console.error("Failed to load data", error);
-                if (isEditMode) { alert("Không thể tải thông tin tour"); }
+                if (isEditMode) { toast.error("Không thể tải thông tin tour"); }
             } finally {
                 setLoading(false);
             }
@@ -251,11 +252,12 @@ const AdminEditTour = () => {
                     } catch (err: unknown) {
                         const approveError = err as AxiosError<{ message?: string }>;
                         console.error("Auto-approve failed:", approveError);
-                        alert("Cập nhật thành công, nhưng không thể duyệt tour. Lỗi: " + (approveError.response?.data?.message || approveError.message));
+                        toast.success("Cập nhật thành công!");
+                        toast.error("Nhưng không thể duyệt tour. Lỗi: " + (approveError.response?.data?.message || approveError.message));
                         return;
                     }
                 }
-                alert("Cập nhật thành công!");
+                toast.success("Cập nhật thành công!");
             } else {
                 // CREATE: Clean Payload (No IDs)
                 const createPayload = {
@@ -289,11 +291,11 @@ const AdminEditTour = () => {
                 }
 
                 if (newId) {
-                    alert(`Tạo tour mới thành công! Tour ID: ${newId}`);
+                    toast.success(`Tạo tour mới thành công! Tour ID: ${newId}`);
                     // Navigate to edit mode for the new tour so user can continue editing
                     navigate(`/admin/tour-edit/${newId}`);
                 } else {
-                    alert("Tạo tour mới thành công!");
+                    toast.success("Tạo tour mới thành công!");
                     navigate('/admin/tours'); // Fallback if no ID returned
                 }
             }
@@ -302,12 +304,12 @@ const AdminEditTour = () => {
             const error = err as AxiosError<{ errors?: Record<string, string[]>; message?: string }>;
             console.error(error);
             if (error.response && error.response.status === 401) {
-                alert("Phiên đăng nhập đã hết hạn hoặc bạn không có quyền thực hiện thao tác này. Vui lòng đăng nhập lại.");
+                toast.error("Phiên đăng nhập đã hết hạn hoặc bạn không có quyền thực hiện thao tác này. Vui lòng đăng nhập lại.");
             } else if (error.response?.data?.errors) {
                 const errorMessages = Object.values(error.response.data.errors).flat().join('\n');
-                alert("Lỗi dữ liệu:\n" + errorMessages);
+                toast.error("Lỗi dữ liệu:\n" + errorMessages);
             } else {
-                alert("Có lỗi xảy ra: " + (error.response?.data?.message || (error as Error).message || "Lỗi không xác định"));
+                toast.error("Có lỗi xảy ra: " + (error.response?.data?.message || (error as Error).message || "Lỗi không xác định"));
             }
         } finally {
             setLoading(false);
@@ -502,7 +504,7 @@ const AdminEditTour = () => {
                                                 setFormData({ ...formData, ngayKhoiHanh: newDates });
                                                 input.value = ''; // Reset input
                                             } else {
-                                                alert("Ngày này đã được chọn!");
+                                                toast.error("Ngày này đã được chọn!");
                                             }
                                         }
                                     }}

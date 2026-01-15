@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { toast } from 'react-hot-toast';
 import { X, Image as ImageIcon, Loader } from 'lucide-react';
 
 interface UploadImageProps {
@@ -19,17 +20,17 @@ const UploadImage = ({ onUpload, currentImage, label = "Ảnh bìa", className =
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (!file) {return;}
+        if (!file) { return; }
 
         // Basic validation
         if (!file.type.startsWith('image/')) {
-            alert('Vui lòng chọn file ảnh (JPG, PNG, GIF...)');
+            toast.error('Vui lòng chọn file ảnh (JPG, PNG, GIF...)');
             return;
         }
 
         // 5MB limit check (optional but recommended)
         if (file.size > 5 * 1024 * 1024) {
-            alert('File ảnh quá lớn! Vui lòng chọn ảnh dưới 5MB.');
+            toast.error('File ảnh quá lớn! Vui lòng chọn ảnh dưới 5MB.');
             return;
         }
 
@@ -53,11 +54,11 @@ const UploadImage = ({ onUpload, currentImage, label = "Ảnh bìa", className =
                 onUpload(data.secure_url);
             } else {
                 console.error("Cloudinary upload failed", data);
-                alert("Upload thất bại: " + (data.error?.message || "Lỗi không xác định"));
+                toast.error("Upload thất bại: " + (data.error?.message || "Lỗi không xác định"));
             }
         } catch (error) {
             console.error("Upload Error:", error);
-            alert("Lỗi khi upload ảnh. Vui lòng thử lại.");
+            toast.error("Lỗi khi upload ảnh. Vui lòng thử lại.");
         } finally {
             setUploading(false);
         }

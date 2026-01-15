@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 import { MapPin, Clock, Truck, Ticket, Heart, Calendar, User, Scale } from 'lucide-react';
 import type { Tour } from '../../types';
 import { useState, useEffect } from 'react';
@@ -29,7 +30,7 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
         e.preventDefault();
         e.stopPropagation();
         if (!user) {
-            alert("Vui lòng đăng nhập để lưu tour yêu thích!");
+            toast.error("Vui lòng đăng nhập để lưu tour yêu thích!");
             return;
         }
 

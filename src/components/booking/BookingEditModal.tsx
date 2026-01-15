@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from 'react-hot-toast';
 import { X } from 'lucide-react';
 
 interface BookingEditModalProps {
@@ -20,8 +21,16 @@ const BookingEditModal: React.FC<BookingEditModalProps> = ({ isOpen, onClose, on
 
     if (!isOpen || !bookingData) { return null; }
 
-    const handleSubmit = (e: React.FormEvent) => {
-        onSubmit(e, formData);
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            await onSubmit(e, formData);
+        } catch (error: any) {
+            // This catch might be redundant if onSubmit handles it, 
+            // but if onSubmit throws specifically for us to handle UI:
+            const msg = error.response?.data?.msg || error.response?.data?.message || "Lỗi cập nhật!";
+            toast.error(msg);
+        }
     };
 
     return (

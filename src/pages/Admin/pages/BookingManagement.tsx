@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { toast } from 'react-hot-toast';
 import { Loader, User, Mail, Phone, FileText, X, Edit, Trash2, Plus } from 'lucide-react';
 import { bookingService } from '../../../services/bookingService';
 import { useNotification } from '../../../context/NotificationContext';
@@ -72,7 +73,7 @@ const BookingManagement = () => {
             fetchBookings();
             refreshCounts(); // Update notification
         } catch (e) {
-            alert("Lỗi cập nhật trạng thái!");
+            toast.error("Lỗi cập nhật trạng thái!");
         }
     };
 
@@ -80,13 +81,13 @@ const BookingManagement = () => {
         if (!window.confirm("Bạn có chắc chắn muốn xóa đơn đặt tour này? Hành động này không thể hoàn tác.")) { return; }
         try {
             await bookingService.delete(id);
-            alert("Đã xóa thành công!");
+            toast.success("Đã xóa thành công!");
             fetchBookings();
             refreshCounts();
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (e: any) {
             const msg = e.response?.data?.message || "Lỗi khi xóa!";
-            alert(msg);
+            toast.error(msg);
         }
     };
 
@@ -100,12 +101,12 @@ const BookingManagement = () => {
                 soLuongNguoi: Number(data.soLuongNguoiLon || 0) + Number(data.soLuongTreEm || 0)
             };
             await bookingService.update(payload.donDatId, payload);
-            alert("Cập nhật thành công!");
+            toast.success("Cập nhật thành công!");
             setEditBooking(null);
             fetchBookings();
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (e: any) {
-            alert(e.response?.data?.message || "Lỗi cập nhật!");
+            toast.error(e.response?.data?.message || "Lỗi cập nhật!");
         }
     };
 
@@ -113,12 +114,12 @@ const BookingManagement = () => {
     const handleCreate = async (data: any) => {
         try {
             await bookingService.create(data);
-            alert("Tạo đơn đặt thành công!");
+            toast.success("Tạo đơn đặt thành công!");
             setIsCreateModalOpen(false);
             fetchBookings();
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (e: any) {
-            alert(e.response?.data?.msg || e.response?.data?.message || "Lỗi khi tạo đơn!");
+            toast.error(e.response?.data?.msg || e.response?.data?.message || "Lỗi khi tạo đơn!");
         }
     };
 

@@ -3,6 +3,7 @@ import { useForm, UseFormRegister, FieldError } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { Lock, Key, ArrowLeft, Eye, EyeOff, AlertCircle, LucideIcon } from 'lucide-react';
 import { AxiosError } from 'axios';
+import { toast } from 'react-hot-toast';
 import { authService } from '../../services/authService';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -74,7 +75,7 @@ const ResetPassword = () => {
 
             // Auto login logic
             login(res.data);
-            alert("Đổi mật khẩu thành công! Bạn đã được đăng nhập.");
+            toast.success("Đổi mật khẩu thành công! Bạn đã được đăng nhập.");
 
             if (res.data.role === 'Admin') { navigate('/admin'); }
             else { navigate('/'); }

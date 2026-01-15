@@ -6,6 +6,7 @@ export interface NguoiDung {
   email: string;
   soDienThoai?: string;
   diaChi?: string;
+  ngaySinh?: string;
   isAdmin: boolean;
   hanCheThanhToan?: boolean;
 }
@@ -106,6 +107,7 @@ export interface LoginResponse {
   email?: string;
   soDienThoai?: string;
   diaChi?: string;
+  ngaySinh?: string;
   hanCheThanhToan?: boolean; // Added
 }
 

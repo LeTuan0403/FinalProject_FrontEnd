@@ -39,17 +39,20 @@ import ComparisonFloatingBar from './components/common/ComparisonFloatingBar';
 import ChatWidget from './components/common/ChatWidget';
 import AdminLayout from './pages/Admin/components/AdminLayout';
 import { NotificationProvider } from './context/NotificationContext';
+import { Toaster } from 'react-hot-toast';
 
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, isLoading } = useAuth();
-  if (isLoading) {return <div>Loading...</div>;}
-  if (!user || user.role !== 'Admin') {return <div>Bạn không có quyền truy cập trang này</div>;}
+  if (isLoading) { return <div>Loading...</div>; }
+  if (!user || user.role !== 'Admin') { return <div>Bạn không có quyền truy cập trang này</div>; }
   return children;
 };
+
 
 function App() {
   return (
     <ComparisonProvider>
+      <Toaster position="top-center" reverseOrder={false} />
       <Routes>
         {/* Client Routes */}
         <Route path="/" element={<Layout />}>

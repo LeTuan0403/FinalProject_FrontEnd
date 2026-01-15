@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { toast } from 'react-hot-toast';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AxiosError } from 'axios';
 import { isFutureDate } from '../../utils/dateUtils';
@@ -155,19 +156,19 @@ const Booking = () => {
         if (Object.keys(currentErrors).length === 0) {
             setIsConfirming(true);
         } else {
-            alert("Vui lòng kiểm tra lại thông tin!");
+            toast.error("Vui lòng kiểm tra lại thông tin!");
         }
     };
 
     const handleConfirm = async () => {
         try {
             if (!id || !tour) {
-                alert("Không tìm thấy thông tin tour!");
+                toast.error("Không tìm thấy thông tin tour!");
                 return;
             }
 
             if (!user) {
-                alert("Vui lòng đăng nhập để đặt tour!");
+                toast.error("Vui lòng đăng nhập để đặt tour!");
                 navigate('/login');
                 return;
             }
