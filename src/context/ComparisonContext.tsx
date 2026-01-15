@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
 interface ComparisonContextType {
@@ -14,7 +15,7 @@ export const ComparisonProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const [selectedTourIds, setSelectedTourIds] = useState<number[]>(() => {
         try {
             const saved = localStorage.getItem('compareTourIds');
-            if (!saved || saved === 'undefined' || saved === 'null') return [];
+            if (!saved || saved === 'undefined' || saved === 'null') { return []; }
             return JSON.parse(saved);
         } catch (e) {
             console.error("Error parsing comparison ids from local storage", e);

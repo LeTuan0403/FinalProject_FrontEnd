@@ -59,7 +59,7 @@ const Profile = () => {
         }
     };
 
-    if (loading) return <div className="min-h-screen pt-24 flex justify-center"><Loader className="animate-spin" /></div>;
+    if (loading) {return <div className="min-h-screen pt-24 flex justify-center"><Loader className="animate-spin" /></div>;}
 
     return (
         <div className="min-h-screen pt-24 pb-12 bg-gray-50">

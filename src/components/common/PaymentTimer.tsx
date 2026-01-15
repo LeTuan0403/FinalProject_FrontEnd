@@ -56,7 +56,7 @@ const PaymentTimer: React.FC<PaymentTimerProps> = ({ createdAt, departureDate, o
             } else {
                 setIsExpired(true);
                 clearInterval(timer);
-                if (onExpire) onExpire();
+                if (onExpire) { onExpire(); }
             }
         }, 1000);
 
@@ -66,11 +66,11 @@ const PaymentTimer: React.FC<PaymentTimerProps> = ({ createdAt, departureDate, o
             setTimeLeft(initial);
         } else {
             setIsExpired(true);
-            if (onExpire) onExpire();
+            if (onExpire) { onExpire(); }
         }
 
         return () => clearInterval(timer);
-    }, [createdAt]);
+    }, [createdAt, departureDate, onExpire]);
 
     if (isExpired) {
         return (
@@ -81,7 +81,7 @@ const PaymentTimer: React.FC<PaymentTimerProps> = ({ createdAt, departureDate, o
         );
     }
 
-    if (!timeLeft) return null;
+    if (!timeLeft) { return null; }
 
     return (
         <div className={`flex items-center gap-1 text-orange-600 font-medium ${className}`}>

@@ -19,7 +19,7 @@ const UploadImage = ({ onUpload, currentImage, label = "Ảnh bìa", className =
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (!file) return;
+        if (!file) {return;}
 
         // Basic validation
         if (!file.type.startsWith('image/')) {

@@ -6,8 +6,11 @@ import type { Tour } from '../../types';
 interface AdminBookingCreateModalProps {
     isOpen: boolean;
     onClose: () => void;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onSubmit: (data: any) => Promise<void>;
 }
+
+// ... (in render)
 
 const AdminBookingCreateModal: React.FC<AdminBookingCreateModalProps> = ({ isOpen, onClose, onSubmit }) => {
     const [tours, setTours] = useState<Tour[]>([]);
@@ -81,7 +84,7 @@ const AdminBookingCreateModal: React.FC<AdminBookingCreateModalProps> = ({ isOpe
         onSubmit(payload);
     };
 
-    if (!isOpen) return null;
+    if (!isOpen) { return null; }
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
@@ -159,7 +162,7 @@ const AdminBookingCreateModal: React.FC<AdminBookingCreateModalProps> = ({ isOpe
                                 value={formData.soLuongNguoiLon}
                                 onChange={e => {
                                     const val = e.target.value;
-                                    setFormData({ ...formData, soLuongNguoiLon: val === '' ? '' : Number(val) } as any);
+                                    setFormData({ ...formData, soLuongNguoiLon: val === '' ? 1 : Number(val) });
                                 }}
                             />
                         </div>
@@ -172,7 +175,7 @@ const AdminBookingCreateModal: React.FC<AdminBookingCreateModalProps> = ({ isOpe
                                 value={formData.soLuongTreEm}
                                 onChange={e => {
                                     const val = e.target.value;
-                                    setFormData({ ...formData, soLuongTreEm: val === '' ? '' : Number(val) } as any);
+                                    setFormData({ ...formData, soLuongTreEm: val === '' ? 0 : Number(val) });
                                 }}
                             />
                         </div>
@@ -187,7 +190,7 @@ const AdminBookingCreateModal: React.FC<AdminBookingCreateModalProps> = ({ isOpe
                                 >
                                     <option value="">-- Chọn ngày --</option>
                                     {selectedTour.ngayKhoiHanh
-                                        .map((d: any) => new Date(d))
+                                        .map((d: string | number | Date) => new Date(d))
                                         .filter((d: Date) => d.getTime() >= new Date().setHours(0, 0, 0, 0))
                                         .sort((a: Date, b: Date) => a.getTime() - b.getTime())
                                         .map((date: Date, idx: number) => {

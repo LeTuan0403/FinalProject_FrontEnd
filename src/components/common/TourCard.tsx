@@ -6,6 +6,8 @@ import { userService } from '../../services/userService';
 import { useAuth } from '../../hooks/useAuth';
 import { useComparison } from '../../context/ComparisonContext';
 
+import { calculateDuration, getNextDeparture, getRemainingSeats, getTourCode } from '../../utils/tourUtils';
+
 interface TourCardProps {
     tour: Tour;
     variant?: 'vertical' | 'horizontal';
@@ -35,7 +37,7 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
             await userService.toggleFavorite(tour.tourId);
             const newState = !favorited;
             setFavorited(newState);
-            if (onToggleFavorite) onToggleFavorite(tour.tourId, newState);
+            if (onToggleFavorite) { onToggleFavorite(tour.tourId, newState); }
         } catch (error) {
             console.error("Failed to toggle favorite", error);
         }
@@ -51,73 +53,10 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
         }
     };
 
-    // Helper to calculate duration
-    const calculatedDuration = tour.tourChiTiets?.length
-        ? Math.max(...tour.tourChiTiets.map(t => t.ngayThu))
-        : 1;
-    const durationText = tour.thoiGian || `${calculatedDuration} ngày${calculatedDuration - 1 > 0 ? ` ${calculatedDuration - 1} đêm` : ''}`;
-
-    // Helper for Next Departure
-    const getNextDeparture = () => {
-        if (!tour.ngayKhoiHanh || !Array.isArray(tour.ngayKhoiHanh) || tour.ngayKhoiHanh.length === 0) return "Liên hệ";
-
-        // Filter future dates and sort
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        tomorrow.setHours(0, 0, 0, 0);
-
-        const futureDates = tour.ngayKhoiHanh
-            .map(d => new Date(d))
-            .filter(d => d.getTime() >= tomorrow.getTime())
-            .sort((a, b) => a.getTime() - b.getTime());
-
-        if (futureDates.length === 0) return "Đã hết lịch";
-
-        // Check availability if provided, otherwise assume available
-        const filteredDates = futureDates.filter(d => {
-            if (tour.availability) {
-                const dateStr = d.toISOString().split('T')[0];
-                const avail = tour.availability.find(a => new Date(a.date).toISOString().split('T')[0] === dateStr);
-                // If availability info exists, check remainingSeats > 0.
-                if (avail) {
-                    return avail.remainingSeats > 0;
-                }
-            }
-            // Fallback: If no availability info, we show it (or should we hide? Safe to show).
-            // Actually, if backend sends availability, it should be comprehensive.
-
-            // Legacy/Fallback check: (Ideally we trust availability array)
-            return true;
-        });
-
-        if (filteredDates.length === 0) return "Đã hết chỗ";
-
-        const nextDate = filteredDates[0].toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-        return filteredDates.length > 1 ? `${nextDate} (+${filteredDates.length - 1})` : nextDate;
-    };
-    const nextDepartureText = getNextDeparture();
-
-    // Helper for Tour Code
-    const tourCode = tour.maTour || `T - ${tour.tourId} `;
-
-    // Helper for Remaining Seats
-    const getRemainingSeats = () => {
-        let nextRem = tour.soLuongCho ?? 0;
-        if (tour.availability) {
-            // Availability for future
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            tomorrow.setHours(0, 0, 0, 0);
-
-            const avail = tour.availability
-                .filter(a => new Date(a.date).getTime() >= tomorrow.getTime() && a.remainingSeats > 0)
-                .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
-
-            if (avail) nextRem = avail.remainingSeats;
-        }
-        return nextRem;
-    };
-    const remainingSeats = getRemainingSeats();
+    const durationText = calculateDuration(tour);
+    const nextDepartureText = getNextDeparture(tour);
+    const tourCode = getTourCode(tour);
+    const remainingSeats = getRemainingSeats(tour);
 
     if (variant === 'vertical') {
         return (

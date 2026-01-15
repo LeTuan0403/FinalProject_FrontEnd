@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { AxiosError } from 'axios';
 import { authService } from '../../services/authService';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -14,6 +15,35 @@ const VerifyAccount = () => {
     const [status, setStatus] = useState<'idle' | 'verifying' | 'success' | 'error'>('idle');
     const [message, setMessage] = useState('');
 
+    const verify = useCallback(async (emailToVerify: string, codeToVerify: string) => {
+        setStatus('verifying');
+        setIsLoading(true);
+        try {
+            const res = await authService.verifyAccount(emailToVerify, codeToVerify);
+            setStatus('success');
+
+            // Auto login
+            login(res.data);
+
+            setTimeout(() => {
+                if (res.data.role === 'Admin') { navigate('/'); }
+                else { navigate('/'); }
+            }, 1500);
+        } catch (err: unknown) {
+            setStatus('error');
+            const error = err as AxiosError<{ msg?: string }>;
+            let msg: string;
+            if (error?.response?.data) {
+                msg = error.response.data.msg || "Xác thực thất bại.";
+            } else {
+                msg = "Xác thực thất bại. Vui lòng thử lại.";
+            }
+            setMessage(msg);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [login, navigate]);
+
     useEffect(() => {
         const emailParam = searchParams.get('email');
         const codeParam = searchParams.get('code');
@@ -26,37 +56,7 @@ const VerifyAccount = () => {
             setOtp(codeParam);
             verify(emailParam, codeParam);
         }
-    }, [searchParams]);
-
-    const verify = async (emailToVerify: string, codeToVerify: string) => {
-        setStatus('verifying');
-        setIsLoading(true);
-        try {
-            const res = await authService.verifyAccount(emailToVerify, codeToVerify);
-            setStatus('success');
-
-            // Auto login
-            login(res.data);
-
-            setTimeout(() => {
-                if (res.data.role === 'Admin') navigate('/');
-                else navigate('/');
-            }, 1500);
-        } catch (err) {
-            setStatus('error');
-            const error = err as { response?: { data?: unknown } };
-            let msg: string;
-            if (error?.response?.data) {
-                // @ts-ignore
-                msg = error.response.data.msg || "Xác thực thất bại.";
-            } else {
-                msg = "Xác thực thất bại. Vui lòng thử lại.";
-            }
-            setMessage(msg);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    }, [searchParams, verify]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();

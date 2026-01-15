@@ -1,5 +1,5 @@
 import axiosClient from '../api/axiosClient';
-import type { LoginResponse } from '../types';
+import type { LoginResponse, NguoiDung } from '../types';
 
 interface LoginData {
   email: string;
@@ -28,14 +28,14 @@ export const authService = {
 };
 
 export const userService = {
-  getAll: async (params?: any) => {
-    return axiosClient.get<any>('/users', { params });
+  getAll: async (params?: Record<string, unknown>) => {
+    return axiosClient.get<NguoiDung[]>('/users', { params });
   },
   delete: async (id: number) => {
     return axiosClient.delete(`/users/${id}`);
   },
   getMe: async () => {
-    return axiosClient.get<any>('/users/me');
+    return axiosClient.get<NguoiDung>('/users/me');
   },
   updateProfile: async (data: { hoTen: string; soDienThoai?: string; diaChi?: string; ngaySinh?: string }) => {
     return axiosClient.put('/users/profile', data);

@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, ReactNode } from "react";
 import io, { Socket } from "socket.io-client";
 // import { useAuth } from "../hooks/useAuth";
@@ -25,6 +26,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
         return () => {
             socket.disconnect();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     return (

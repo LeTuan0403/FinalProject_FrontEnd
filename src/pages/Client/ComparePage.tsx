@@ -27,6 +27,7 @@ const ComparePage: React.FC = () => {
             try {
                 const idsParam = selectedTourIds.join(',');
                 const res = await tourService.getAll({ ids: idsParam });
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const data = (res && (res as any).data) ? (res as any).data : res;
                 setTours(Array.isArray(data) ? data : []);
             } catch (err) {
@@ -43,6 +44,7 @@ const ComparePage: React.FC = () => {
         if (allTours.length === 0) {
             try {
                 const res = await tourService.getAll();
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const data = (res && (res as any).data) ? (res as any).data : res;
                 setAllTours(Array.isArray(data) ? data : []);
             } catch (error) {
@@ -59,8 +61,7 @@ const ComparePage: React.FC = () => {
     // Filter available tours for the modal
     const availableTours = allTours.filter(t => !selectedTourIds.includes(t.tourId) && t.tenTour.toLowerCase().includes(searchTerm.toLowerCase()));
 
-
-    if (loading && tours.length === 0) return <div className="p-10 text-center">Đang tải dữ liệu so sánh...</div>;
+    if (loading && tours.length === 0) { return <div className="p-10 text-center">Đang tải dữ liệu so sánh...</div>; }
     // Removed "Empty state" return to allow adding tours if empty (though logic originally redirected). 
     // If selectedTourIds is empty, we still render so user can add.
 
@@ -166,7 +167,6 @@ const ComparePage: React.FC = () => {
                                 ))}
                                 {showAddButton && <td className="border-b border-r bg-gray-50/30"></td>}
                             </tr>
-
 
                             {/* UTILITIES / INCLUDES */}
                             <tr>

@@ -47,7 +47,7 @@ export interface Tour {
   diemKhoiHanh?: string; // Tên backend: DiemKhoiHanh
   tenDiaDiem?: string; // Main destination for Custom Tours
   tourChiTiets: Tour_ChiTiet[];
-  lichTrinh?: any[]; // [NEW] Matching MongoDB
+  lichTrinh?: Tour_ChiTiet[]; // [NEW] Matching MongoDB
   daDuyet: boolean;
   khuVuc?: string; // Backend: string containing region
   loaiTour?: string; // Backend: string containing type
@@ -95,6 +95,8 @@ export interface DonDatTour {
   user?: NguoiDung; // Navigation property if included
 }
 
+export type Booking = DonDatTour;
+
 // ... existing code ...
 export interface LoginResponse {
   token: string;
@@ -126,8 +128,9 @@ export interface Review {
     userId: NguoiDung | string;
     content: string;
     createdAt: string;
-    isAnonymous?: boolean;
+    isAnonymous?: boolean; // Restored
     media?: { type: 'image' | 'video'; url: string; }[];
     likes?: string[];
   }[];
+  subscribers?: string[]; // Array of User IDs
 }

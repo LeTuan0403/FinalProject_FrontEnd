@@ -1,6 +1,5 @@
 import axiosClient from '../api/axiosClient';
 
-
 export interface Contact {
     lienHeId: number;
     hoTen: string;

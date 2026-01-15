@@ -8,6 +8,7 @@ import PaymentTimer from '../../components/common/PaymentTimer';
 const PaymentPage = () => {
     const { bookingId } = useParams<{ bookingId: string }>();
     const navigate = useNavigate();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [booking, setBooking] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [isExpired, setIsExpired] = useState(false);
@@ -15,7 +16,7 @@ const PaymentPage = () => {
 
     // Check status periodically
     useEffect(() => {
-        if (!bookingId) return;
+        if (!bookingId) { return; }
 
         // Polling function
         const interval = setInterval(async () => {
@@ -39,7 +40,7 @@ const PaymentPage = () => {
 
     useEffect(() => {
         const fetchBooking = async () => {
-            if (!bookingId) return;
+            if (!bookingId) { return; }
             try {
                 const res = await bookingService.getById(Number(bookingId));
                 setBooking(res.data);
@@ -56,46 +57,50 @@ const PaymentPage = () => {
         fetchBooking();
     }, [bookingId]);
 
-    if (loading) return <div className="flex justify-center items-center h-screen"><Loader2 className="animate-spin text-blue-600" size={48} /></div>;
+    if (loading) { return <div className="flex justify-center items-center h-screen"><Loader2 className="animate-spin text-blue-600" size={48} /></div>; }
 
     // Safety check for cancelled booking
-    if (isCancelled || booking?.trangThai === 'Đã hủy' || booking?.trangThai === 'Cancelled') return (
-        <div className="min-h-screen flex flex-col justify-center items-center p-4 bg-gray-50">
-            <div className="text-center p-10 bg-white rounded-2xl shadow-xl max-w-md w-full border border-red-100">
-                <div className="w-16 h-16 bg-red-100/50 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <AlertCircle className="w-8 h-8 text-red-500" />
-                </div>
-                <h2 className="text-xl font-bold text-gray-800 mb-2">Đơn hàng đã bị hủy</h2>
-                <p className="text-gray-500 mb-6">Đơn hàng này đã bị hủy và không thể thực hiện thanh toán. Vui lòng đặt lại tour nếu bạn vẫn muốn tham gia.</p>
-                <div className="space-y-3">
-                    <button onClick={() => navigate(`/tours/${booking.tourId}`)} className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition">
-                        Đặt Lại Tour Này
-                    </button>
-                    <button onClick={() => navigate('/my-bookings')} className="w-full bg-gray-100 text-gray-600 font-bold py-3 rounded-xl hover:bg-gray-200 transition">
-                        Xem Danh Sách Đơn Hàng
-                    </button>
+    if (isCancelled || booking?.trangThai === 'Đã hủy' || booking?.trangThai === 'Cancelled') {
+        return (
+            <div className="min-h-screen flex flex-col justify-center items-center p-4 bg-gray-50">
+                <div className="text-center p-10 bg-white rounded-2xl shadow-xl max-w-md w-full border border-red-100">
+                    <div className="w-16 h-16 bg-red-100/50 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <AlertCircle className="w-8 h-8 text-red-500" />
+                    </div>
+                    <h2 className="text-xl font-bold text-gray-800 mb-2">Đơn hàng đã bị hủy</h2>
+                    <p className="text-gray-500 mb-6">Đơn hàng này đã bị hủy và không thể thực hiện thanh toán. Vui lòng đặt lại tour nếu bạn vẫn muốn tham gia.</p>
+                    <div className="space-y-3">
+                        <button onClick={() => navigate(`/tours/${booking.tourId}`)} className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition">
+                            Đặt Lại Tour Này
+                        </button>
+                        <button onClick={() => navigate('/my-bookings')} className="w-full bg-gray-100 text-gray-600 font-bold py-3 rounded-xl hover:bg-gray-200 transition">
+                            Xem Danh Sách Đơn Hàng
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
-    );
+        );
+    }
 
-    if (!booking) return (
-        <div className="min-h-screen flex flex-col justify-center items-center p-4">
-            <div className="text-center p-10 bg-white rounded-2xl shadow-xl max-w-md w-full">
-                <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-                <h2 className="text-xl font-bold text-gray-800 mb-2">Không tìm thấy đơn hàng</h2>
-                <p className="text-gray-500 mb-6">Đơn hàng này có thể đã bị xóa hoặc không tồn tại.</p>
-                <div className="space-y-3">
-                    <button onClick={() => navigate('/my-bookings')} className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition">
-                        Xem Đơn Hàng Của Tôi
-                    </button>
-                    <button onClick={() => navigate('/')} className="w-full bg-gray-100 text-gray-600 font-bold py-3 rounded-xl hover:bg-gray-200 transition">
-                        Về Trang Chủ
-                    </button>
+    if (!booking) {
+        return (
+            <div className="min-h-screen flex flex-col justify-center items-center p-4">
+                <div className="text-center p-10 bg-white rounded-2xl shadow-xl max-w-md w-full">
+                    <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+                    <h2 className="text-xl font-bold text-gray-800 mb-2">Không tìm thấy đơn hàng</h2>
+                    <p className="text-gray-500 mb-6">Đơn hàng này có thể đã bị xóa hoặc không tồn tại.</p>
+                    <div className="space-y-3">
+                        <button onClick={() => navigate('/my-bookings')} className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition">
+                            Xem Đơn Hàng Của Tôi
+                        </button>
+                        <button onClick={() => navigate('/')} className="w-full bg-gray-100 text-gray-600 font-bold py-3 rounded-xl hover:bg-gray-200 transition">
+                            Về Trang Chủ
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
-    );
+        );
+    }
 
     // Helper to safety normalize Vietnamese names for banking
     const removeAccents = (str: string) => {

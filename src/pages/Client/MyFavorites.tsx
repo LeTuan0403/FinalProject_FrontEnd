@@ -35,7 +35,7 @@ const MyFavorites = () => {
         }
     };
 
-    if (loading) return <div className="min-h-screen flex items-center justify-center">Đang tải...</div>;
+    if (loading) {return <div className="min-h-screen flex items-center justify-center">Đang tải...</div>;}
 
     return (
         <div className="container mx-auto px-4 py-8 min-h-screen">

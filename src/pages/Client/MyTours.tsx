@@ -13,7 +13,7 @@ const MyTours = () => {
 
     useEffect(() => {
         const fetchMyTours = async () => {
-            if (!user) return;
+            if (!user) { return; }
             try {
                 // Fetch direct list of tours created by the current user
                 const res = await tourService.getToursByUser();
@@ -36,7 +36,7 @@ const MyTours = () => {
         navigate('/custom-tour', { state: { tourData: tour } });
     };
 
-    if (loading) return <div className="min-h-screen flex justify-center items-center"><Loader className="animate-spin text-blue-600" /></div>;
+    if (loading) { return <div className="min-h-screen flex justify-center items-center"><Loader className="animate-spin text-blue-600" /></div>; }
 
     return (
         <div className="bg-gray-50 min-h-screen py-12">
@@ -119,6 +119,7 @@ const MyTours = () => {
                                                         try {
                                                             await tourService.deleteCustom(tour.tourId);
                                                             setTours(prev => prev.filter(t => t.tourId !== tour.tourId));
+                                                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                                         } catch (error: any) {
                                                             console.error("Delete tour failed:", error);
                                                             const errMsg = error.response?.data?.message || error.message || "Lỗi không xác định";

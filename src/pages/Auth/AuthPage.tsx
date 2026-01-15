@@ -3,11 +3,29 @@ import { useForm, FieldError } from 'react-hook-form';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { authService } from '../../services/authService';
 import { useAuth } from '../../hooks/useAuth';
-import { GoogleLogin } from '@react-oauth/google';
+import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
+import { AxiosError } from 'axios';
 import { AlertCircle, User, Mail, Lock, Phone, MapPin, ChevronRight, Calendar } from 'lucide-react';
 
 import InputField from '../../components/common/InputField';
 import PasswordInput from '../../components/common/PasswordInput';
+
+interface LoginFormData {
+    email: string;
+    matKhau: string;
+    rememberMe?: boolean;
+}
+
+interface RegisterFormData {
+    hoTen: string;
+    email: string;
+    soDienThoai: string;
+    matKhau: string;
+    confirmMatKhau: string;
+    ngaySinh?: string;
+    tinhThanh?: string;
+    quanHuyen?: string;
+}
 
 const AuthPage = () => {
     const [isSignUp, setIsSignUp] = useState(false);
@@ -21,7 +39,7 @@ const AuthPage = () => {
         register: loginRegister,
         handleSubmit: handleLoginSubmit,
         formState: { errors: loginErrors, isSubmitting: isLoginSubmitting }
-    } = useForm();
+    } = useForm<LoginFormData>();
     const [loginError, setLoginError] = useState('');
 
     // Register Form
@@ -30,22 +48,22 @@ const AuthPage = () => {
         handleSubmit: handleRegisterSubmit,
         watch: registerWatch,
         formState: { errors: registerErrors }
-    } = useForm();
+    } = useForm<RegisterFormData>();
     const [registerError, setRegisterError] = useState('');
     const [isRegisterLoading, setIsRegisterLoading] = useState(false);
     const password = registerWatch("matKhau");
 
-    const handleGoogleSuccess = async (credentialResponse: any) => {
+    const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
         if (credentialResponse.credential) {
             try {
                 const res = await authService.loginGoogle(credentialResponse.credential);
                 login(res.data);
-                if (res.data.role === 'Admin') navigate('/');
-                else navigate('/');
-            } catch (err: any) {
+                if (res.data.role === 'Admin') { navigate('/'); }
+                else { navigate('/'); }
+            } catch (err: unknown) {
                 console.error("Google Login Backend Error:", err);
-                // Backend trả về 'msg', nhưng cũng check 'message' để an toàn
-                const msg = err?.response?.data?.msg || err?.response?.data?.message || "Đăng nhập Google thất bại.";
+                const error = err as AxiosError<{ msg?: string; message?: string }>;
+                const msg = error?.response?.data?.msg || error?.response?.data?.message || "Đăng nhập Google thất bại.";
                 setLoginError(typeof msg === 'string' ? msg : JSON.stringify(msg));
             }
         }
@@ -60,7 +78,7 @@ const AuthPage = () => {
     }, [location.pathname]);
 
     const toggleMode = async (mode: 'login' | 'register') => {
-        if ((mode === 'register' && isSignUp) || (mode === 'login' && !isSignUp)) return;
+        if ((mode === 'register' && isSignUp) || (mode === 'login' && !isSignUp)) { return; }
 
         setIsAnimating(true);
 
@@ -82,20 +100,20 @@ const AuthPage = () => {
         }, 500); // reduced from 800
     };
 
-    const onLogin = async (data: any) => {
+    const onLogin = async (data: LoginFormData) => {
         try {
             setLoginError('');
             const res = await authService.login(data);
             login(res.data);
-            if (res.data.role === 'Admin') navigate('/');
-            else navigate('/');
-        } catch (err: any) {
-            // Backend trả về 'msg'
-            setLoginError(err?.response?.data?.msg || err?.response?.data?.message || 'Đăng nhập thất bại.');
+            if (res.data.role === 'Admin') { navigate('/'); }
+            else { navigate('/'); }
+        } catch (err: unknown) {
+            const error = err as AxiosError<{ msg?: string; message?: string }>;
+            setLoginError(error?.response?.data?.msg || error?.response?.data?.message || 'Đăng nhập thất bại.');
         }
     };
 
-    const onRegister = async (data: any) => {
+    const onRegister = async (data: RegisterFormData) => {
         setIsRegisterLoading(true);
         setRegisterError('');
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -110,16 +128,15 @@ const AuthPage = () => {
         try {
             await authService.register(payload);
             navigate(`/verify-account?email=${payload.email}`);
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error(err);
-            const msg = err?.response?.data?.msg || err?.response?.data?.message || err?.response?.data || "Đăng ký thất bại.";
+            const error = err as AxiosError<{ msg?: string; message?: string; }>;
+            const msg = error?.response?.data?.msg || error?.response?.data?.message || error?.response?.data || "Đăng ký thất bại.";
             setRegisterError(typeof msg === 'string' ? msg : JSON.stringify(msg));
         } finally {
             setIsRegisterLoading(false);
         }
     };
-
-
 
     return (
         <div className="relative flex justify-center items-center py-8 font-sans min-h-[calc(100vh-80px)]"
@@ -213,7 +230,7 @@ const AuthPage = () => {
                             <div className="col-span-1"><InputField icon={MapPin} register={registerForm} name="tinhThanh" placeholder="Tỉnh/Thành" /></div>
                             <div className="col-span-1"><InputField icon={MapPin} register={registerForm} name="quanHuyen" placeholder="Quận/Huyện" /></div>
                             <div className="col-span-1"><PasswordInput icon={Lock} register={registerForm} name="matKhau" rules={{ required: true, minLength: 8 }} placeholder="Mật khẩu" error={registerErrors.matKhau as FieldError} /></div>
-                            <div className="col-span-1"><PasswordInput icon={Lock} register={registerForm} name="confirmMatKhau" rules={{ validate: (v: string) => v === password }} placeholder="Xác nhận" error={registerErrors.confirmMatKhau as FieldError} /></div>
+                            <div className="col-span-1"><PasswordInput icon={Lock} register={registerForm} name="confirmMatKhau" rules={{ validate: (v: string | undefined) => v === password || "Mật khẩu không khớp" }} placeholder="Xác nhận" error={registerErrors.confirmMatKhau as FieldError} /></div>
                         </div>
 
                         <button type="submit" disabled={isRegisterLoading} className="w-full rounded-lg bg-teal-600 text-white text-sm font-bold py-2.5 hover:bg-teal-700 transition shadow-md shadow-teal-200 mt-2">

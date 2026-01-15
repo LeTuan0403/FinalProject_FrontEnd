@@ -52,16 +52,16 @@ export const LOCATION_COORDINATES: Record<string, [number, number]> = {
 };
 
 export const normalizeLocationName = (name: string): string => {
-  if (!name) return "";
-  let n = name.trim();
+  if (!name) {return "";}
+  const n = name.trim();
   // Simple mapping handling
-  if (n.includes("Hà Nội")) return "Hà Nội";
-  if (n.includes("HCM") || n.includes("Hồ Chí Minh") || n.includes("Sài Gòn")) return "TP. Hồ Chí Minh";
-  if (n.includes("Đà Nẵng")) return "Đà Nẵng";
-  if (n.includes("Đà Lạt")) return "Đà Lạt";
-  if (n.includes("Nha Trang")) return "Nha Trang";
-  if (n.includes("Phú Quốc")) return "Phú Quốc";
-  if (n.includes("Sapa")) return "Sapa";
-  if (n.includes("Hạ Long")) return "Hạ Long";
+  if (n.includes("Hà Nội")) {return "Hà Nội";}
+  if (n.includes("HCM") || n.includes("Hồ Chí Minh") || n.includes("Sài Gòn")) {return "TP. Hồ Chí Minh";}
+  if (n.includes("Đà Nẵng")) {return "Đà Nẵng";}
+  if (n.includes("Đà Lạt")) {return "Đà Lạt";}
+  if (n.includes("Nha Trang")) {return "Nha Trang";}
+  if (n.includes("Phú Quốc")) {return "Phú Quốc";}
+  if (n.includes("Sapa")) {return "Sapa";}
+  if (n.includes("Hạ Long")) {return "Hạ Long";}
   return n;
 };

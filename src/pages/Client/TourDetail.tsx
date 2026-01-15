@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { isFutureDate, formatTimeRange, compareTimeStrings } from '../../utils/dateUtils';
-import { ChevronDown, ChevronUp, Share2, Heart, Ticket, Clock, MapPin, Truck, Info, Map, CheckCircle, AlertCircle, Star, MessageSquare, Trash2, Edit, Reply, Check, X, Calendar, UserCheck, Utensils, Image as ImageIcon, ThumbsUp, Camera, Cloud } from 'lucide-react';
+import { ChevronDown, ChevronUp, Share2, Heart, Ticket, Clock, MapPin, Truck, Info, Map, CheckCircle, AlertCircle, Star, MessageSquare, Trash2, Edit, Reply, Check, X, Calendar, UserCheck, Utensils, Image as ImageIcon, ThumbsUp, Camera, Cloud, Bell, BellOff } from 'lucide-react';
 import { tourService } from '../../services/tourService';
 import { reviewService } from '../../services/reviewService';
 import type { Tour, Review } from '../../types';
@@ -12,14 +12,14 @@ import WeatherWidget from '../../components/common/WeatherWidget';
 
 // Helper to get full media URL
 const getMediaUrl = (url: string) => {
-  if (!url) return '';
-  if (url.startsWith('http') || url.startsWith('blob:')) return url;
+  if (!url) { return ''; }
+  if (url.startsWith('http') || url.startsWith('blob:')) { return url; }
   return `http://localhost:5000${url}`;
 };
 
 // Helper: Parse destinations from Tour Name
 const getLocationsFromTourName = (name: string) => {
-  if (!name) return [];
+  if (!name) { return []; }
   // 1. Isolate main part
   let nameToParse = name.split('|')[0];
 
@@ -36,12 +36,12 @@ const getLocationsFromTourName = (name: string) => {
   return nameToParse.split(/[-–,]/)
     .map(s => s.trim())
     .filter(s => {
-      if (s.length < 2) return false;
-      if (/\d+N\d+Đ/i.test(s)) return false;
-      if (/\d+\s*sao/i.test(s)) return false;
-      if (/trọn gói/i.test(s)) return false;
-      if (/khởi hành/i.test(s)) return false;
-      if (/giá/i.test(s)) return false;
+      if (s.length < 2) { return false; }
+      if (/\d+N\d+Đ/i.test(s)) { return false; }
+      if (/\d+\s*sao/i.test(s)) { return false; }
+      if (/trọn gói/i.test(s)) { return false; }
+      if (/khởi hành/i.test(s)) { return false; }
+      if (/giá/i.test(s)) { return false; }
       return true;
     })
     .slice(0, 3);
@@ -57,7 +57,7 @@ const MediaGrid = ({
   onRemove?: (index: number) => void,
   size?: "sm" | "md" | "lg"
 }) => {
-  if (!media || media.length === 0) return null;
+  if (!media || media.length === 0) { return null; }
 
   const sizeClasses = {
     sm: "w-12 h-12",
@@ -90,6 +90,7 @@ const MediaGrid = ({
   );
 };
 
+// eslint-disable-next-line complexity
 const TourDetail = () => {
   const { id } = useParams<{ id: string }>();
   const [tour, setTour] = useState<Tour | null>(null);
@@ -131,15 +132,15 @@ const TourDetail = () => {
   const [submittingReview, setSubmittingReview] = useState(false);
   const [editingReviewId, setEditingReviewId] = useState<number | null>(null);
 
-  const fetchReviews = async () => {
-    if (!id) return;
+  const fetchReviews = useCallback(async () => {
+    if (!id) { return; }
     try {
       const res = await reviewService.getByTour(Number(id));
       setReviews(res.data);
     } catch (e) {
       console.error("Error fetching reviews", e);
     }
-  }
+  }, [id]);
 
   // Auto-scroll effect (Fixed placement)
   // We need to track the LAST opened day to scroll to it
@@ -173,11 +174,11 @@ const TourDetail = () => {
   // Scroll to top on mount/id change
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, [id]);
+  }, [id, fetchReviews]);
 
   useEffect(() => {
     const fetchTour = async () => {
-      if (!id) return;
+      if (!id) { return; }
       try {
         setLoading(true);
         const response = await tourService.getById(Number(id));
@@ -202,7 +203,7 @@ const TourDetail = () => {
     };
 
     fetchTour();
-  }, [id, user]);
+  }, [id, user, fetchReviews]);
 
   const toggleFavorite = async () => {
     if (!user) {
@@ -249,7 +250,7 @@ const TourDetail = () => {
       return;
     }
 
-    if (!id) return;
+    if (!id) { return; }
 
     setSubmittingReview(true);
     try {
@@ -264,6 +265,7 @@ const TourDetail = () => {
       }
 
       // 2. Prepare Data
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const reviewData: any = {
         tourId: Number(id),
         userId: user.userId,
@@ -294,6 +296,7 @@ const TourDetail = () => {
         // CREATE New Review
         const res = await reviewService.create(reviewData);
         if (res.data) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const newReview: any = { ...res.data, nguoiDung: { hoTen: user.hoTen } };
           setReviews(prev => [newReview, ...prev]);
           alert("Cảm ơn bạn đã đánh giá!");
@@ -324,7 +327,7 @@ const TourDetail = () => {
       formElement.scrollIntoView({ behavior: 'smooth' });
       // Focus textarea
       const textarea = formElement.querySelector('textarea');
-      if (textarea) textarea.focus();
+      if (textarea) { textarea.focus(); }
     }
   };
 
@@ -385,6 +388,20 @@ const TourDetail = () => {
     }
   }
 
+  const handleToggleSubscription = async (reviewId: number) => {
+    if (!user) { return; }
+    try {
+      const res = await reviewService.toggleSubscription(reviewId);
+      setReviews(prev => prev.map(rv => rv.danhGiaId === reviewId ? { ...rv, subscribers: res.data.subscribers } : rv));
+
+      const isNowSubscribed = res.data.subscribers && res.data.subscribers.includes(String(user.userId));
+      alert(isNowSubscribed ? "Đã bật thông báo cho luồng thảo luận này" : "Đã tắt thông báo cho luồng thảo luận này");
+    } catch (error) {
+      console.error("Toggle subscription failed", error);
+      alert("Lỗi khi thay đổi trạng thái thông báo");
+    }
+  };
+
   const handleReplyFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const files = Array.from(e.target.files);
@@ -402,6 +419,7 @@ const TourDetail = () => {
     setReplyPreviewMedia(prev => prev.filter((_, i) => i !== index));
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleStartEditReply = (reply: any) => {
     setEditingReplyId(reply._id);
     setEditingReplyContent(reply.content);
@@ -411,8 +429,6 @@ const TourDetail = () => {
     setReplyPreviewMedia([]);
     // Do NOT close the reply section (setReplyingToId(null)) - we want to edit in place.
   };
-
-
 
   const handleUpdateReply = async (reviewId: number, replyId: string) => {
     try {
@@ -443,7 +459,7 @@ const TourDetail = () => {
   };
 
   const handleDeleteReply = async (reviewId: number, replyId: string) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa bình luận này?")) return;
+    if (!window.confirm("Bạn có chắc chắn muốn xóa bình luận này?")) { return; }
     try {
       const res = await reviewService.deleteReply(reviewId, replyId);
       setReviews(prev => prev.map(rv => rv.danhGiaId === reviewId ? { ...rv, replies: res.data } : rv));
@@ -463,7 +479,7 @@ const TourDetail = () => {
       return;
     }
 
-    if (!replyContent.trim()) return;
+    if (!replyContent.trim()) { return; }
 
     try {
       let uploadedFiles: { type: 'image' | 'video', url: string }[] = [];
@@ -508,6 +524,7 @@ const TourDetail = () => {
     setInlineReplyPreviewMedia(prev => prev.filter((_, i) => i !== index));
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleOpenInlineReply = (reply: any, replyName: string) => {
     setActiveInlineReplyId(reply._id);
     setInlineReplyContent(`@${replyName} `);
@@ -516,7 +533,7 @@ const TourDetail = () => {
   };
 
   const handleInlineReplySubmit = async (reviewId: number) => {
-    if (!inlineReplyContent.trim() && inlineReplyMediaFiles.length === 0) return;
+    if (!inlineReplyContent.trim() && inlineReplyMediaFiles.length === 0) { return; }
     try {
       let uploadedFiles: { type: 'image' | 'video', url: string }[] = [];
       if (inlineReplyMediaFiles.length > 0) {
@@ -537,13 +554,14 @@ const TourDetail = () => {
     }
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center text-gray-500">Đang tải thông tin tour...</div>;
-  if (error || !tour) return <div className="min-h-screen flex items-center justify-center text-red-500">{error || "Tour không tồn tại"}</div>;
+  if (loading) { return <div className="min-h-screen flex items-center justify-center text-gray-500">Đang tải thông tin tour...</div>; }
+  if (error || !tour) { return <div className="min-h-screen flex items-center justify-center text-red-500">{error || "Tour không tồn tại"}</div>; }
 
   const tourCode = tour.maTour || `T - ${tour.tourId} `;
 
   // Calculate duration accurately
   const maxDay = (tour.lichTrinh || tour.tourChiTiets)?.length
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ? Math.max(...(tour.lichTrinh || tour.tourChiTiets).map((ct: any) => ct.ngayThu))
     : 1;
   const durationText = tour.thoiGian || `${maxDay} ngày ${maxDay - 1 > 0 ? (maxDay - 1) + ' đêm' : ''} `;
@@ -595,8 +613,11 @@ const TourDetail = () => {
               const today = new Date();
               today.setHours(0, 0, 0, 0);
               const allFutureDates = (tour.ngayKhoiHanh || [])
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 .map((d: any) => new Date(d))
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 .filter((d: any) => new Date(d).getTime() >= today.getTime())
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 .sort((a: any, b: any) => new Date(a).getTime() - new Date(b).getTime());
 
               // 2. Identify Selected Date (or default to first)
@@ -613,12 +634,12 @@ const TourDetail = () => {
               // Fallback to itinerary
               if (validLocations.length === 0) {
                 const itineraryObj = tour.lichTrinh?.[0]?.diaDiem || tour.tourChiTiets?.[0]?.diaDiem;
-                if (itineraryObj?.tenDiaDiem) validLocations.push(itineraryObj.tenDiaDiem);
+                if (itineraryObj?.tenDiaDiem) { validLocations.push(itineraryObj.tenDiaDiem); }
               }
               // Final fallback
-              if (validLocations.length === 0 && tour.diemKhoiHanh) validLocations.push(tour.diemKhoiHanh);
+              if (validLocations.length === 0 && tour.diemKhoiHanh) { validLocations.push(tour.diemKhoiHanh); }
 
-              if (validLocations.length === 0) return null;
+              if (validLocations.length === 0) { return null; }
 
               return (
                 <div className="mb-8 p-6 bg-blue-50/50 rounded-2xl border border-blue-100">
@@ -706,17 +727,19 @@ const TourDetail = () => {
                   Lịch Trình Chi Tiết
                 </h2>
 
-
-
                 <div className="space-y-4">
                   {/* Adapter: Use lichTrinh if available, mapping diaDiemId to diaDiem for frontend compatibility */}
                   {(tour.lichTrinh || tour.tourChiTiets) && (tour.lichTrinh || tour.tourChiTiets).length > 0 ? (
                     // Group details by day
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     Array.from(new Set((tour.lichTrinh || tour.tourChiTiets).map((ct: any) => ct.ngayThu))).sort((a: any, b: any) => a - b).map((day: any) => {
                       // Map diaDiemId to diaDiem object if necessary (for populated data)
                       const dayItems = (tour.lichTrinh || tour.tourChiTiets)
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         .filter((ct: any) => ct.ngayThu === day)
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         .sort((a: any, b: any) => compareTimeStrings(a.thoiGian, b.thoiGian))
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         .map((item: any) => ({
                           ...item,
                           diaDiem: item.diaDiemId || item.diaDiem // Handle populated path (diaDiemId becomes the object)
@@ -880,14 +903,17 @@ const TourDetail = () => {
                 {/* Reviews List */}
                 <div className="space-y-6 mb-10">
                   {reviews.length > 0 ? (
+                    // eslint-disable-next-line complexity
                     reviews.map((rv) => {
                       // Helper to get robust user info
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
                       const reviewUser = rv.nguoiDung || (typeof rv.userId === 'object' ? rv.userId as any : null);
                       const reviewUserName = reviewUser?.hoTen || 'Khách hàng';
                       const reviewOwnerId = reviewUser?.userId || (typeof rv.userId !== 'object' ? rv.userId : null);
 
                       // Robust ownership check (String comparison for ObjectId vs Number/String)
                       const isOwner = user && reviewOwnerId && String(user.userId) === String(reviewOwnerId);
+                      const isLiked = user && rv.likes?.includes(String(user.userId));
 
                       return (
                         <div key={rv.danhGiaId} className={`bg-white p-5 rounded-xl border shadow-sm transition-all ${editingReviewId === rv.danhGiaId ? 'border-blue-500 ring-1 ring-blue-200 bg-blue-50/20' : 'border-gray-100'}`}>
@@ -928,30 +954,52 @@ const TourDetail = () => {
                             </div>
                           )}
 
-
                           {/* Media Display */}
                           <MediaGrid media={rv.media || []} size="lg" />
 
                           <p className="text-gray-600 italic mb-3">"{rv.binhLuan}"</p>
 
                           {/* Action Buttons */}
-                          <div className="flex items-center gap-4 text-sm text-gray-500 mb-3 border-t border-gray-50 pt-2">
+                          <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-100">
                             <button
                               onClick={() => handleLike(rv.danhGiaId!)}
-                              className={`flex items-center gap-1 hover:text-blue-600 transition ${user && rv.likes?.includes(String(user.userId)) ? 'text-blue-600 font-bold' : ''}`}
+                              className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${isLiked ? 'text-blue-600' : 'text-gray-500 hover:text-blue-600'}`}
                             >
-                              <ThumbsUp size={14} />
-                              <span>{rv.likes?.length || 0} Thích</span>
+                              <ThumbsUp size={16} className={isLiked ? 'fill-current' : ''} />
+                              <span>Thích ({rv.likes?.length || 0})</span>
                             </button>
+
                             <button
                               onClick={() => setReplyingToId(replyingToId === rv.danhGiaId ? null : rv.danhGiaId!)}
-                              className={`flex items-center gap-1 hover:text-blue-600 transition ${replyingToId === rv.danhGiaId ? 'text-blue-600 font-bold' : ''}`}
+                              className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${replyingToId === rv.danhGiaId ? 'text-blue-600' : 'text-gray-500 hover:text-blue-600'}`}
                             >
-                              <MessageSquare size={14} />
-                              <span>{rv.replies?.length || 0} Bình luận</span>
+                              <MessageSquare size={16} />
+                              <span>Phản hồi ({rv.replies?.length || 0})</span>
                             </button>
-                          </div>
 
+                            {/* Subscription Toggle for Any User (Thread Subscription) */}
+                            {user && (
+                              <button
+                                onClick={() => handleToggleSubscription(rv.danhGiaId!)}
+                                className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${user && rv.subscribers?.includes(String(user.userId)) ? 'text-blue-600' : 'text-gray-400 hover:text-blue-600'}`}
+                                title={user && rv.subscribers?.includes(String(user.userId)) ? "Tắt thông báo luồng này" : "Bật thông báo khi có người trả lời"}
+                              >
+                                {user && rv.subscribers?.includes(String(user.userId)) ? <Bell size={16} className="fill-current" /> : <BellOff size={16} />}
+                                <span className="hidden sm:inline">{user && rv.subscribers?.includes(String(user.userId)) ? 'Đang theo dõi' : 'Theo dõi'}</span>
+                              </button>
+                            )}
+
+                            {isOwner && (
+                              <>
+                                <button onClick={() => handleEditReview(rv)} className="flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-blue-600 transition-colors ml-auto">
+                                  <Edit size={16} /> <span className="hidden sm:inline">Sửa</span>
+                                </button>
+                                <button onClick={() => handleDeleteReview(rv.danhGiaId!)} className="flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-red-500 transition-colors">
+                                  <Trash2 size={16} /> <span className="hidden sm:inline">Xóa</span>
+                                </button>
+                              </>
+                            )}
+                          </div>
                           {/* Replies Section (Toggleable) */}
                           {replyingToId === rv.danhGiaId && (
                             <div className="ml-12 mt-3 space-y-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
@@ -975,7 +1023,9 @@ const TourDetail = () => {
                               )}
 
                               {/* List Existing Replies */}
+                              {/* eslint-disable-next-line complexity */}
                               {rv.replies?.map((reply, rIdx) => {
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                 const replyUser = typeof reply.userId === 'object' ? reply.userId as any : null;
                                 // Identify Admin Reply
                                 const isAdminReply =
@@ -1192,7 +1242,6 @@ const TourDetail = () => {
                                   </div>
                                 </div>
                               )}
-
 
                             </div>
                           )
@@ -1420,13 +1469,13 @@ const TourDetail = () => {
                               .filter(d => {
                                 // Robust String Check
                                 const dStr = d.toISOString().split('T')[0];
-                                if (!isFutureDate(dStr)) return false;
+                                if (!isFutureDate(dStr)) { return false; }
 
                                 // Availability check
                                 if (tour.availability) {
                                   const dateStr = d.toISOString().split('T')[0];
                                   const avail = tour.availability.find(a => new Date(a.date).toISOString().split('T')[0] === dateStr);
-                                  if (avail && avail.remainingSeats <= 0) return false;
+                                  if (avail && avail.remainingSeats <= 0) { return false; }
                                 }
                                 return true;
                               })
@@ -1439,7 +1488,7 @@ const TourDetail = () => {
                             // Group by Month/Year
                             const grouped = futureDates.reduce((acc, date) => {
                               const key = `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
-                              if (!acc[key]) acc[key] = [];
+                              if (!acc[key]) { acc[key] = []; }
                               acc[key].push(date.getDate().toString().padStart(2, '0'));
                               return acc;
                             }, {} as Record<string, string[]>);
@@ -1456,11 +1505,11 @@ const TourDetail = () => {
                             tour.ngayKhoiHanh.filter(d => new Date(d).getTime() >= new Date().setHours(0, 0, 0, 0)).length > 0 &&
                             Object.keys(tour.ngayKhoiHanh.reduce((acc, d) => {
                               const date = new Date(d);
-                              if (date.getTime() < new Date().setHours(0, 0, 0, 0)) return acc;
+                              if (date.getTime() < new Date().setHours(0, 0, 0, 0)) { return acc; }
                               const key = `${date.getMonth()}/${date.getFullYear()}`;
                               acc[key] = true;
                               return acc;
-                            }, {} as any)).length > 3 &&
+                            }, {} as Record<string, boolean>)).length > 3 &&
                             <span className="text-xs text-gray-500 italic">+ các tháng sau</span>
                           }
                         </div >
@@ -1515,7 +1564,7 @@ const TourDetail = () => {
                         const futureAvails = tour.availability
                           .filter(a => new Date(a.date).getTime() >= tomorrow.getTime() && a.remainingSeats > 0)
                           .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-                        if (futureAvails.length > 0) nextRem = futureAvails[0].remainingSeats;
+                        if (futureAvails.length > 0) { nextRem = futureAvails[0].remainingSeats; }
                       }
 
                       if (nextRem > 0 && nextRem <= 5) {

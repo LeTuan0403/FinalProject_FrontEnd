@@ -7,7 +7,7 @@ const ComparisonFloatingBar: React.FC = () => {
     const { selectedTourIds, clearCompare } = useComparison();
     const navigate = useNavigate();
 
-    if (selectedTourIds.length === 0) return null;
+    if (selectedTourIds.length === 0) {return null;}
 
     return (
         <div className="fixed bottom-0 left-0 right-0 z-50 p-4 animate-slide-up">

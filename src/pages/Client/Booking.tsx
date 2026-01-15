@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { AxiosError } from 'axios';
 import { isFutureDate } from '../../utils/dateUtils';
 import { tourService } from '../../services/tourService';
 import { bookingService } from '../../services/bookingService';
@@ -7,6 +8,7 @@ import type { Tour } from '../../types';
 import { X, Loader, AlertTriangle, CheckCircle } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
+// eslint-disable-next-line complexity
 const Booking = () => {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -44,7 +46,7 @@ const Booking = () => {
 
     useEffect(() => {
         const fetchTour = async () => {
-            if (!id) return;
+            if (!id) { return; }
             try {
                 setLoading(true);
                 const res = await tourService.getById(Number(id));
@@ -55,12 +57,12 @@ const Booking = () => {
                 // Assuming tourController sends { ...tour, availability: [{ date, bookedSeats, remainingSeats }] }
 
                 const rawDates = res.data.ngayKhoiHanh;
-                let availabilityMap: Record<string, number> = {};
+                const availabilityMap: Record<string, number> = {};
 
                 // Map availability if provided by backend
                 // If not provided (old backend), we fallback to global 'soLuongCho' which is now static Max Capacity
                 if (res.data.availability && Array.isArray(res.data.availability)) {
-                    res.data.availability.forEach((item: any) => {
+                    res.data.availability.forEach((item: { date: string; remainingSeats: number }) => {
                         // Normalize date key to YYYY-MM-DD
                         const dateKey = new Date(item.date).toISOString().split('T')[0];
                         availabilityMap[dateKey] = item.remainingSeats;
@@ -80,19 +82,19 @@ const Booking = () => {
 
                             return { date: dateObj, dateStr, remaining };
                         })
-                        .filter((item: any) => {
+                        .filter((item: { dateStr: string }) => {
                             return isFutureDate(item.dateStr);
                         })
-                        .sort((a: any, b: any) => a.date.getTime() - b.date.getTime());
+                        .sort((a: { date: Date }, b: { date: Date }) => a.date.getTime() - b.date.getTime());
 
                     // Find first date with seats > 0
-                    const firstAvailable = validDates.find((item: any) => item.remaining > 0);
+                    const firstAvailable = validDates.find((item: { remaining: number | undefined; dateStr: string }) => (item.remaining || 0) > 0);
                     if (firstAvailable) {
                         initialDate = firstAvailable.dateStr;
                     }
 
                     // We can also store this availability state to use in render
-                    setTour({ ...res.data, availabilityMap } as any); // extend Tour type locally or ignore TS for now
+                    setTour({ ...res.data, availabilityMap } as Tour & { availabilityMap: Record<string, number> });
 
                     setFormData(prev => ({
                         ...prev,
@@ -116,10 +118,10 @@ const Booking = () => {
         };
 
         fetchTour();
-    }, [id]);
+    }, [id, user?.hoTen]);
 
-    if (loading) return <div className="min-h-screen flex text-center justify-center items-center text-gray-500 gap-2"><Loader className="animate-spin" /> Loading tour info...</div>;
-    if (error || !tour) return <div className="min-h-screen flex text-center justify-center items-center text-red-500">{error || 'Tour not found'}</div>;
+    if (loading) { return <div className="min-h-screen flex text-center justify-center items-center text-gray-500 gap-2"><Loader className="animate-spin" /> Loading tour info...</div>; }
+    if (error || !tour) { return <div className="min-h-screen flex text-center justify-center items-center text-red-500">{error || 'Tour not found'}</div>; }
 
     // For Custom Tour, tongGiaDuKien is TOTAL. Retrieve Unit Price by dividing by capacity.
     // For Standard Tour, tongGiaDuKien is Unit Price.
@@ -130,11 +132,11 @@ const Booking = () => {
 
     const validate = () => {
         const errors: Record<string, string> = {};
-        if (!formData.fullName) errors.fullName = "Vui lòng nhập họ tên";
-        if (!formData.email) errors.email = "Vui lòng nhập email";
-        if (!formData.phone) errors.phone = "Vui lòng nhập số điện thoại";
-        if (!formData.address) errors.address = "Vui lòng nhập địa chỉ";
-        if (!formData.adults || Number(formData.adults) <= 0) errors.adults = "Số lượng người lớn phải lớn hơn 0";
+        if (!formData.fullName) { errors.fullName = "Vui lòng nhập họ tên"; }
+        if (!formData.email) { errors.email = "Vui lòng nhập email"; }
+        if (!formData.phone) { errors.phone = "Vui lòng nhập số điện thoại"; }
+        if (!formData.address) { errors.address = "Vui lòng nhập địa chỉ"; }
+        if (!formData.adults || Number(formData.adults) <= 0) { errors.adults = "Số lượng người lớn phải lớn hơn 0"; }
         return errors;
     };
 
@@ -211,7 +213,8 @@ const Booking = () => {
                 // Show local success modal
                 setSuccessModal({ isOpen: true, bookingId: newBookingId });
             }
-        } catch (error: any) {
+        } catch (err: unknown) {
+            const error = err as AxiosError<{ msg?: string; message?: string; title?: string }>;
             console.error("❌ Booking failed:", error);
             console.error("Error details:", error.response?.data);
 
@@ -337,8 +340,9 @@ const Booking = () => {
                                                     const displayStr = date.toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'numeric', day: 'numeric' });
 
                                                     // Check availability
-                                                    // @ts-ignore
-                                                    const remaining = tour.availabilityMap ? tour.availabilityMap[dateStr] : tour.soLuongCho;
+                                                    // Check availability
+                                                    const tourWithAvailability = tour as Tour & { availabilityMap?: Record<string, number> };
+                                                    const remaining = tourWithAvailability.availabilityMap ? tourWithAvailability.availabilityMap[dateStr] : tour.soLuongCho;
                                                     const isFull = remaining !== undefined && remaining <= 0;
 
                                                     return (

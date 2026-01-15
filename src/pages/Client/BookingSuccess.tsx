@@ -2,15 +2,16 @@ import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { CheckCircle, Home, FileText, Loader2, MapPin, Calendar, DollarSign, User } from 'lucide-react';
 import { bookingService } from '../../services/bookingService';
+import { Booking } from '../../types';
 
 const BookingSuccess = () => {
     const { bookingId } = useParams<{ bookingId: string }>();
-    const [booking, setBooking] = useState<any>(null);
+    const [booking, setBooking] = useState<Booking | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchBooking = async () => {
-            if (!bookingId) return;
+            if (!bookingId) { return; }
             try {
                 const res = await bookingService.getById(Number(bookingId));
                 setBooking(res.data);
@@ -23,7 +24,7 @@ const BookingSuccess = () => {
         fetchBooking();
     }, [bookingId]);
 
-    if (loading) return <div className="min-h-screen flex justify-center items-center bg-gray-50"><Loader2 className="animate-spin text-green-600" size={48} /></div>;
+    if (loading) { return <div className="min-h-screen flex justify-center items-center bg-gray-50"><Loader2 className="animate-spin text-green-600" size={48} /></div>; }
 
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
@@ -68,7 +69,7 @@ const BookingSuccess = () => {
 
                 <div className="space-y-3">
                     {booking && booking.tourId && (
-                        <Link to={`/tours/${booking.tourId.tourId}`} className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition flex items-center justify-center gap-2 shadow-lg shadow-blue-200">
+                        <Link to={`/tours/${booking.tourId}`} className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition flex items-center justify-center gap-2 shadow-lg shadow-blue-200">
                             <MapPin size={20} />
                             Xem Tour Đã Đặt
                         </Link>

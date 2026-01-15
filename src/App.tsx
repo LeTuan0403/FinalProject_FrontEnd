@@ -20,7 +20,6 @@ import ForgotPassword from './pages/Auth/ForgotPassword';
 import ResetPassword from './pages/Auth/ResetPassword';
 import VerifyAccount from './pages/Auth/VerifyAccount';
 
-
 import Dashboard from './pages/Admin/pages/Dashboard';
 import TourManagement from './pages/Admin/pages/TourManagement';
 import BookingManagement from './pages/Admin/pages/BookingManagement';
@@ -38,11 +37,13 @@ import AdminChat from './pages/Admin/pages/AdminChat';
 import { ComparisonProvider } from './context/ComparisonContext';
 import ComparisonFloatingBar from './components/common/ComparisonFloatingBar';
 import ChatWidget from './components/common/ChatWidget';
+import AdminLayout from './pages/Admin/components/AdminLayout';
+import { NotificationProvider } from './context/NotificationContext';
 
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, isLoading } = useAuth();
-  if (isLoading) return <div>Loading...</div>;
-  if (!user || user.role !== 'Admin') return <div>Bạn không có quyền truy cập trang này</div>;
+  if (isLoading) {return <div>Loading...</div>;}
+  if (!user || user.role !== 'Admin') {return <div>Bạn không có quyền truy cập trang này</div>;}
   return children;
 };
 
@@ -77,21 +78,27 @@ function App() {
 
         {/* Auth Routes Removed from here */}
 
-
         {/* Admin Routes - Flattened, no Layout wrapper */}
-        <Route path="/admin">
-          <Route index element={<AdminRoute><Dashboard /></AdminRoute>} />
-          <Route path="tours" element={<AdminRoute><TourManagement /></AdminRoute>} />
-          <Route path="bookings" element={<AdminRoute><BookingManagement /></AdminRoute>} />
-          <Route path="users" element={<AdminRoute><UserManagement /></AdminRoute>} />
-          <Route path="locations" element={<AdminRoute><LocationManagement /></AdminRoute>} />
-          <Route path="reviews" element={<AdminRoute><AdminReviews /></AdminRoute>} />
-          <Route path="contacts" element={<AdminRoute><ContactManagement /></AdminRoute>} />
-          <Route path="chat" element={<AdminRoute><AdminChat /></AdminRoute>} />
-          <Route path="settings" element={<AdminRoute><Settings /></AdminRoute>} />
+        {/* Admin Routes */}
+        <Route path="/admin" element={
+          <AdminRoute>
+            <NotificationProvider>
+              <AdminLayout />
+            </NotificationProvider>
+          </AdminRoute>
+        }>
+          <Route index element={<Dashboard />} />
+          <Route path="tours" element={<TourManagement />} />
+          <Route path="bookings" element={<BookingManagement />} />
+          <Route path="users" element={<UserManagement />} />
+          <Route path="locations" element={<LocationManagement />} />
+          <Route path="reviews" element={<AdminReviews />} />
+          <Route path="contacts" element={<ContactManagement />} />
+          <Route path="chat" element={<AdminChat />} />
+          <Route path="settings" element={<Settings />} />
 
-          <Route path="tours/create" element={<AdminRoute><AdminEditTour /></AdminRoute>} />
-          <Route path="tours/edit/:id" element={<AdminRoute><AdminEditTour /></AdminRoute>} />
+          <Route path="tours/create" element={<AdminEditTour />} />
+          <Route path="tours/edit/:id" element={<AdminEditTour />} />
         </Route>
 
       </Routes>

@@ -44,7 +44,7 @@ const FloatingContact = () => {
                         rel="noreferrer"
                         className={`flex items-center gap-2 pr-1 pl-4 py-1.5 rounded-full shadow-lg transform transition-all hover:scale-110 ${opt.delay} ${isOpen ? 'translate-x-0 opacity-100' : 'translate-x-10 opacity-0'}`}
                     >
-                        <span className="bg-white text-gray-700 text-xs font-bold px-2 py-1 rounded hidden group-hover:block shadow-sm">
+                        <span className="bg-white text-gray-700 text-xs font-bold px-2 py-1 rounded shadow-sm">
                             {opt.label}
                         </span>
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white shadow-md ${opt.color}`}>

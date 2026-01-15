@@ -28,7 +28,7 @@ const ChatWidget = () => {
     useEffect(() => {
         const initChat = async () => {
             // Check LocalStorage or API
-            let savedConvId = localStorage.getItem("chat_conversation_id");
+            const savedConvId = localStorage.getItem("chat_conversation_id");
             const senderId = user ? String(user.userId) : (localStorage.getItem("chat_guest_id") || `guest_${Date.now()}`);
 
             if (!user && !localStorage.getItem("chat_guest_id")) {
@@ -56,7 +56,7 @@ const ChatWidget = () => {
 
     // 2. Socket Listeners
     useEffect(() => {
-        if (!socket) return;
+        if (!socket) { return; }
 
         // Ensure we are in the room if we have a conversationId
         if (conversationId) {
@@ -64,7 +64,7 @@ const ChatWidget = () => {
         }
 
         const handleConnect = () => {
-            if (conversationId) socket.emit("join_room", conversationId);
+            if (conversationId) { socket.emit("join_room", conversationId); }
         };
         socket.on("connect", handleConnect);
 
@@ -102,11 +102,11 @@ const ChatWidget = () => {
             };
             setMessages([greeting]);
         }
-    }, [isOpen]);
+    }, [isOpen, messages.length, conversationId]);
 
     // 4. Send Message
     const handleSend = async () => {
-        if (!newMessage.trim()) return;
+        if (!newMessage.trim()) { return; }
 
         const senderId = user ? String(user.userId) : localStorage.getItem("chat_guest_id")!;
         let currentConvId = conversationId;
@@ -123,7 +123,7 @@ const ChatWidget = () => {
                 localStorage.setItem("chat_conversation_id", currentConvId!);
 
                 // Join Room
-                if (socket) socket.emit("join_room", currentConvId);
+                if (socket) { socket.emit("join_room", currentConvId); }
             } catch (e) {
                 console.error("Create conv failed", e);
                 return;
@@ -131,7 +131,7 @@ const ChatWidget = () => {
         }
 
         // Ensure joined room (idempotent)
-        if (socket) socket.emit("join_room", currentConvId);
+        if (socket) { socket.emit("join_room", currentConvId); }
 
         const msgData = {
             conversationId: currentConvId,
@@ -151,7 +151,7 @@ const ChatWidget = () => {
         try {
             await axios.post("http://localhost:5000/api/chat/message", msgData);
             // Send to Socket for Realtime
-            if (socket) socket.emit("send_message", msgData);
+            if (socket) { socket.emit("send_message", msgData); }
 
             setNewMessage("");
         } catch (e) {
@@ -160,8 +160,8 @@ const ChatWidget = () => {
     };
 
     const handleDeleteChat = async () => {
-        if (!conversationId) return;
-        if (!window.confirm("Bạn có chắc muốn xóa toàn bộ cuộc trò chuyện này?")) return;
+        if (!conversationId) { return; }
+        if (!window.confirm("Bạn có chắc muốn xóa toàn bộ cuộc trò chuyện này?")) { return; }
 
         try {
             await axios.delete(`http://localhost:5000/api/chat/conversation/${conversationId}`);
@@ -173,7 +173,7 @@ const ChatWidget = () => {
         }
     };
 
-    if (user?.role === 'Admin') return null;
+    if (user?.role === 'Admin') { return null; }
 
     return (
         <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end pointer-events-none">

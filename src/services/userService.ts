@@ -1,14 +1,14 @@
 import axiosClient from '../api/axiosClient';
-import type { Tour } from '../types';
+import type { Tour, NguoiDung } from '../types';
 
 // Assuming User type includes favorites now, or we define a specific response
 // Define minimal types needed
 
 export const userService = {
     getProfile: async () => {
-        return axiosClient.get('/users/me');
+        return axiosClient.get<NguoiDung>('/users/me');
     },
-    updateProfile: async (data: any) => {
+    updateProfile: async (data: Partial<NguoiDung>) => {
         return axiosClient.put('/users/profile', data);
     },
     getMyFavorites: async () => {

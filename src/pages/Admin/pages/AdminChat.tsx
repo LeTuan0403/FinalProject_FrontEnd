@@ -2,12 +2,14 @@ import { useState, useEffect, useRef } from "react";
 import { MessageCircle, Search, Send, MoreVertical, MapPin, X, Trash2 } from "lucide-react";
 import axios from "axios";
 import { useChat } from "../../../context/ChatContext";
-import Sidebar from "../components/Sidebar";
+import { useNotification } from "../../../context/NotificationContext";
+
 import { Message, Conversation, TourShort } from "../../../types/chat";
 import ChatBubble from "../../../components/chat/ChatBubble";
 
 const AdminChat = () => {
     const { socket } = useChat();
+    const { refreshCounts } = useNotification();
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [selectedConv, setSelectedConv] = useState<Conversation | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
@@ -24,14 +26,14 @@ const AdminChat = () => {
         try {
             const res = await axios.get("http://localhost:5000/api/tours");
             // Assuming API returns full list. Filter fields if possible, or just use full obj.
-            setTours(res.data);
+            setTours(res.data as TourShort[]);
         } catch (e) {
             console.error("Fetch tours failed", e);
         }
     };
 
     const handleRecommendTour = async (tour: TourShort) => {
-        if (!selectedConv) return;
+        if (!selectedConv) { return; }
         setIsTourModalOpen(false);
 
         const msgData = {
@@ -66,7 +68,7 @@ const AdminChat = () => {
             // So if we send `tourId: string` to socket, User receives string.
             // We need to send POPULATED object to socket.
             const socketMsg = { ...optimisticMsg };
-            if (socket) socket.emit("send_message", socketMsg);
+            if (socket) { socket.emit("send_message", socketMsg); }
 
             // Update preview
             setConversations(prev => prev.map(c => c._id === selectedConv._id ? { ...c, lastMessage: "[Gợi ý Tour]" } : c));
@@ -101,6 +103,7 @@ const AdminChat = () => {
                     await axios.put(`http://localhost:5000/api/chat/conversation/read/${selectedConv._id}`, { role: 'admin' });
                     // Update local state isRead
                     setConversations(prev => prev.map(c => c._id === selectedConv._id ? { ...c, isReadByAdmin: true } : c));
+                    refreshCounts();
                 } catch (e) {
                     console.error("Fetch msgs failed", e);
                 }
@@ -120,11 +123,11 @@ const AdminChat = () => {
                 };
             }
         }
-    }, [selectedConv, socket]);
+    }, [selectedConv, socket, refreshCounts]);
 
     // 3. Socket Listeners
     useEffect(() => {
-        if (!socket) return;
+        if (!socket) { return; }
 
         // Listen for new messages in current room
         socket.on("receive_message", (data: Message) => {
@@ -139,9 +142,10 @@ const AdminChat = () => {
         });
 
         // Listen for Global Notifications (to update conversation list order/badges)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         socket.on("admin_notification", (data: any) => {
             // data = { conversationId, text, senderId ... }
-            if (data.senderId === 'admin') return; // Ignore self
+            if (data.senderId === 'admin') { return; } // Ignore self
 
             setConversations(prev => {
                 const existing = prev.find(c => c._id === data.conversationId);
@@ -176,26 +180,26 @@ const AdminChat = () => {
 
     // Auto-scroll
     const handleDeleteMessage = async (msgId: string) => {
-        if (!selectedConv || !window.confirm("Xóa tin nhắn này?")) return;
+        if (!selectedConv || !window.confirm("Xóa tin nhắn này?")) { return; }
 
         try {
             await axios.delete(`http://localhost:5000/api/chat/message/${msgId}`);
             setMessages(prev => prev.filter(m => m._id !== msgId));
-            if (socket) socket.emit("admin_delete_message", { conversationId: selectedConv._id, messageId: msgId });
+            if (socket) { socket.emit("admin_delete_message", { conversationId: selectedConv._id, messageId: msgId }); }
         } catch (e) {
             console.error("Delete msg failed", e);
         }
     };
 
     const handleDeleteConversation = async () => {
-        if (!selectedConv) return;
-        if (!window.confirm("Bạn có chắc muốn xóa cuộc trò chuyện này? Hành động này không thể hoàn tác.")) return;
+        if (!selectedConv) { return; }
+        if (!window.confirm("Bạn có chắc muốn xóa cuộc trò chuyện này? Hành động này không thể hoàn tác.")) { return; }
 
         try {
             await axios.delete(`http://localhost:5000/api/chat/conversation/${selectedConv._id}`);
 
             // Emit socket event to notify user
-            if (socket) socket.emit("admin_delete_conversation", selectedConv._id);
+            if (socket) { socket.emit("admin_delete_conversation", selectedConv._id); }
 
             // Update local state
             setConversations(prev => prev.filter(c => c._id !== selectedConv._id));
@@ -209,7 +213,7 @@ const AdminChat = () => {
 
     const handleSend = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newMessage.trim() || !selectedConv) return;
+        if (!newMessage.trim() || !selectedConv) { return; }
 
         const msgData = {
             conversationId: selectedConv._id,
@@ -224,7 +228,7 @@ const AdminChat = () => {
 
         try {
             await axios.post("http://localhost:5000/api/chat/message", msgData);
-            if (socket) socket.emit("send_message", msgData);
+            if (socket) { socket.emit("send_message", msgData); }
 
             // Update local conversation preview
             setConversations(prev => {
@@ -237,189 +241,187 @@ const AdminChat = () => {
     };
 
     return (
-        <div className="flex h-screen bg-gray-50">
-            <Sidebar />
-            <div className="flex-1 ml-64 p-8 h-full flex flex-col">
-                <h1 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-                    <MessageCircle /> Tin nhắn CSKH
-                </h1>
-                <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex">
-                    {/* Sidebar: Conversation List */}
-                    <div className="w-1/3 border-r border-gray-100 bg-gray-50 flex flex-col">
-                        <div className="p-4 border-b border-gray-200 bg-white">
-                            <h2 className="text-xl font-bold text-gray-800 mb-4">Tin nhắn <span className="text-blue-600">({conversations.filter(c => !c.isReadByAdmin).length})</span></h2>
-                            <div className="relative">
-                                <input
-                                    type="text"
-                                    placeholder="Tìm kiếm khách hàng..."
-                                    className="w-full pl-10 pr-4 py-2 bg-gray-100 border-none rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm transition-all"
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                />
-                                <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                            </div>
-                        </div>
+        <div className="h-full flex flex-col bg-gray-50">
 
-                        <div className="flex-1 overflow-y-auto">
-                            {conversations.filter(c => c.guestName?.toLowerCase().includes(searchTerm.toLowerCase())).map(conv => (
-                                <div
-                                    key={conv._id}
-                                    onClick={() => setSelectedConv(conv)}
-                                    className={`p-4 border-b border-gray-100 cursor-pointer transition-all hover:bg-gray-100 ${selectedConv?._id === conv._id ? 'bg-blue-50 hover:bg-blue-50' : ''
-                                        } ${!conv.isReadByAdmin ? 'bg-blue-50/30' : ''}`}
-                                >
-                                    <div className="flex justify-between items-start mb-1">
-                                        <h4 className={`text-sm ${!conv.isReadByAdmin ? 'font-bold text-gray-900' : 'font-medium text-gray-700'}`}>
-                                            {conv.guestName}
-                                        </h4>
-                                        <span className="text-[10px] text-gray-400">{new Date(conv.updatedAt).toLocaleDateString('vi-VN')}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center">
-                                        <p className={`text-xs truncate max-w-[180px] ${!conv.isReadByAdmin ? 'text-gray-800 font-semibold' : 'text-gray-500'}`}>
-                                            {conv.lastMessage || "Hình ảnh/File..."}
-                                        </p>
-                                        {!conv.isReadByAdmin && (
-                                            <span className="w-2.5 h-2.5 bg-blue-600 rounded-full shadow-sm animate-pulse"></span>
-                                        )}
-                                    </div>
-                                </div>
-                            ))}
+            <h1 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                <MessageCircle /> Tin nhắn CSKH
+            </h1>
+            <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex">
+                {/* Sidebar: Conversation List */}
+                <div className="w-1/3 border-r border-gray-100 bg-gray-50 flex flex-col">
+                    <div className="p-4 border-b border-gray-200 bg-white">
+                        <h2 className="text-xl font-bold text-gray-800 mb-4">Tin nhắn <span className="text-blue-600">({conversations.filter(c => !c.isReadByAdmin).length})</span></h2>
+                        <div className="relative">
+                            <input
+                                type="text"
+                                placeholder="Tìm kiếm khách hàng..."
+                                className="w-full pl-10 pr-4 py-2 bg-gray-100 border-none rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm transition-all"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         </div>
                     </div>
 
-                    {/* Main Chat Area */}
-                    <div className="flex-1 flex flex-col bg-white">
-                        {selectedConv ? (
-                            <>
-                                {/* Chat Header */}
-                                <div className="p-4 border-b border-gray-100 flex justify-between items-center shadow-sm z-10">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg shadow-md">
-                                            {selectedConv.guestName.charAt(0).toUpperCase()}
-                                        </div>
-                                        <div>
-                                            <h3 className="font-bold text-gray-800">{selectedConv.guestName}</h3>
-                                            <span className="text-xs text-green-500 font-medium flex items-center gap-1">
-                                                <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span> Online
-                                            </span>
-                                        </div>
+                    <div className="flex-1 overflow-y-auto">
+                        {conversations.filter(c => c.guestName?.toLowerCase().includes(searchTerm.toLowerCase())).map(conv => (
+                            <div
+                                key={conv._id}
+                                onClick={() => setSelectedConv(conv)}
+                                className={`p-4 border-b border-gray-100 cursor-pointer transition-all hover:bg-gray-100 ${selectedConv?._id === conv._id ? 'bg-blue-50 hover:bg-blue-50' : ''
+                                    } ${!conv.isReadByAdmin ? 'bg-blue-50/30' : ''}`}
+                            >
+                                <div className="flex justify-between items-start mb-1">
+                                    <h4 className={`text-sm ${!conv.isReadByAdmin ? 'font-bold text-gray-900' : 'font-medium text-gray-700'}`}>
+                                        {conv.guestName}
+                                    </h4>
+                                    <span className="text-[10px] text-gray-400">{new Date(conv.updatedAt).toLocaleDateString('vi-VN')}</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <p className={`text-xs truncate max-w-[180px] ${!conv.isReadByAdmin ? 'text-gray-800 font-semibold' : 'text-gray-500'}`}>
+                                        {conv.lastMessage || "Hình ảnh/File..."}
+                                    </p>
+                                    {!conv.isReadByAdmin && (
+                                        <span className="w-2.5 h-2.5 bg-blue-600 rounded-full shadow-sm animate-pulse"></span>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Main Chat Area */}
+                <div className="flex-1 flex flex-col bg-white">
+                    {selectedConv ? (
+                        <>
+                            {/* Chat Header */}
+                            <div className="p-4 border-b border-gray-100 flex justify-between items-center shadow-sm z-10">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg shadow-md">
+                                        {selectedConv.guestName.charAt(0).toUpperCase()}
                                     </div>
-                                    <div className="flex items-center gap-1">
-                                        <button onClick={handleDeleteConversation} className="p-2 hover:bg-red-50 text-red-500 rounded-full transition" title="Xóa cuộc trò chuyện">
-                                            <Trash2 size={20} />
-                                        </button>
-                                        <button className="p-2 hover:bg-gray-100 rounded-full text-gray-500">
-                                            <MoreVertical size={20} />
-                                        </button>
+                                    <div>
+                                        <h3 className="font-bold text-gray-800">{selectedConv.guestName}</h3>
+                                        <span className="text-xs text-green-500 font-medium flex items-center gap-1">
+                                            <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span> Online
+                                        </span>
                                     </div>
                                 </div>
-
-                                {/* Messages List */}
-                                <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-50/50">
-                                    {messages.map((msg, idx) => {
-                                        const isMe = msg.senderId === 'admin';
-                                        return (
-                                            <ChatBubble
-                                                key={idx}
-                                                message={msg}
-                                                isMe={isMe}
-                                                onDelete={handleDeleteMessage}
-                                            />
-                                        );
-                                    })}
-                                    <div ref={messagesEndRef} />
-                                </div>
-
-                                {/* Input Area */}
-                                <div className="p-4 bg-white border-t border-gray-100 flex items-center gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setIsTourModalOpen(true);
-                                            if (tours.length === 0) fetchAllTours();
-                                        }}
-                                        className="p-3 text-gray-500 hover:bg-gray-100 rounded-xl transition"
-                                        title="Gửi gợi ý Tour"
-                                    >
-                                        <MapPin size={20} />
+                                <div className="flex items-center gap-1">
+                                    <button onClick={handleDeleteConversation} className="p-2 hover:bg-red-50 text-red-500 rounded-full transition" title="Xóa cuộc trò chuyện">
+                                        <Trash2 size={20} />
                                     </button>
-                                    <form onSubmit={handleSend} className="flex-1 flex gap-3 items-center bg-gray-50 p-2 rounded-xl border border-gray-200 focus-within:ring-2 focus-within:ring-blue-100 focus-within:border-blue-400 transition-all">
+                                    <button className="p-2 hover:bg-gray-100 rounded-full text-gray-500">
+                                        <MoreVertical size={20} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Messages List */}
+                            <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-50/50">
+                                {messages.map((msg, idx) => {
+                                    const isMe = msg.senderId === 'admin';
+                                    return (
+                                        <ChatBubble
+                                            key={idx}
+                                            message={msg}
+                                            isMe={isMe}
+                                            onDelete={handleDeleteMessage}
+                                        />
+                                    );
+                                })}
+                                <div ref={messagesEndRef} />
+                            </div>
+
+                            {/* Input Area */}
+                            <div className="p-4 bg-white border-t border-gray-100 flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setIsTourModalOpen(true);
+                                        if (tours.length === 0) { fetchAllTours(); }
+                                    }}
+                                    className="p-3 text-gray-500 hover:bg-gray-100 rounded-xl transition"
+                                    title="Gửi gợi ý Tour"
+                                >
+                                    <MapPin size={20} />
+                                </button>
+                                <form onSubmit={handleSend} className="flex-1 flex gap-3 items-center bg-gray-50 p-2 rounded-xl border border-gray-200 focus-within:ring-2 focus-within:ring-blue-100 focus-within:border-blue-400 transition-all">
+                                    <input
+                                        type="text"
+                                        value={newMessage}
+                                        onChange={(e) => setNewMessage(e.target.value)}
+                                        placeholder="Nhập tin nhắn..."
+                                        className="flex-1 bg-transparent px-4 py-2 outline-none text-gray-700 font-medium placeholder-gray-400"
+                                    />
+                                    <button
+                                        type="submit"
+                                        disabled={!newMessage.trim()}
+                                        className="p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-md"
+                                    >
+                                        <Send size={18} />
+                                    </button>
+                                </form>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="flex-1 flex flex-col items-center justify-center text-gray-400 bg-gray-50/30">
+                            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                                <MessageCircle size={40} className="text-gray-300" />
+                            </div>
+                            <p className="font-medium text-lg">Chọn một cuộc hội thoại để bắt đầu</p>
+                        </div>
+                    )}
+                </div>
+                {
+                    isTourModalOpen && (
+                        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                            <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden max-h-[80vh] flex flex-col animate-in fade-in zoom-in duration-200">
+                                <div className="p-4 border-b flex justify-between items-center bg-gray-50">
+                                    <h3 className="font-bold text-gray-800">Chọn Tour để giới thiệu</h3>
+                                    <button onClick={() => setIsTourModalOpen(false)} className="p-1 hover:bg-gray-200 rounded-full">
+                                        <X size={20} />
+                                    </button>
+                                </div>
+                                <div className="p-4 border-b">
+                                    <div className="relative">
                                         <input
                                             type="text"
-                                            value={newMessage}
-                                            onChange={(e) => setNewMessage(e.target.value)}
-                                            placeholder="Nhập tin nhắn..."
-                                            className="flex-1 bg-transparent px-4 py-2 outline-none text-gray-700 font-medium placeholder-gray-400"
+                                            placeholder="Tìm kiếm tour..."
+                                            className="w-full pl-9 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                            value={tourSearch}
+                                            onChange={(e) => setTourSearch(e.target.value)}
                                         />
-                                        <button
-                                            type="submit"
-                                            disabled={!newMessage.trim()}
-                                            className="p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-md"
-                                        >
-                                            <Send size={18} />
-                                        </button>
-                                    </form>
-                                </div>
-                            </>
-                        ) : (
-                            <div className="flex-1 flex flex-col items-center justify-center text-gray-400 bg-gray-50/30">
-                                <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                                    <MessageCircle size={40} className="text-gray-300" />
-                                </div>
-                                <p className="font-medium text-lg">Chọn một cuộc hội thoại để bắt đầu</p>
-                            </div>
-                        )}
-                    </div>
-                    {
-                        isTourModalOpen && (
-                            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                                <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden max-h-[80vh] flex flex-col animate-in fade-in zoom-in duration-200">
-                                    <div className="p-4 border-b flex justify-between items-center bg-gray-50">
-                                        <h3 className="font-bold text-gray-800">Chọn Tour để giới thiệu</h3>
-                                        <button onClick={() => setIsTourModalOpen(false)} className="p-1 hover:bg-gray-200 rounded-full">
-                                            <X size={20} />
-                                        </button>
+                                        <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                                     </div>
-                                    <div className="p-4 border-b">
-                                        <div className="relative">
-                                            <input
-                                                type="text"
-                                                placeholder="Tìm kiếm tour..."
-                                                className="w-full pl-9 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                                value={tourSearch}
-                                                onChange={(e) => setTourSearch(e.target.value)}
-                                            />
-                                            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                                        </div>
-                                    </div>
-                                    <div className="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-4 auto-rows-max">
-                                        {tours.filter(t => t.tenTour.toLowerCase().includes(tourSearch.toLowerCase())).map(tour => (
-                                            <div key={tour._id} className="group border rounded-xl hover:shadow-lg cursor-pointer transition overflow-hidden bg-white flex flex-col h-full hover:border-blue-300" onClick={() => handleRecommendTour(tour)}>
-                                                <div className="aspect-[4/3] overflow-hidden relative bg-gray-100">
-                                                    <img
-                                                        src={tour.hinhAnhBia ? (tour.hinhAnhBia.startsWith('http') ? tour.hinhAnhBia : `http://localhost:5000${tour.hinhAnhBia}`) : "https://images.unsplash.com/photo-1540541338287-41700207dee6"}
-                                                        alt=""
-                                                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                                                    />
-                                                    <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded backdrop-blur-sm">
-                                                        {tour.thoiGian}
-                                                    </div>
-                                                </div>
-                                                <div className="p-3 flex flex-col flex-1">
-                                                    <h4 className="font-bold text-gray-800 text-sm line-clamp-2 mb-1 group-hover:text-blue-600 transition-colors">{tour.tenTour}</h4>
-                                                    <div className="mt-auto pt-2 flex justify-between items-center border-t border-gray-50">
-                                                        <p className="font-bold text-blue-600 text-sm">{tour.tongGiaDuKien?.toLocaleString()}₫</p>
-                                                        <span className="text-[10px] text-gray-400">Nhấn để gửi</span>
-                                                    </div>
+                                </div>
+                                <div className="flex-1 overflow-y-auto p-4 grid grid-cols-2 gap-4 auto-rows-max">
+                                    {tours.filter(t => t.tenTour.toLowerCase().includes(tourSearch.toLowerCase())).map(tour => (
+                                        <div key={tour._id} className="group border rounded-xl hover:shadow-lg cursor-pointer transition overflow-hidden bg-white flex flex-col h-full hover:border-blue-300" onClick={() => handleRecommendTour(tour)}>
+                                            <div className="aspect-[4/3] overflow-hidden relative bg-gray-100">
+                                                <img
+                                                    src={tour.hinhAnhBia ? (tour.hinhAnhBia.startsWith('http') ? tour.hinhAnhBia : `http://localhost:5000${tour.hinhAnhBia}`) : "https://images.unsplash.com/photo-1540541338287-41700207dee6"}
+                                                    alt=""
+                                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                                />
+                                                <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded backdrop-blur-sm">
+                                                    {tour.thoiGian}
                                                 </div>
                                             </div>
-                                        ))}
-                                    </div>
+                                            <div className="p-3 flex flex-col flex-1">
+                                                <h4 className="font-bold text-gray-800 text-sm line-clamp-2 mb-1 group-hover:text-blue-600 transition-colors">{tour.tenTour}</h4>
+                                                <div className="mt-auto pt-2 flex justify-between items-center border-t border-gray-50">
+                                                    <p className="font-bold text-blue-600 text-sm">{tour.tongGiaDuKien?.toLocaleString()}₫</p>
+                                                    <span className="text-[10px] text-gray-400">Nhấn để gửi</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
-                        )
-                    }
-                </div>
+                        </div>
+                    )
+                }
             </div>
         </div>
     );

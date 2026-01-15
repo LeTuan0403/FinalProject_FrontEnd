@@ -57,7 +57,7 @@ const Home = () => {
     };
 
     const onMouseMove = (e: React.MouseEvent) => {
-      if (!isDragging) return;
+      if (!isDragging) {return;}
       e.preventDefault();
       const slider = e.currentTarget as HTMLElement;
       const x = e.pageX - slider.offsetLeft;
@@ -73,16 +73,16 @@ const Home = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const params = new URLSearchParams();
-    if (destination.trim()) params.append('search', destination.trim());
+    if (destination.trim()) {params.append('search', destination.trim());}
     params.append('type', searchTab);
-    if (departurePoint) params.append('from', departurePoint);
-    if (departureDate) params.append('date', departureDate);
+    if (departurePoint) {params.append('from', departurePoint);}
+    if (departureDate) {params.append('date', departureDate);}
 
     navigate(`/tours?${params.toString()}`);
   };
 
-  if (loading) return <div className="text-center py-20 text-gray-500">Đang tải tour...</div>;
-  if (error) return <div className="text-center py-20 text-red-500">{error}</div>;
+  if (loading) {return <div className="text-center py-20 text-gray-500">Đang tải tour...</div>;}
+  if (error) {return <div className="text-center py-20 text-red-500">{error}</div>;}
 
   // Get all domestic tours
   const domesticTours = tours.filter(t =>
@@ -107,8 +107,8 @@ const Home = () => {
 
   // Get Last Minute Tours (within 3 days from Tomorrow)
   const lastMinuteTours = tours.filter(t => {
-    if (!t.daDuyet || t.isTuChon) return false;
-    if (!t.ngayKhoiHanh || !Array.isArray(t.ngayKhoiHanh)) return false;
+    if (!t.daDuyet || t.isTuChon) {return false;}
+    if (!t.ngayKhoiHanh || !Array.isArray(t.ngayKhoiHanh)) {return false;}
 
     // Robust String Comparison
 

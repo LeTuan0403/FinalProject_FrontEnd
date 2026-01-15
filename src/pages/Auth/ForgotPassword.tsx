@@ -1,8 +1,21 @@
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, UseFormRegister, FieldError } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
-import { Mail, ArrowLeft, Send, AlertCircle, CheckCircle } from 'lucide-react';
+import { Mail, ArrowLeft, Send, AlertCircle, CheckCircle, LucideIcon } from 'lucide-react';
+import { AxiosError } from 'axios';
 import { authService } from '../../services/authService';
+
+// Define prop types for InputField
+interface InputFieldProps {
+    icon: LucideIcon;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    register: UseFormRegister<any>;
+    name: string;
+    rules: object;
+    placeholder: string;
+    type?: string;
+    error?: FieldError;
+}
 
 const ForgotPassword = () => {
     const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<{ email: string }>();
@@ -22,13 +35,14 @@ const ForgotPassword = () => {
             setMessage(responseData.message);
             setToken("CHECK_EMAIL"); // Dummy value to trigger success view
 
-        } catch (err: any) {
-            const errorMessage = err?.response?.data?.message || err?.response?.data || 'Có lỗi xảy ra. Vui lòng kiểm tra lại email.';
+        } catch (err: unknown) {
+            const error = err as AxiosError<{ message: string }>;
+            const errorMessage = error?.response?.data?.message || 'Có lỗi xảy ra. Vui lòng kiểm tra lại email.';
             setError(typeof errorMessage === 'string' ? errorMessage : 'Có lỗi xảy ra.');
         }
     };
 
-    const InputField = ({ icon: Icon, register, name, rules, placeholder, type = "text", error }: any) => (
+    const InputField = ({ icon: Icon, register, name, rules, placeholder, type = "text", error }: InputFieldProps) => (
         <div className="relative w-full">
             <div className={`absolute left-3 top-2.5 transition-colors ${error ? 'text-red-400' : 'text-gray-400'}`}>
                 <Icon size={18} />

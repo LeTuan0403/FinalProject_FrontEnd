@@ -4,18 +4,21 @@ import { X } from 'lucide-react';
 interface BookingEditModalProps {
     isOpen: boolean;
     onClose: () => void;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onSubmit: (e: React.FormEvent, data: any) => Promise<void>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     bookingData: any;
 }
 
 const BookingEditModal: React.FC<BookingEditModalProps> = ({ isOpen, onClose, onSubmit, bookingData }) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [formData, setFormData] = useState<any>(bookingData || {});
 
     useEffect(() => {
         setFormData(bookingData || {});
     }, [bookingData]);
 
-    if (!isOpen || !bookingData) return null;
+    if (!isOpen || !bookingData) { return null; }
 
     const handleSubmit = (e: React.FormEvent) => {
         onSubmit(e, formData);

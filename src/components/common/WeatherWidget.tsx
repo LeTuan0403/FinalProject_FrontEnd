@@ -32,13 +32,13 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ locationName, departureDa
 
     useEffect(() => {
         const fetchWeather = async () => {
-            if (!locationName) return;
+            if (!locationName) {return;}
             setLoading(true);
             setError(null);
 
             // Normalize for better search results (Open-Meteo often prefers unaccented or specific aliases)
             const normalizeForSearch = (name: string) => {
-                let n = name.normalize("NFD")
+                const n = name.normalize("NFD")
                     .replace(/[\u0300-\u036f]/g, "") // Remove accents
                     .replace(/đ/g, "d").replace(/Đ/g, "D"); // Handle Vietnamese D
                 return n;
@@ -67,7 +67,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ locationName, departureDa
                 );
                 const weatherData = await weatherRes.json();
 
-                if (!weatherData.daily) throw new Error("No weather data");
+                if (!weatherData.daily) {throw new Error("No weather data");}
 
                 // Find the index for the target date
                 const dates = weatherData.daily.time as string[];
@@ -103,24 +103,24 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ locationName, departureDa
 
     // Helper: Map WMO code to Icon & Label
     const getWeatherIcon = (code: number) => {
-        if (code === 0) return { icon: <Sun className="text-yellow-500 animate-pulse-slow" size={32} />, label: "Nắng đẹp" };
-        if (code >= 1 && code <= 3) return { icon: <Cloud className="text-gray-400" size={32} />, label: "Có mây" };
-        if (code >= 45 && code <= 48) return { icon: <Wind className="text-blue-300" size={32} />, label: "Sương mù" };
-        if (code >= 51 && code <= 67) return { icon: <CloudRain className="text-blue-500" size={32} />, label: "Mưa nhỏ" };
-        if (code >= 71 && code <= 77) return { icon: <Droplets className="text-blue-200" size={32} />, label: "Tuyết rơi" };
-        if (code >= 80 && code <= 82) return { icon: <CloudRain className="text-blue-700" size={32} />, label: "Mưa rào" };
-        if (code >= 95 && code <= 99) return { icon: <CloudRain className="text-purple-500" size={32} />, label: "Dông bão" };
+        if (code === 0) {return { icon: <Sun className="text-yellow-500 animate-pulse-slow" size={32} />, label: "Nắng đẹp" };}
+        if (code >= 1 && code <= 3) {return { icon: <Cloud className="text-gray-400" size={32} />, label: "Có mây" };}
+        if (code >= 45 && code <= 48) {return { icon: <Wind className="text-blue-300" size={32} />, label: "Sương mù" };}
+        if (code >= 51 && code <= 67) {return { icon: <CloudRain className="text-blue-500" size={32} />, label: "Mưa nhỏ" };}
+        if (code >= 71 && code <= 77) {return { icon: <Droplets className="text-blue-200" size={32} />, label: "Tuyết rơi" };}
+        if (code >= 80 && code <= 82) {return { icon: <CloudRain className="text-blue-700" size={32} />, label: "Mưa rào" };}
+        if (code >= 95 && code <= 99) {return { icon: <CloudRain className="text-purple-500" size={32} />, label: "Dông bão" };}
         return { icon: <Sun className="text-yellow-500" size={32} />, label: "Không xác định" };
     };
 
-    if (loading) return (
+    if (loading) {return (
         <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl border border-blue-100 shadow-sm flex items-center gap-3 animate-pulse">
             <Loader className="animate-spin text-blue-500" size={20} />
             <span className="text-sm text-blue-600 font-medium">Đang tải dự báo thời tiết...</span>
         </div>
-    );
+    );}
 
-    if (error || !weather) return (
+    if (error || !weather) {return (
         <div className="bg-red-50 p-4 rounded-xl border border-red-100 text-red-500 text-sm mb-4">
             <div className="font-bold flex items-center gap-2">
                 <AlertCircle size={16} />
@@ -128,7 +128,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ locationName, departureDa
             </div>
             <div className="text-xs mt-1">Lỗi: {error || "Không có dữ liệu"}</div>
         </div>
-    );
+    );}
 
     const { icon, label } = getWeatherIcon(weather.weatherCode);
 

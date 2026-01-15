@@ -47,7 +47,7 @@ const SearchableSelect = ({ value, options, onChange, placeholder = "Chọn...",
                 className={`w-full p-2 border rounded bg-white flex items-center justify-between cursor-pointer hover:border-blue-400 transition-colors ${isOpen ? 'ring-2 ring-blue-100 border-blue-400' : 'border-gray-200'}`}
                 onClick={() => {
                     setIsOpen(!isOpen);
-                    if (!isOpen) setSearchTerm('');
+                    if (!isOpen) {setSearchTerm('');}
                 }}
             >
                 <div>

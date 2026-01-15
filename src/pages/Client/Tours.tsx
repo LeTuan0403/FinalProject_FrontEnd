@@ -27,10 +27,10 @@ const Tours = () => {
     const region = searchParams.get('region');
     const date = searchParams.get('date');
 
-    if (search) setSearchTerm(search);
-    if (type) setSelectedType(type);
-    if (region) setSelectedRegion(region);
-    if (date) setStartDate(date);
+    if (search) { setSearchTerm(search); }
+    if (type) { setSelectedType(type); }
+    if (region) { setSelectedRegion(region); }
+    if (date) { setStartDate(date); }
   }, [searchParams]);
 
   useEffect(() => {
@@ -49,7 +49,7 @@ const Tours = () => {
     // Filter by Region / Continent
     if (selectedRegion !== 'all') {
       result = result.filter(t => {
-        if (!t.khuVuc) return false;
+        if (!t.khuVuc) { return false; }
         // Strict match or substring match if DB data is slightly messy but contains the key
         const kv = t.khuVuc.toLowerCase();
         const selected = selectedRegion.toLowerCase();
@@ -61,7 +61,7 @@ const Tours = () => {
     // Filter by Date
     if (startDate) {
       result = result.filter(t => {
-        if (!t.ngayKhoiHanh || !Array.isArray(t.ngayKhoiHanh)) return false;
+        if (!t.ngayKhoiHanh || !Array.isArray(t.ngayKhoiHanh)) { return false; }
         // Check if any available date MATCHES the selected start date EXACTLY
         return t.ngayKhoiHanh.some(d => {
           const tourDate = new Date(d).toISOString().split('T')[0];
@@ -76,9 +76,9 @@ const Tours = () => {
         const days = t.tourChiTiets?.length
           ? Math.max(...t.tourChiTiets.map(d => d.ngayThu))
           : 1;
-        if (durationRange === '1-3') return days <= 3;
-        if (durationRange === '4-7') return days >= 4 && days <= 7;
-        if (durationRange === 'over7') return days > 7;
+        if (durationRange === '1-3') { return days <= 3; }
+        if (durationRange === '4-7') { return days >= 4 && days <= 7; }
+        if (durationRange === 'over7') { return days > 7; }
         return true;
       });
     }
@@ -112,13 +112,14 @@ const Tours = () => {
           // 1. Try detailed schedule (lichTrinh or tourChiTiets)
           const schedule = t.lichTrinh || t.tourChiTiets;
           if (schedule && schedule.length > 0) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const maxDay = Math.max(...schedule.map((d: any) => d.ngayThu || 0));
-            if (maxDay > 1) return maxDay;
+            if (maxDay > 1) { return maxDay; }
           }
           // 2. Parse string (fallback)
           if (t.thoiGian) {
             const match = t.thoiGian.match(/(\d+)\s*(ngày|ngay|n)/i); // Matches "3 ngày", "3N", "3 Ngay"
-            if (match) return parseInt(match[1]);
+            if (match) { return parseInt(match[1]); }
           }
           return 1;
         };
@@ -139,8 +140,8 @@ const Tours = () => {
     setFilteredTours([...result]);
   }, [selectedRegion, priceRange, searchTerm, selectedType, durationRange, transport, sortBy, startDate, tours]);
 
-  if (loading) return <div className="text-center py-20 text-gray-500">Đang tải danh sách tour...</div>;
-  if (error) return <div className="text-center py-20 text-red-500">{error}</div>;
+  if (loading) { return <div className="text-center py-20 text-gray-500">Đang tải danh sách tour...</div>; }
+  if (error) { return <div className="text-center py-20 text-red-500">{error}</div>; }
 
   return (
     <div className="container mx-auto px-4 py-8">

@@ -12,6 +12,7 @@ const MyBookings = () => {
     const { user } = useAuth();
     const [bookings, setBookings] = useState<DonDatTour[]>([]);
     const [loading, setLoading] = useState(true);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [editBooking, setEditBooking] = useState<any>(null); // State for editing
 
     useEffect(() => {
@@ -31,8 +32,8 @@ const MyBookings = () => {
                 const aIsPending = pendingStatuses.includes(a.trangThai || '');
                 const bIsPending = pendingStatuses.includes(b.trangThai || '');
 
-                if (aIsPending && !bIsPending) return -1;
-                if (!aIsPending && bIsPending) return 1;
+                if (aIsPending && !bIsPending) { return -1; }
+                if (!aIsPending && bIsPending) { return 1; }
 
                 return new Date(a.ngayDat || 0).getTime() - new Date(b.ngayDat || 0).getTime();
             });
@@ -45,6 +46,7 @@ const MyBookings = () => {
         }
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleUpdate = async (e: React.FormEvent, data: any) => {
         e.preventDefault();
         try {
@@ -56,23 +58,25 @@ const MyBookings = () => {
             alert("Cập nhật đơn đặt tour thành công!");
             setEditBooking(null);
             fetchMyBookings();
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             alert(error.response?.data?.message || "Lỗi cập nhật!");
         }
     };
 
     const handleCancel = async (id: number) => {
-        if (!window.confirm("Bạn có chắc chắn muốn hủy đơn này? Nếu hủy, bạn sẽ không thể đặt lại tour này trong 24 giờ.")) return;
+        if (!window.confirm("Bạn có chắc chắn muốn hủy đơn này? Nếu hủy, bạn sẽ không thể đặt lại tour này trong 24 giờ.")) { return; }
         try {
             await bookingService.cancel(id, "Khách hàng tự hủy");
             alert("Đã hủy đơn thành công!");
             fetchMyBookings();
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             alert(error.response?.data?.message || "Lỗi hủy đơn!");
         }
     };
 
-    if (loading) return <div className="min-h-screen pt-24 pb-12 flex justify-center items-center">Loading...</div>;
+    if (loading) { return <div className="min-h-screen pt-24 pb-12 flex justify-center items-center">Loading...</div>; }
 
     if (!bookings.length) {
         return (

@@ -50,7 +50,11 @@ export const reviewService = {
         return axiosClient.delete(`/danhgia/${id}/reply/${replyId}`);
     },
 
-    updateReply: (id: number, replyId: string, content: string, media?: any[]) => {
+    updateReply: (id: number, replyId: string, content: string, media?: { type: 'image' | 'video'; url: string; }[]) => {
         return axiosClient.put(`/danhgia/${id}/reply/${replyId}`, { content, media });
+    },
+
+    toggleSubscription: (id: number) => {
+        return axiosClient.put<{ subscribers: string[] }>(`/danhgia/${id}/subscribe`);
     }
 };

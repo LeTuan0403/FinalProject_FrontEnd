@@ -1,11 +1,23 @@
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, UseFormRegister, FieldError } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
-import { Lock, Key, ArrowLeft, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { Lock, Key, ArrowLeft, Eye, EyeOff, AlertCircle, LucideIcon } from 'lucide-react';
+import { AxiosError } from 'axios';
 import { authService } from '../../services/authService';
 import { useAuth } from '../../hooks/useAuth';
 
-const InputField = ({ icon: Icon, register, name, rules, placeholder, type = "text", error }: any) => (
+interface InputProps {
+    icon: LucideIcon;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    register: UseFormRegister<any>;
+    name: string;
+    rules: object;
+    placeholder: string;
+    type?: string;
+    error?: FieldError;
+}
+
+const InputField = ({ icon: Icon, register, name, rules, placeholder, type = "text", error }: InputProps) => (
     <div className="relative w-full">
         <div className={`absolute left-3 top-2.5 transition-colors ${error ? 'text-red-400' : 'text-gray-400'}`}>
             <Icon size={18} />
@@ -20,7 +32,7 @@ const InputField = ({ icon: Icon, register, name, rules, placeholder, type = "te
     </div>
 );
 
-const PasswordInput = ({ icon: Icon, register, name, rules, placeholder, error }: any) => {
+const PasswordInput = ({ icon: Icon, register, name, rules, placeholder, error }: InputProps) => {
     const [showPassword, setShowPassword] = useState(false);
     return (
         <div className="relative w-full">
@@ -64,12 +76,13 @@ const ResetPassword = () => {
             login(res.data);
             alert("Đổi mật khẩu thành công! Bạn đã được đăng nhập.");
 
-            if (res.data.role === 'Admin') navigate('/admin');
-            else navigate('/');
+            if (res.data.role === 'Admin') { navigate('/admin'); }
+            else { navigate('/'); }
 
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error(err);
-            const errorMessage = err?.response?.data?.message || err?.response?.data?.msg || err?.response?.data || 'Đặt lại mật khẩu thất bại. Vui lòng kiểm tra lại mã hoặc email.';
+            const error = err as AxiosError<{ message?: string; msg?: string }>;
+            const errorMessage = error?.response?.data?.message || error?.response?.data?.msg || 'Đặt lại mật khẩu thất bại. Vui lòng kiểm tra lại mã hoặc email.';
             setError(typeof errorMessage === 'string' ? errorMessage : 'Đặt lại mật khẩu thất bại.');
         }
     };
@@ -165,8 +178,8 @@ const ResetPassword = () => {
                             name="confirmPassword"
                             rules={{
                                 validate: (val: string) => {
-                                    if (!val) return "Vui lòng nhập lại mật khẩu";
-                                    if (val !== passwordVal) return "Mật khẩu không khớp";
+                                    if (!val) { return "Vui lòng nhập lại mật khẩu"; }
+                                    if (val !== passwordVal) { return "Mật khẩu không khớp"; }
                                     return true;
                                 }
                             }}

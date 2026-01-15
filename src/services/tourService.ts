@@ -2,7 +2,7 @@ import axiosClient from '../api/axiosClient';
 import type { Tour, DiaDiem } from '../types';
 
 export const tourService = {
-  getAll: async (params?: any) => {
+  getAll: async (params?: Record<string, unknown>) => {
     return axiosClient.get<Tour[]>('/tours', { params });
   },
   getById: async (id: number) => {

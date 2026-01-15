@@ -25,7 +25,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const hanCheThanhToan = localStorage.getItem('hanCheThanhToan') === 'true';
 
     if (token && hoTen && role) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setUser({
         token,
         hoTen,
@@ -54,11 +53,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const login = (data: any) => {
+  // eslint-disable-next-line complexity, @typescript-eslint/no-explicit-any
+  const login = (data: LoginResponse | Record<string, unknown> | any) => {
     // Handle potential attribute name mismatches from backend
-    const token = data.token || data.Token || data.result?.token;
-    const hoTen = data.hoTen || data.HoTen || data.fullName || data.FullName || data.result?.hoTen;
-    const role = data.role || data.Role || data.result?.role;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const token = data.token || data.Token || (data.result as any)?.token;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const hoTen = data.hoTen || data.HoTen || data.fullName || data.FullName || (data.result as any)?.hoTen;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const role = data.role || data.Role || (data.result as any)?.role;
     const email = data.email || data.user?.email || data.result?.email;
     const soDienThoai = data.soDienThoai || data.user?.soDienThoai || data.result?.soDienThoai;
     const diaChi = data.diaChi || data.user?.diaChi || data.result?.diaChi;
@@ -88,11 +91,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.setItem('hoTen', hoTen);
     localStorage.setItem('role', role);
     localStorage.setItem('userId', String(userId));
-    if (email) localStorage.setItem('email', email);
-    if (soDienThoai) localStorage.setItem('soDienThoai', soDienThoai);
-    if (diaChi) localStorage.setItem('diaChi', diaChi);
-    if (hanCheThanhToan) localStorage.setItem('hanCheThanhToan', 'true');
-    else localStorage.removeItem('hanCheThanhToan');
+    if (email) { localStorage.setItem('email', email); }
+    if (soDienThoai) { localStorage.setItem('soDienThoai', soDienThoai); }
+    if (diaChi) { localStorage.setItem('diaChi', diaChi); }
+    if (hanCheThanhToan) { localStorage.setItem('hanCheThanhToan', 'true'); }
+    else { localStorage.removeItem('hanCheThanhToan'); }
 
     // Update state
     setUser({

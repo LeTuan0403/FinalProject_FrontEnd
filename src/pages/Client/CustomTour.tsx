@@ -1,3 +1,4 @@
+/* eslint-disable max-depth */
 import { useState, useEffect, useMemo } from 'react';
 import { MapPin, Navigation, Loader, Plus, Info, X, Calendar, Clock, Users, AlertTriangle, FileText } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -66,6 +67,7 @@ const CustomTour = () => {
     dayConfigs: {} as Record<number, DayConfig>
   });
 
+  // eslint-disable-next-line complexity
   useEffect(() => {
     const fetchLocations = async () => {
       try {
@@ -90,7 +92,7 @@ const CustomTour = () => {
       let parsedDuration = 3;
       if (editData.thoiGian) {
         const match = editData.thoiGian.match(/(\d+)\s*ngày/i);
-        if (match) parsedDuration = parseInt(match[1]);
+        if (match) { parsedDuration = parseInt(match[1]); }
       } else if (editData.tourChiTiets) {
         // Fallback if thoiGian matches nothing (unlikely)
         parsedDuration = editData.tourChiTiets.length;
@@ -113,14 +115,14 @@ const CustomTour = () => {
       let maxFreeDay = 0;
       while ((freeMatch = freeDayRegex.exec(description)) !== null) {
         const d = parseInt(freeMatch[1]);
-        if (d > maxFreeDay) maxFreeDay = d;
+        if (d > maxFreeDay) { maxFreeDay = d; }
 
         // Try to extract note from free day line if present
         // Needed if we save "Tự do hoạt động. (Ghi chú: abc)"
         // But the regex might need adjustment to capture it.
         // For now, simple free status restoration:
-        if (!configMap[d]) configMap[d] = { meals: [], note: '', isFree: true };
-        else configMap[d].isFree = true;
+        if (!configMap[d]) { configMap[d] = { meals: [], note: '', isFree: true }; }
+        else { configMap[d].isFree = true; }
       }
 
       // Also check for "Chưa chọn điểm đến" if we persist that
@@ -128,12 +130,14 @@ const CustomTour = () => {
 
       // 3. Process Tour Details (Support both 'tourChiTiets' and 'lichTrinh')
       let maxDetailDay = 0;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const details = editData.tourChiTiets || (editData as any).lichTrinh || [];
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       details.forEach((ct: any) => {
-        if (ct.ngayThu > maxDetailDay) maxDetailDay = ct.ngayThu;
+        if (ct.ngayThu > maxDetailDay) { maxDetailDay = ct.ngayThu; }
 
-        if (!locMap[ct.ngayThu]) locMap[ct.ngayThu] = [];
+        if (!locMap[ct.ngayThu]) { locMap[ct.ngayThu] = []; }
 
         // Extract Visit Time from ghiChu if available
         let vTime = '2 tiếng';
@@ -144,9 +148,9 @@ const CustomTour = () => {
           const parts = ct.ghiChu.split('|');
           parts.forEach((p: string) => {
             const pTrim = p.trim();
-            if (pTrim.startsWith("Thời gian:")) vTime = pTrim.replace("Thời gian:", "").trim();
-            if (pTrim.startsWith("Ăn:")) mealsRaw = pTrim.replace("Ăn:", "").trim();
-            if (pTrim.startsWith("Ghi chú:")) noteRaw = pTrim.replace("Ghi chú:", "").trim();
+            if (pTrim.startsWith("Thời gian:")) { vTime = pTrim.replace("Thời gian:", "").trim(); }
+            if (pTrim.startsWith("Ăn:")) { mealsRaw = pTrim.replace("Ăn:", "").trim(); }
+            if (pTrim.startsWith("Ghi chú:")) { noteRaw = pTrim.replace("Ghi chú:", "").trim(); }
           });
         }
 
@@ -181,23 +185,25 @@ const CustomTour = () => {
       let restoredEndPoint = editData.tenDiaDiem || '';
       if (!restoredEndPoint && editData.tenTour && editData.tenTour.includes(" - ")) {
         const parts = editData.tenTour.split(" - ");
-        if (parts.length > 1) restoredEndPoint = parts[1].trim(); // This might be "Hà Nội & Lào Cai"
+        if (parts.length > 1) { restoredEndPoint = parts[1].trim(); } // This might be "Hà Nội & Lào Cai"
       }
 
       // Robust splitting: Handle both " - " (saved in tenDiaDiem) and " & " (saved in tenTour)
       // Also strictly filter out empty strings
-      const rawDestinations = restoredEndPoint ? restoredEndPoint.split(/[\-&]/) : [];
+      const rawDestinations = restoredEndPoint ? restoredEndPoint.split(/[-&]/) : [];
       const cleanDestinations = rawDestinations.map(s => s.trim()).filter(s => s.length > 0);
 
       setFormData({
-        startPoint: editData.diemKhoiHanh || 'Thành phố Hồ Chí Minh',
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        startPoint: editData.diemKhoiHanh || (editData as any).DiemKhoiHanh || 'Thành phố Hồ Chí Minh',
         destinations: cleanDestinations,
         startDate: minDateStr, // Always reset date to valid future date on edit? Or keep original if valid? User typically wants to replicate the tour.
         duration: parsedDuration,
         startTime: '08:00',
         adults: parsedAdults,
         children: 0,
-        transport: editData.phuongTien || 'Oto',
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        transport: editData.phuongTien || (editData as any).PhuongTien || 'Oto',
         isSelfCatering: description.includes('(Khách tự túc ăn uống)'),
         selectedLocations: locMap,
         dayConfigs: configMap
@@ -250,7 +256,7 @@ const CustomTour = () => {
     Object.entries(formData.selectedLocations).forEach(([dayStr, locs]) => {
       if (Number(dayStr) !== targetDayForAdd) {
         const found = locs?.find(l => l.diaDiemId === loc.diaDiemId);
-        if (found) duplicateDay = dayStr;
+        if (found) { duplicateDay = dayStr; }
       }
     });
 
@@ -306,6 +312,7 @@ const CustomTour = () => {
     }));
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const updateDayConfig = (day: number, field: keyof DayConfig, value: any) => {
     setFormData(prev => {
       // 1. Update dayConfigs
@@ -347,6 +354,7 @@ const CustomTour = () => {
     setFormData(p => ({ ...p, duration: newDuration }));
   };
 
+  // eslint-disable-next-line complexity
   const handleSubmit = async () => {
     if (!user) {
       alert("Vui lòng đăng nhập để tạo tour!");
@@ -418,9 +426,9 @@ const CustomTour = () => {
       let totalS = 0, totalT = 0, totalC = 0;
       for (let d = 1; d <= formData.duration; d++) {
         const meals = formData.dayConfigs[d]?.meals || [];
-        if (meals.includes('Sáng')) totalS++;
-        if (meals.includes('Trưa')) totalT++;
-        if (meals.includes('Tối')) totalC++;
+        if (meals.includes('Sáng')) { totalS++; }
+        if (meals.includes('Trưa')) { totalT++; }
+        if (meals.includes('Tối')) { totalC++; }
       }
 
       const payload = {
@@ -463,7 +471,7 @@ const CustomTour = () => {
     }
   };
 
-  if (loading) return <div className="min-h-screen flex justify-center items-center gap-2"><Loader className="animate-spin text-blue-600" /> <span className="text-blue-600 font-medium">Đang xử lý...</span></div>;
+  if (loading) { return <div className="min-h-screen flex justify-center items-center gap-2"><Loader className="animate-spin text-blue-600" /> <span className="text-blue-600 font-medium">Đang xử lý...</span></div>; }
 
   return (
     <div className="bg-gray-100 min-h-screen py-8 font-sans">
@@ -514,7 +522,7 @@ const CustomTour = () => {
                                 setShowDest1Dropdown(true);
                                 // If already selected, init search with current value? Or keep empty to show all?
                                 // Let's keep it sync
-                                if (formData.destinations[0] && !dest1Search) setDest1Search(formData.destinations[0]);
+                                if (formData.destinations[0] && !dest1Search) { setDest1Search(formData.destinations[0]); }
                               }}
                               onChange={e => {
                                 setDest1Search(e.target.value);
@@ -534,7 +542,7 @@ const CustomTour = () => {
                                     onClick={() => {
                                       setDest1Search(d);
                                       // Update Form Data Logic (Copied from old onChange)
-                                      let newDests = [d];
+                                      const newDests = [d];
                                       if (formData.destinations[1]) {
                                         const reg1 = CITY_REGION_MAP[d];
                                         const reg2 = CITY_REGION_MAP[formData.destinations[1]];
@@ -568,14 +576,14 @@ const CustomTour = () => {
                             onChange={e => {
                               const val = e.target.value;
                               const newDests = [formData.destinations[0]];
-                              if (val) newDests.push(val);
+                              if (val) { newDests.push(val); }
                               setFormData({ ...formData, destinations: newDests });
                             }}
                           >
                             <option value="">-- Chọn thêm --</option>
                             {(() => {
                               const firstDest = formData.destinations[0];
-                              if (!firstDest) return null;
+                              if (!firstDest) { return null; }
                               const region = CITY_REGION_MAP[firstDest];
                               return DESTINATION_OPTIONS
                                 .filter(d => CITY_REGION_MAP[d] === region && d !== firstDest)
@@ -667,7 +675,7 @@ const CustomTour = () => {
                           setFormData({ ...formData, adults: val === '' ? '' : Math.max(1, parseInt(val)) });
                         }}
                         onBlur={() => {
-                          if (formData.adults === '') setFormData({ ...formData, adults: 1 });
+                          if (formData.adults === '') { setFormData({ ...formData, adults: 1 }); }
                         }}
                         className="w-full p-3 pl-9 bg-gray-50 border border-gray-200 rounded-xl font-bold text-sm outline-none"
                       />
@@ -715,7 +723,7 @@ const CustomTour = () => {
                             const newConfigs = { ...prev.dayConfigs };
                             if (isChecked) {
                               Object.keys(newConfigs).forEach(key => {
-                                if (newConfigs[Number(key)]) newConfigs[Number(key)].meals = [];
+                                if (newConfigs[Number(key)]) { newConfigs[Number(key)].meals = []; }
                               });
                             }
                             return { ...prev, isSelfCatering: isChecked, dayConfigs: isChecked ? newConfigs : prev.dayConfigs };
@@ -904,6 +912,7 @@ const CustomTour = () => {
               <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
                 {filteredLocations.length > 0 ? (
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {/* eslint-disable-next-line complexity */}
                     {filteredLocations.map(loc => {
                       const isSelected = tempSelectedLocations.find(t => t.diaDiemId === loc.diaDiemId);
 

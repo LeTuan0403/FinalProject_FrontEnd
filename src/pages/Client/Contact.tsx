@@ -21,10 +21,10 @@ const Contact = () => {
 
   useEffect(() => {
     if (user) {
-      if (user.hoTen) setValue('hoTen', user.hoTen);
-      if (user.email) setValue('email', user.email);
-      if (user.soDienThoai) setValue('soDienThoai', user.soDienThoai); // Requires context update
-      if (user.diaChi) setValue('diaChi', user.diaChi); // Requires context update
+      if (user.hoTen) { setValue('hoTen', user.hoTen); }
+      if (user.email) { setValue('email', user.email); }
+      if (user.soDienThoai) { setValue('soDienThoai', user.soDienThoai); } // Requires context update
+      if (user.diaChi) { setValue('diaChi', user.diaChi); } // Requires context update
     }
   }, [user, setValue]);
 
@@ -34,12 +34,14 @@ const Contact = () => {
       // Note: Backend endpoint currently might not accept phone/address if not updated, 
       // but we send it anyway or we can filter it if strictly needed.
       // Assuming contactService.createContact just passes data along.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await contactService.createContact(data as any);
       setSuccess(true);
       reset();
 
       // Auto hide success message after 5 seconds
       setTimeout(() => setSuccess(false), 5000);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error(err);
       setError('Gửi tin nhắn thất bại. Vui lòng thử lại sau.');

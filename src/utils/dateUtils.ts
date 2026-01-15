@@ -10,11 +10,11 @@ export const isFutureDate = (dateStr: string): boolean => {
 };
 
 export const formatTimeRange = (timeStr: string): string => {
-    if (!timeStr) return '';
-    if (!timeStr.includes('-')) return timeStr;
+    if (!timeStr) {return '';}
+    if (!timeStr.includes('-')) {return timeStr;}
 
     const [start, end] = timeStr.split('-').map(s => s.trim());
-    if (start === end) return start;
+    if (start === end) {return start;}
     return timeStr;
 };
 
