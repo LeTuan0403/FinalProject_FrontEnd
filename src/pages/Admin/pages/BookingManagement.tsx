@@ -62,12 +62,29 @@ const BookingManagement = () => {
             if (data.type === 'booking') {
                 fetchBookings();
             }
+            // Handle automatic refund confirmation notification
+            if (data.type === 'refund_auto') {
+                toast.success(data.message, { duration: 5000 });
+                // We fetch bookings which will trigger the sync effect below
+                fetchBookings();
+                refreshCounts();
+            }
         };
         socket.on("admin_notification", handleNotification);
         return () => {
             socket.off("admin_notification", handleNotification);
         };
     }, [socket]);
+
+    // Sync refundDetailBooking when global bookings list update
+    useEffect(() => {
+        if (refundDetailBooking) {
+            const updated = bookings.find(b => b.donDatId === refundDetailBooking.donDatId);
+            if (updated && updated.trangThai !== refundDetailBooking.trangThai) {
+                setRefundDetailBooking(updated);
+            }
+        }
+    }, [bookings]);
 
     const handleStatusUpdate = async (id: number, status: string) => {
         try {

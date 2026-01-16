@@ -28,8 +28,6 @@ const RefundModal: React.FC<RefundModalProps> = ({ isOpen, onClose, booking, onS
     const [otp, setOtp] = useState('');
     const [timeLeft, setTimeLeft] = useState(60);
 
-    // Calculate Refund (Mock logic for now, you can enhance based on policy)
-    // Example: 100% refund for now
     // Calculate Refund Policy
     const { refundAmount, refundInfo } = React.useMemo(() => {
         if (!booking) return { refundAmount: 0, refundInfo: '' };
