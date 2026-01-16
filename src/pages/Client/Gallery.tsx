@@ -18,45 +18,44 @@ const Gallery = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  // Helper to extract city from location data
   const getCityFromLocation = (loc: DiaDiem): string => {
     const text = `${loc.tenDiaDiem} ${loc.diaChiCuThe || ''}`.toLowerCase();
 
     // Northern Vietnam
-    if (text.includes('hà nội')) return 'Hà Nội';
-    if (text.includes('hạ long') || text.includes('quảng ninh') || text.includes('bãi cháy')) return 'Hạ Long';
-    if (text.includes('sapa') || text.includes('lào cai') || text.includes('fansipan')) return 'Sapa';
-    if (text.includes('ninh bình') || text.includes('tràng an') || text.includes('tam cốc')) return 'Ninh Bình';
-    if (text.includes('hà giang') || text.includes('đồng văn') || text.includes('mã pí lèng')) return 'Hà Giang';
-    if (text.includes('cao bằng') || text.includes('bản giốc')) return 'Cao Bằng';
-    if (text.includes('mộc châu') || text.includes('sơn la')) return 'Mộc Châu';
-    if (text.includes('mai châu') || text.includes('hòa bình')) return 'Hòa Bình';
-    if (text.includes('hải phòng') || text.includes('cát bà') || text.includes('đồ sơn')) return 'Hải Phòng';
-    if (text.includes('bắc kạn') || text.includes('ba bể')) return 'Bắc Kạn';
+    if (text.includes('hà nội')) { return 'Hà Nội'; }
+    if (text.includes('hạ long') || text.includes('quảng ninh') || text.includes('bãi cháy')) { return 'Hạ Long'; }
+    if (text.includes('sapa') || text.includes('lào cai') || text.includes('fansipan')) { return 'Sapa'; }
+    if (text.includes('ninh bình') || text.includes('tràng an') || text.includes('tam cốc')) { return 'Ninh Bình'; }
+    if (text.includes('hà giang') || text.includes('đồng văn') || text.includes('mã pí lèng')) { return 'Hà Giang'; }
+    if (text.includes('cao bằng') || text.includes('bản giốc')) { return 'Cao Bằng'; }
+    if (text.includes('mộc châu') || text.includes('sơn la')) { return 'Mộc Châu'; }
+    if (text.includes('mai châu') || text.includes('hòa bình')) { return 'Hòa Bình'; }
+    if (text.includes('hải phòng') || text.includes('cát bà') || text.includes('đồ sơn')) { return 'Hải Phòng'; }
+    if (text.includes('bắc kạn') || text.includes('ba bể')) { return 'Bắc Kạn'; }
 
     // Central Vietnam
-    if (text.includes('huế') || text.includes('thừa thiên')) return 'Huế';
-    if (text.includes('đà nẵng') || text.includes('bà nà')) return 'Đà Nẵng';
-    if (text.includes('hội an') || text.includes('quảng nam') || text.includes('mỹ sơn')) return 'Hội An';
-    if (text.includes('phong nha') || text.includes('quảng bình') || text.includes('thiên đường')) return 'Quảng Bình';
-    if (text.includes('nha trang') || text.includes('khánh hòa') || text.includes('cam ranh')) return 'Nha Trang';
-    if (text.includes('quy nhơn') || text.includes('bình định')) return 'Quy Nhơn';
-    if (text.includes('phú yên') || text.includes('tuy hòa')) return 'Phú Yên';
-    if (text.includes('đà lạt') || text.includes('lâm đồng')) return 'Đà Lạt';
-    if (text.includes('phan thiết') || text.includes('mũi né') || text.includes('bình thuận')) return 'Phan Thiết';
-    if (text.includes('buôn ma thuột') || text.includes('đắk lắk')) return 'Buôn Ma Thuột';
-    if (text.includes('kon tum') || text.includes('măng đen')) return 'Kon Tum';
+    if (text.includes('huế') || text.includes('thừa thiên')) { return 'Huế'; }
+    if (text.includes('đà nẵng') || text.includes('bà nà')) { return 'Đà Nẵng'; }
+    if (text.includes('hội an') || text.includes('quảng nam') || text.includes('mỹ sơn')) { return 'Hội An'; }
+    if (text.includes('phong nha') || text.includes('quảng bình') || text.includes('thiên đường')) { return 'Quảng Bình'; }
+    if (text.includes('nha trang') || text.includes('khánh hòa') || text.includes('cam ranh')) { return 'Nha Trang'; }
+    if (text.includes('quy nhơn') || text.includes('bình định')) { return 'Quy Nhơn'; }
+    if (text.includes('phú yên') || text.includes('tuy hòa')) { return 'Phú Yên'; }
+    if (text.includes('đà lạt') || text.includes('lâm đồng')) { return 'Đà Lạt'; }
+    if (text.includes('phan thiết') || text.includes('mũi né') || text.includes('bình thuận')) { return 'Phan Thiết'; }
+    if (text.includes('buôn ma thuột') || text.includes('đắk lắk')) { return 'Buôn Ma Thuột'; }
+    if (text.includes('kon tum') || text.includes('măng đen')) { return 'Kon Tum'; }
 
     // Southern Vietnam
-    if (text.includes('hồ chí minh') || text.includes('sài gòn')) return 'TP. Hồ Chí Minh';
-    if (text.includes('vũng tàu') || text.includes('bà rịa')) return 'Vũng Tàu';
-    if (text.includes('phú quốc') || text.includes('kiên giang')) return 'Phú Quốc';
-    if (text.includes('cần thơ') || text.includes('ninh kiều')) return 'Cần Thơ';
-    if (text.includes('côn đảo')) return 'Côn Đảo';
-    if (text.includes('bến tre')) return 'Bến Tre';
-    if (text.includes('tiền giang') || text.includes('mỹ tho')) return 'Tiền Giang';
-    if (text.includes('cà mau')) return 'Cà Mau';
-    if (text.includes('tây ninh') || text.includes('bà đen')) return 'Tây Ninh';
+    if (text.includes('hồ chí minh') || text.includes('sài gòn')) { return 'TP. Hồ Chí Minh'; }
+    if (text.includes('vũng tàu') || text.includes('bà rịa')) { return 'Vũng Tàu'; }
+    if (text.includes('phú quốc') || text.includes('kiên giang')) { return 'Phú Quốc'; }
+    if (text.includes('cần thơ') || text.includes('ninh kiều')) { return 'Cần Thơ'; }
+    if (text.includes('côn đảo')) { return 'Côn Đảo'; }
+    if (text.includes('bến tre')) { return 'Bến Tre'; }
+    if (text.includes('tiền giang') || text.includes('mỹ tho')) { return 'Tiền Giang'; }
+    if (text.includes('cà mau')) { return 'Cà Mau'; }
+    if (text.includes('tây ninh') || text.includes('bà đen')) { return 'Tây Ninh'; }
 
     return 'Địa điểm khác';
   };
@@ -76,13 +75,13 @@ const Gallery = () => {
   const sortedCities = Object.keys(groupedLocations).sort((a, b) => {
     const idxA = priorityCities.indexOf(a);
     const idxB = priorityCities.indexOf(b);
-    if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-    if (idxA !== -1) return -1;
-    if (idxB !== -1) return 1;
+    if (idxA !== -1 && idxB !== -1) { return idxA - idxB; }
+    if (idxA !== -1) { return -1; }
+    if (idxB !== -1) { return 1; }
     return a.localeCompare(b);
   });
 
-  if (loading) return <div className="text-center py-20 text-gray-500">Đang tải hình ảnh...</div>;
+  if (loading) { return <div className="text-center py-20 text-gray-500">Đang tải hình ảnh...</div>; }
 
   return (
     <div className="container mx-auto px-4 py-8">

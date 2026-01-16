@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
-import { Loader, User, Mail, Phone, FileText, X, Edit, Trash2, Plus } from 'lucide-react';
+import { Loader, User, Mail, Phone, FileText, X, Edit, Trash2, Plus, AlertOctagon } from 'lucide-react';
 import { bookingService } from '../../../services/bookingService';
 import { useNotification } from '../../../context/NotificationContext';
 import StatusBadge from '../../../components/booking/StatusBadge';
 import BookingEditModal from '../../../components/booking/BookingEditModal';
 import AdminBookingCreateModal from '../../../components/booking/AdminBookingCreateModal';
+import BookingRefundDetailModal from '../../../components/booking/BookingRefundDetailModal';
 import PaymentTimer from '../../../components/common/PaymentTimer';
 import { useChat } from '../../../context/ChatContext';
 import type { Booking } from '../../../types';
@@ -15,6 +16,7 @@ const BookingManagement = () => {
     const [loading, setLoading] = useState(true);
     const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
     const [editBooking, setEditBooking] = useState<Booking | null>(null);
+    const [refundDetailBooking, setRefundDetailBooking] = useState<Booking | null>(null);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
     const { refreshCounts } = useNotification();
@@ -232,6 +234,16 @@ const BookingManagement = () => {
                                                     </div>
                                                 )}
 
+                                                {/* Refund Action for Admin */}
+                                                {b.trangThai === 'Chờ hoàn tiền' && (
+                                                    <button
+                                                        onClick={() => setRefundDetailBooking(b)}
+                                                        className="w-full mt-2 text-xs bg-red-100 text-red-700 px-2 py-1.5 rounded hover:bg-red-200 font-bold whitespace-nowrap flex items-center justify-center gap-1 animate-pulse border border-red-300"
+                                                    >
+                                                        <AlertOctagon size={14} /> Xử lý hoàn tiền
+                                                    </button>
+                                                )}
+
                                                 {/* Edit/Delete Tools */}
                                                 <div className="flex gap-2 mt-1">
                                                     <button
@@ -266,6 +278,17 @@ const BookingManagement = () => {
                 onClose={() => setEditBooking(null)}
                 onSubmit={handleUpdate}
                 bookingData={editBooking}
+            />
+
+            {/* Refund Detail Modal */}
+            <BookingRefundDetailModal
+                isOpen={!!refundDetailBooking}
+                onClose={() => setRefundDetailBooking(null)}
+                booking={refundDetailBooking}
+                onSuccess={() => {
+                    fetchBookings();
+                    refreshCounts();
+                }}
             />
 
             <AdminBookingCreateModal

@@ -94,6 +94,15 @@ export interface DonDatTour {
   ngayDat?: string;
   tour?: Tour;
   user?: NguoiDung; // Navigation property if included
+
+  // Refund fields
+  refundReason?: string;
+  refundBankName?: string;
+  refundAccountNumber?: string;
+  refundAccountHolder?: string;
+  refundAmountEst?: number;
+  refundCommitment?: boolean;
+  refundDate?: string;
 }
 
 export type Booking = DonDatTour;

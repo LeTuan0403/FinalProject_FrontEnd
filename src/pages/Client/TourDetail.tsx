@@ -182,7 +182,7 @@ const TourDetail = () => {
       if (!id) { return; }
       try {
         setLoading(true);
-        const response = await tourService.getById(Number(id));
+        const response = await tourService.getById(id);
         setTour(response.data);
         fetchReviews(); // Fetch reviews immediately
 
@@ -191,7 +191,7 @@ const TourDetail = () => {
           try {
             const favRes = await userService.getMyFavorites();
             const favs = favRes.data as Tour[];
-            setIsFavorite(favs.some(t => t.tourId === Number(id)));
+            setIsFavorite(favs.some(t => String(t.tourId) === String(id)));
           } catch (e) {
             console.error("Error checking favorites", e);
           }

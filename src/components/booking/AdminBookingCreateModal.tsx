@@ -3,6 +3,7 @@ import { toast } from 'react-hot-toast';
 import { X, Loader, Plus } from 'lucide-react';
 import { tourService } from '../../services/tourService';
 import type { Tour } from '../../types';
+import BookingForm from './BookingForm';
 
 interface AdminBookingCreateModalProps {
     isOpen: boolean;
@@ -120,122 +121,26 @@ const AdminBookingCreateModal: React.FC<AdminBookingCreateModalProps> = ({ isOpe
                         )}
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-1">Người liên hệ *</label>
-                            <input
-                                type="text"
-                                required
-                                className="w-full p-3 border rounded-lg"
-                                value={formData.nguoiLienHe}
-                                onChange={e => setFormData({ ...formData, nguoiLienHe: e.target.value })}
-                                placeholder="Tên khách hàng"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-1">Số điện thoại *</label>
-                            <input
-                                type="text"
-                                required
-                                className="w-full p-3 border rounded-lg"
-                                value={formData.sdtLienHe}
-                                onChange={e => setFormData({ ...formData, sdtLienHe: e.target.value })}
-                                placeholder="09xxx..."
-                            />
-                        </div>
-                        <div className="col-span-2">
-                            <label className="block text-sm font-bold text-gray-700 mb-1">Email</label>
-                            <input
-                                type="email"
-                                className="w-full p-3 border rounded-lg"
-                                value={formData.emailLienHe}
-                                onChange={e => setFormData({ ...formData, emailLienHe: e.target.value })}
-                                placeholder="khachhang@example.com (tùy chọn)"
-                            />
-                        </div>
+                    <div className="mb-4">
+                        <BookingForm
+                            formData={formData}
+                            onChange={setFormData}
+                            tour={selectedTour}
+                        />
+                    </div>
 
-                        <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-1">Số người lớn</label>
-                            <input
-                                type="number"
-                                min="1"
-                                className="w-full p-3 border rounded-lg"
-                                value={formData.soLuongNguoiLon}
-                                onChange={e => {
-                                    const val = e.target.value;
-                                    setFormData({ ...formData, soLuongNguoiLon: val === '' ? 1 : Number(val) });
-                                }}
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-1">Số trẻ em</label>
-                            <input
-                                type="number"
-                                min="0"
-                                className="w-full p-3 border rounded-lg"
-                                value={formData.soLuongTreEm}
-                                onChange={e => {
-                                    const val = e.target.value;
-                                    setFormData({ ...formData, soLuongTreEm: val === '' ? 0 : Number(val) });
-                                }}
-                            />
-                        </div>
-
-                        <div className="col-span-2">
-                            <label className="block text-sm font-bold text-gray-700 mb-1">Ngày khởi hành *</label>
-                            {selectedTour?.ngayKhoiHanh && Array.isArray(selectedTour.ngayKhoiHanh) && selectedTour.ngayKhoiHanh.length > 0 ? (
-                                <select
-                                    className="w-full p-3 border rounded-lg"
-                                    value={formData.ngayKhoiHanh}
-                                    onChange={e => setFormData({ ...formData, ngayKhoiHanh: e.target.value })}
-                                >
-                                    <option value="">-- Chọn ngày --</option>
-                                    {selectedTour.ngayKhoiHanh
-                                        .map((d: string | number | Date) => new Date(d))
-                                        .filter((d: Date) => d.getTime() >= new Date().setHours(0, 0, 0, 0))
-                                        .sort((a: Date, b: Date) => a.getTime() - b.getTime())
-                                        .map((date: Date, idx: number) => {
-                                            const dateStr = date.toISOString().split('T')[0];
-                                            const displayStr = date.toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'numeric', day: 'numeric' });
-                                            return <option key={idx} value={dateStr}>{displayStr}</option>;
-                                        })
-                                    }
-                                    <option value="other">Khác (Liên hệ)</option>
-                                </select>
-                            ) : (
-                                <input
-                                    type="date"
-                                    className="w-full p-3 border rounded-lg"
-                                    value={formData.ngayKhoiHanh}
-                                    onChange={e => setFormData({ ...formData, ngayKhoiHanh: e.target.value })}
-                                    min={new Date().toISOString().split('T')[0]}
-                                />
-                            )}
-                        </div>
-
-                        <div className="col-span-2">
-                            <label className="block text-sm font-bold text-gray-700 mb-1">Trạng thái khởi tạo</label>
-                            <select
-                                className="w-full p-3 border rounded-lg"
-                                value={formData.trangThai}
-                                onChange={e => setFormData({ ...formData, trangThai: e.target.value })}
-                            >
-                                <option value="Chờ thanh toán">Chờ thanh toán</option>
-                                <option value="Đã thanh toán">Đã thanh toán</option>
-                                <option value="Hoàn tất">Hoàn tất</option>
-                            </select>
-                            <p className="text-xs text-gray-500 mt-1">* Nếu chọn "Đã thanh toán" trở lên, hệ thống sẽ trừ số chỗ ngay lập tức.</p>
-                        </div>
-
-                        <div className="col-span-2">
-                            <label className="block text-sm font-bold text-gray-700 mb-1">Ghi chú</label>
-                            <textarea
-                                className="w-full p-3 border rounded-lg h-24"
-                                value={formData.ghiChu}
-                                onChange={e => setFormData({ ...formData, ghiChu: e.target.value })}
-                                placeholder="Ghi chú thêm..."
-                            />
-                        </div>
+                    <div className="mb-4">
+                        <label className="block text-sm font-bold text-gray-700 mb-1">Trạng thái khởi tạo</label>
+                        <select
+                            className="w-full p-3 border rounded-lg"
+                            value={formData.trangThai}
+                            onChange={e => setFormData({ ...formData, trangThai: e.target.value })}
+                        >
+                            <option value="Chờ thanh toán">Chờ thanh toán</option>
+                            <option value="Đã thanh toán">Đã thanh toán</option>
+                            <option value="Hoàn tất">Hoàn tất</option>
+                        </select>
+                        <p className="text-xs text-gray-500 mt-1">* Nếu chọn "Đã thanh toán" trở lên, hệ thống sẽ trừ số chỗ ngay lập tức.</p>
                     </div>
 
                     <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">

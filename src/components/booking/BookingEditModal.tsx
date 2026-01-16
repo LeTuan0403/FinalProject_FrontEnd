@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { X } from 'lucide-react';
+import BookingForm from './BookingForm';
 
 interface BookingEditModalProps {
     isOpen: boolean;
@@ -25,9 +26,8 @@ const BookingEditModal: React.FC<BookingEditModalProps> = ({ isOpen, onClose, on
         e.preventDefault();
         try {
             await onSubmit(e, formData);
-        } catch (error: any) {
-            // This catch might be redundant if onSubmit handles it, 
-            // but if onSubmit throws specifically for us to handle UI:
+        } catch (err) {
+            const error = err as any;
             const msg = error.response?.data?.msg || error.response?.data?.message || "Lỗi cập nhật!";
             toast.error(msg);
         }
@@ -41,100 +41,11 @@ const BookingEditModal: React.FC<BookingEditModalProps> = ({ isOpen, onClose, on
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition"><X size={24} /></button>
                 </div>
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-1">Người liên hệ</label>
-                            <input
-                                type="text"
-                                className="w-full p-3 border rounded-lg"
-                                value={formData.nguoiLienHe || ''}
-                                onChange={e => setFormData({ ...formData, nguoiLienHe: e.target.value })}
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-1">Số điện thoại</label>
-                            <input
-                                type="text"
-                                className="w-full p-3 border rounded-lg"
-                                value={formData.sdtLienHe || ''}
-                                onChange={e => setFormData({ ...formData, sdtLienHe: e.target.value })}
-                            />
-                        </div>
-                        <div className="col-span-2">
-                            <label className="block text-sm font-bold text-gray-700 mb-1">Email</label>
-                            <input
-                                type="email"
-                                className="w-full p-3 border rounded-lg"
-                                value={formData.emailLienHe || ''}
-                                onChange={e => setFormData({ ...formData, emailLienHe: e.target.value })}
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-1">Số người lớn</label>
-                            <input
-                                type="number"
-                                min="1"
-                                className="w-full p-3 border rounded-lg"
-                                value={formData.soLuongNguoiLon || 0}
-                                onChange={e => {
-                                    const val = e.target.value;
-                                    setFormData({ ...formData, soLuongNguoiLon: val === '' ? '' : Number(val) });
-                                }}
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-1">Số trẻ em</label>
-                            <input
-                                type="number"
-                                min="0"
-                                className="w-full p-3 border rounded-lg"
-                                value={formData.soLuongTreEm || 0}
-                                onChange={e => {
-                                    const val = e.target.value;
-                                    setFormData({ ...formData, soLuongTreEm: val === '' ? '' : Number(val) });
-                                }}
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-1">Ngày khởi hành</label>
-                            {bookingData.tour?.ngayKhoiHanh && Array.isArray(bookingData.tour.ngayKhoiHanh) && bookingData.tour.ngayKhoiHanh.length > 0 ? (
-                                <select
-                                    className="w-full p-3 border rounded-lg"
-                                    value={formData.ngayKhoiHanh ? formData.ngayKhoiHanh.split('T')[0] : ''}
-                                    onChange={e => setFormData({ ...formData, ngayKhoiHanh: e.target.value })}
-                                >
-                                    <option value="">-- Chọn ngày khởi hành --</option>
-                                    {bookingData.tour.ngayKhoiHanh
-                                        .map((d: string) => new Date(d))
-                                        .filter((d: Date) => d.getTime() >= new Date().setHours(0, 0, 0, 0))
-                                        .sort((a: Date, b: Date) => a.getTime() - b.getTime())
-                                        .map((date: Date, idx: number) => {
-                                            const dateStr = date.toISOString().split('T')[0];
-                                            const displayStr = date.toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'numeric', day: 'numeric' });
-                                            return <option key={idx} value={dateStr}>{displayStr}</option>;
-                                        })
-                                    }
-                                    <option value="other" disabled>Liên hệ để đặt các lịch khác</option>
-                                </select>
-                            ) : (
-                                <input
-                                    type="date"
-                                    className="w-full p-3 border rounded-lg"
-                                    value={formData.ngayKhoiHanh ? formData.ngayKhoiHanh.split('T')[0] : ''}
-                                    onChange={e => setFormData({ ...formData, ngayKhoiHanh: e.target.value })}
-                                    min={new Date().toISOString().split('T')[0]}
-                                />
-                            )}
-                        </div>
-                        <div className="col-span-2">
-                            <label className="block text-sm font-bold text-gray-700 mb-1">Ghi chú</label>
-                            <textarea
-                                className="w-full p-3 border rounded-lg h-24"
-                                value={formData.ghiChu || ''}
-                                onChange={e => setFormData({ ...formData, ghiChu: e.target.value })}
-                            />
-                        </div>
-                    </div>
+                    <BookingForm
+                        formData={formData}
+                        onChange={setFormData}
+                        tour={bookingData.tour}
+                    />
                     <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
                         <button
                             type="button"

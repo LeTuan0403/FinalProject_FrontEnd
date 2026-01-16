@@ -1,21 +1,10 @@
 import { useState } from 'react';
-import { useForm, UseFormRegister, FieldError } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
-import { Mail, ArrowLeft, Send, AlertCircle, CheckCircle, LucideIcon } from 'lucide-react';
+import { Mail, ArrowLeft, Send, AlertCircle, CheckCircle } from 'lucide-react';
 import { AxiosError } from 'axios';
 import { authService } from '../../services/authService';
-
-// Define prop types for InputField
-interface InputFieldProps {
-    icon: LucideIcon;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    register: UseFormRegister<any>;
-    name: string;
-    rules: object;
-    placeholder: string;
-    type?: string;
-    error?: FieldError;
-}
+import InputField from '../../components/common/InputField';
 
 const ForgotPassword = () => {
     const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<{ email: string }>();
@@ -42,20 +31,7 @@ const ForgotPassword = () => {
         }
     };
 
-    const InputField = ({ icon: Icon, register, name, rules, placeholder, type = "text", error }: InputFieldProps) => (
-        <div className="relative w-full">
-            <div className={`absolute left-3 top-2.5 transition-colors ${error ? 'text-red-400' : 'text-gray-400'}`}>
-                <Icon size={18} />
-            </div>
-            <input
-                {...register(name, rules)}
-                type={type}
-                placeholder={placeholder}
-                className={`w-full bg-gray-50 border ${error ? 'border-red-300 focus:ring-red-100' : 'border-gray-200 focus:border-teal-500 focus:ring-teal-100'} 
-                   rounded-lg px-10 py-2.5 text-sm outline-none transition-all focus:ring-2 placeholder:text-gray-400 text-gray-700`}
-            />
-        </div>
-    );
+
 
     return (
         <div className="relative flex justify-center items-center py-8 font-sans min-h-[calc(100vh-80px)]"

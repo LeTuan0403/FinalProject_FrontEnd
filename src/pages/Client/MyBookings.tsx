@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom';
 import StatusBadge from '../../components/booking/StatusBadge';
 import BookingEditModal from '../../components/booking/BookingEditModal';
 import PaymentTimer from '../../components/common/PaymentTimer';
+import RefundModal from '../../components/booking/RefundModal';
 
 const MyBookings = () => {
     const { user } = useAuth();
@@ -15,6 +16,8 @@ const MyBookings = () => {
     const [loading, setLoading] = useState(true);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [editBooking, setEditBooking] = useState<any>(null); // State for editing
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [refundBooking, setRefundBooking] = useState<any>(null); // State for refund modal
 
     useEffect(() => {
         if (user) {
@@ -61,11 +64,8 @@ const MyBookings = () => {
             fetchMyBookings();
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
-            // Prioritize 'msg' or 'error' from backend, then 'message', then fallback
             const backendMsg = error.response?.data?.msg || error.response?.data?.error || error.response?.data?.message || "Lỗi cập nhật! Vui lòng thử lại.";
             toast.error(backendMsg);
-            // Re-throw if we want the Modal to also catch it, but here we handled it.
-            // If Modal calls onSubmit and expects it to fail to keep modal open, we should rethrow
             throw error;
         }
     };
@@ -186,13 +186,14 @@ const MyBookings = () => {
                                     </div>
                                     <div className="flex gap-3">
                                         <Link
-                                            to={`/tours/${booking.tourId}`} // Use normalized tourId
+                                            to={`/tours/${booking.tourId}`}
                                             className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-bold hover:bg-gray-200 transition"
                                         >
                                             Xem Tour
                                         </Link>
-                                        {/* User Action Logic */}
-                                        {['Pending', 'Chờ thanh toán'].includes(booking.trangThai) && ( // 'Chờ thanh toán'
+
+                                        {/* Pending Actions */}
+                                        {['Pending', 'Chờ thanh toán'].includes(booking.trangThai) && (
                                             <>
                                                 <Link
                                                     to={`/payment/${booking.donDatId}`}
@@ -214,8 +215,16 @@ const MyBookings = () => {
                                                 </button>
                                             </>
                                         )}
-                                        {/* Cannot act on Completed or Cancelled or Paid */}
-                                        {/* Cannot act on Completed or Cancelled */}
+
+                                        {/* Refund Action (Paid Bookings) */}
+                                        {['PAID', 'CONFIRMED', 'Đã thanh toán', 'Đã duyệt'].includes(booking.trangThai) && (
+                                            <button
+                                                onClick={() => setRefundBooking(booking)}
+                                                className="px-4 py-2 bg-red-50 text-red-600 rounded-lg font-bold hover:bg-red-100 transition"
+                                            >
+                                                Hủy / Hoàn tiền
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -223,12 +232,24 @@ const MyBookings = () => {
                     ))}
                 </div>
 
-                {/* Edit Modal Refactored */}
+                {/* Edit Modal */}
                 <BookingEditModal
                     isOpen={!!editBooking}
                     onClose={() => setEditBooking(null)}
                     onSubmit={handleUpdate}
                     bookingData={editBooking}
+                />
+
+                {/* Refund Modal */}
+                <RefundModal
+                    isOpen={!!refundBooking}
+                    onClose={() => setRefundBooking(null)}
+                    booking={refundBooking}
+                    onSuccess={() => {
+                        setRefundBooking(null);
+                        fetchMyBookings();
+                        toast.success("Đã gửi yêu cầu hoàn tiền thành công!");
+                    }}
                 />
             </div>
         </div>

@@ -16,6 +16,29 @@ interface TourCardProps {
     onToggleFavorite?: (id: number, status: boolean) => void;
 }
 
+interface ActionButtonProps {
+    onClick: (e: React.MouseEvent) => void;
+    title: string;
+    active: boolean;
+    activeClass: string;
+    icon: React.ElementType;
+    variant?: 'overlay' | 'standard';
+    className?: string;
+}
+
+const TourActionButton = ({ onClick, title, active, activeClass, icon: Icon, variant = 'standard', className = '' }: ActionButtonProps) => {
+    const baseClass = "p-2 rounded-full transition-all";
+    const variantClass = variant === 'overlay'
+        ? (active ? activeClass : 'bg-black/20 text-white hover:bg-black/40 backdrop-blur-md')
+        : (active ? activeClass : 'bg-gray-100 text-gray-400 hover:bg-gray-200');
+
+    return (
+        <button onClick={onClick} title={title} className={`${className} ${baseClass} ${variantClass}`}>
+            <Icon className={`w-5 h-5 ${active ? 'fill-current' : ''}`} />
+        </button>
+    );
+};
+
 const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavorite }: TourCardProps) => {
     const { user } = useAuth();
     const { addToCompare, removeFromCompare, isInCompare } = useComparison();
@@ -58,27 +81,31 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
     const nextDepartureText = getNextDeparture(tour);
     const tourCode = getTourCode(tour);
     const remainingSeats = getRemainingSeats(tour);
+    // Handle case where tourId might be an object or missing (use _id fallback)
+    const linkId = (tour.tourId && typeof tour.tourId !== 'object') ? tour.tourId : (tour as any)._id;
 
     if (variant === 'vertical') {
         return (
             <div className="bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all overflow-hidden flex flex-col border border-gray-100 group relative">
                 {/* Favorite Button */}
-                <button
+                <TourActionButton
                     onClick={handleToggleFavorite}
                     title="Yêu thích"
-                    className={`absolute top - 4 right - 4 z - 10 p - 2 rounded - full backdrop - blur - md transition - all ${favorited ? 'bg-red-50 text-red-500' : 'bg-black/20 text-white hover:bg-black/40'} `}
-                >
-                    <Heart className={`w - 5 h - 5 ${favorited ? 'fill-current' : ''} `} />
-                </button>
-
-                {/* Compare Button */}
-                <button
+                    active={favorited}
+                    activeClass="bg-red-50 text-red-500"
+                    icon={Heart}
+                    variant="overlay"
+                    className="absolute top-4 right-4 z-10"
+                />
+                <TourActionButton
                     onClick={handleToggleCompare}
                     title="So sánh"
-                    className={`absolute top - 4 right - 16 z - 10 p - 2 rounded - full backdrop - blur - md transition - all ${inCompare ? 'bg-teal-50 text-teal-600' : 'bg-black/20 text-white hover:bg-black/40'} `}
-                >
-                    <Scale className={`w - 5 h - 5 ${inCompare ? 'fill-current' : ''} `} />
-                </button>
+                    active={inCompare}
+                    activeClass="bg-teal-50 text-teal-600"
+                    icon={Scale}
+                    variant="overlay"
+                    className="absolute top-4 right-16 z-10"
+                />
 
                 <div className="relative overflow-hidden h-60">
                     <img
@@ -93,7 +120,7 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
 
                 <div className="p-5 flex-grow flex flex-col">
                     <h3 className="text-lg font-bold mb-3 text-gray-800 group-hover:text-blue-600 transition-colors line-clamp-2 min-h-[3.5rem]">
-                        <Link to={`/tours/${tour.tourId}`}>{tour.tenTour}</Link>
+                        <Link to={`/tours/${linkId}`}>{tour.tenTour}</Link>
                     </h3>
 
                     <div className="flex items-center gap-2 mb-4 text-sm text-gray-500">
@@ -117,7 +144,7 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
                             <p className="text-xl font-black text-red-600">{tour.tongGiaDuKien.toLocaleString()} ₫</p>
                         </div>
                         <Link
-                            to={`/tours/${tour.tourId}`}
+                            to={`/tours/${linkId}`}
                             className="text-blue-600 font-bold text-sm hover:underline"
                         >
                             XEM CHI TIẾT
@@ -132,22 +159,24 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
     return (
         <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all overflow-hidden flex flex-col md:flex-row border border-gray-100 group relative">
             {/* Favorite Button (Horizontal Mobile) */}
-            <button
+            <TourActionButton
                 onClick={handleToggleFavorite}
                 title="Yêu thích"
-                className={`absolute top - 4 right - 4 z - 10 p - 2 rounded - full backdrop - blur - md transition - all md:hidden ${favorited ? 'bg-red-50 text-red-500' : 'bg-black/20 text-white hover:bg-black/40'} `}
-            >
-                <Heart className={`w - 5 h - 5 ${favorited ? 'fill-current' : ''} `} />
-            </button>
-
-            {/* Compare Button (Horizontal Mobile) */}
-            <button
+                active={favorited}
+                activeClass="bg-red-50 text-red-500"
+                icon={Heart}
+                variant="overlay"
+                className="absolute top-4 right-4 z-10 md:hidden"
+            />
+            <TourActionButton
                 onClick={handleToggleCompare}
                 title="So sánh"
-                className={`absolute top - 16 right - 4 z - 10 p - 2 rounded - full backdrop - blur - md transition - all md:hidden ${inCompare ? 'bg-teal-50 text-teal-600' : 'bg-black/20 text-white hover:bg-black/40'} `}
-            >
-                <Scale className={`w - 5 h - 5 ${inCompare ? 'fill-current' : ''} `} />
-            </button>
+                active={inCompare}
+                activeClass="bg-teal-50 text-teal-600"
+                icon={Scale}
+                variant="overlay"
+                className="absolute top-16 right-4 z-10 md:hidden"
+            />
 
             {/* Horizontal Image */}
             <div className="md:w-1/3 relative overflow-hidden h-64 md:h-auto">
@@ -163,25 +192,26 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
                 <div>
                     <div className="flex justify-between items-start">
                         <h3 className="text-xl font-bold mb-3 text-blue-900 group-hover:text-blue-600 transition-colors pr-8">
-                            <Link to={`/tours/${tour.tourId}`}>{tour.tenTour}</Link>
+                            <Link to={`/tours/${linkId}`}>{tour.tenTour}</Link>
                         </h3>
                         <div className="hidden md:flex gap-2">
                             {/* Compare Button Desktop */}
-                            <button
+                            <TourActionButton
                                 onClick={handleToggleCompare}
                                 title="So sánh"
-                                className={`p - 2 rounded - full transition - all ${inCompare ? 'bg-teal-50 text-teal-600' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'} `}
-                            >
-                                <Scale className={`w - 5 h - 5 ${inCompare ? 'fill-current' : ''} `} />
-                            </button>
-                            {/* Desktop Favorite Button */}
-                            <button
+                                active={inCompare}
+                                activeClass="bg-teal-50 text-teal-600"
+                                icon={Scale}
+                                variant="standard"
+                            />
+                            <TourActionButton
                                 onClick={handleToggleFavorite}
                                 title="Yêu thích"
-                                className={`p - 2 rounded - full transition - all ${favorited ? 'bg-red-50 text-red-500' : 'bg-gray-100 text-gray-400 hover:bg-gray-200'} `}
-                            >
-                                <Heart className={`w - 5 h - 5 ${favorited ? 'fill-current' : ''} `} />
-                            </button>
+                                active={favorited}
+                                activeClass="bg-red-50 text-red-500"
+                                icon={Heart}
+                                variant="standard"
+                            />
 
                         </div>
                     </div>
@@ -220,7 +250,7 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
                         <p className="text-2xl font-black text-red-600">{tour.tongGiaDuKien.toLocaleString()} <span className="text-sm font-normal text-red-600">đ</span></p>
                     </div>
                     <Link
-                        to={`/tours/${tour.tourId}`}
+                        to={`/tours/${linkId}`}
                         className="bg-blue-600 text-white px-8 py-3 rounded-lg font-bold text-sm hover:bg-blue-700 transition-all uppercase shadow-blue-200 shadow-md transform hover:-translate-y-0.5"
                     >
                         Xem chi tiết

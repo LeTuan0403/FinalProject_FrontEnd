@@ -1,62 +1,14 @@
 import { useState } from 'react';
-import { useForm, UseFormRegister, FieldError } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
-import { Lock, Key, ArrowLeft, Eye, EyeOff, AlertCircle, LucideIcon } from 'lucide-react';
+import { Lock, Key, ArrowLeft, AlertCircle } from 'lucide-react';
 import { AxiosError } from 'axios';
 import { toast } from 'react-hot-toast';
 import { authService } from '../../services/authService';
 import { useAuth } from '../../hooks/useAuth';
 
-interface InputProps {
-    icon: LucideIcon;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    register: UseFormRegister<any>;
-    name: string;
-    rules: object;
-    placeholder: string;
-    type?: string;
-    error?: FieldError;
-}
-
-const InputField = ({ icon: Icon, register, name, rules, placeholder, type = "text", error }: InputProps) => (
-    <div className="relative w-full">
-        <div className={`absolute left-3 top-2.5 transition-colors ${error ? 'text-red-400' : 'text-gray-400'}`}>
-            <Icon size={18} />
-        </div>
-        <input
-            {...register(name, rules)}
-            type={type}
-            placeholder={placeholder}
-            className={`w-full bg-gray-50 border ${error ? 'border-red-300 focus:ring-red-100' : 'border-gray-200 focus:border-teal-500 focus:ring-teal-100'} 
-               rounded-lg px-10 py-3 text-sm outline-none transition-all focus:ring-2 placeholder:text-gray-400 text-gray-700`}
-        />
-    </div>
-);
-
-const PasswordInput = ({ icon: Icon, register, name, rules, placeholder, error }: InputProps) => {
-    const [showPassword, setShowPassword] = useState(false);
-    return (
-        <div className="relative w-full">
-            <div className={`absolute left-3 top-2.5 transition-colors ${error ? 'text-red-400' : 'text-gray-400'}`}>
-                <Icon size={18} />
-            </div>
-            <input
-                {...register(name, rules)}
-                type={showPassword ? "text" : "password"}
-                placeholder={placeholder}
-                className={`w-full bg-gray-50 border ${error ? 'border-red-300 focus:ring-red-100' : 'border-gray-200 focus:border-teal-500 focus:ring-teal-100'} 
-                   rounded-lg px-10 py-3 text-sm outline-none transition-all focus:ring-2 placeholder:text-gray-400 text-gray-700`}
-            />
-            <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-2.5 text-gray-400 hover:text-teal-600 transition-colors"
-            >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-            </button>
-        </div>
-    );
-};
+import InputField from '../../components/common/InputField';
+import PasswordInput from '../../components/common/PasswordInput';
 
 const ResetPassword = () => {
     const { register, handleSubmit, formState: { errors, isSubmitting }, watch } = useForm<{ email: string; token: string; newPassword: string; confirmPassword: string }>();

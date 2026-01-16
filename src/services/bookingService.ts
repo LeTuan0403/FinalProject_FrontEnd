@@ -50,5 +50,18 @@ export const bookingService = {
             return axiosClient.put(`/dondattours/${id}/cancel`, { lyDoHuy: "Admin cancelled" });
         }
         return axiosClient.put(`/dondattours/${id}`, { trangThai: status });
+    },
+
+    // --- Refund Methods ---
+    requestRefund: (id: number, data: { bankName: string; accountNumber: string; accountHolder: string; reason: string; refundAmount: number }) => {
+        return axiosClient.post(`/dondattours/${id}/request-refund`, data);
+    },
+
+    confirmRefund: (id: number, otp: string) => {
+        return axiosClient.post(`/dondattours/${id}/confirm-refund`, { otp });
+    },
+
+    adminConfirmRefund: (id: number) => {
+        return axiosClient.put(`/dondattours/${id}/admin-confirm-refund`);
     }
 };

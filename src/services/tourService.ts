@@ -5,7 +5,7 @@ export const tourService = {
   getAll: async (params?: Record<string, unknown>) => {
     return axiosClient.get<Tour[]>('/tours', { params });
   },
-  getById: async (id: number) => {
+  getById: async (id: number | string) => {
     return axiosClient.get<Tour>(`/tours/${id}`);
   },
   createCustom: async (data: Record<string, unknown>) => {
@@ -15,19 +15,19 @@ export const tourService = {
   createTour: async (data: Record<string, unknown>) => {
     return axiosClient.post('/tours', data);
   },
-  updateTour: async (id: number, data: Record<string, unknown>) => {
+  updateTour: async (id: number | string, data: Record<string, unknown>) => {
     return axiosClient.put(`/tours/${id}`, data);
   },
-  updateCustom: async (id: number, data: Record<string, unknown>) => {
+  updateCustom: async (id: number | string, data: Record<string, unknown>) => {
     return axiosClient.put(`/tours/custom/${id}`, data);
   },
-  deleteTour: async (id: number) => {
+  deleteTour: async (id: number | string) => {
     return axiosClient.delete(`/tours/${id}`);
   },
-  deleteCustom: async (id: number) => {
+  deleteCustom: async (id: number | string) => {
     return axiosClient.delete(`/tours/custom/${id}`);
   },
-  approveTour: async (id: number) => {
+  approveTour: async (id: number | string) => {
     return axiosClient.put(`/tours/approve/${id}`);
   },
 
