@@ -36,7 +36,7 @@ const ChatBubble = ({ message, isMe, onDelete, showAdminAvatar = false }: ChatBu
                 )}
 
                 {/* Content */}
-                {message.type === 'tour_card' && message.tourId ? (
+                {message.type === 'tour_card' && message.tourId && typeof message.tourId === 'object' ? (
                     <div className="bg-white text-gray-800 rounded-xl overflow-hidden shadow-sm max-w-[280px] -m-1">
                         <img
                             src={message.tourId.hinhAnhBia ? (message.tourId.hinhAnhBia.startsWith('http') ? message.tourId.hinhAnhBia : `http://localhost:5000${message.tourId.hinhAnhBia}`) : "https://images.unsplash.com/photo-1540541338287-41700207dee6"}
@@ -65,7 +65,7 @@ const ChatBubble = ({ message, isMe, onDelete, showAdminAvatar = false }: ChatBu
 
                 {/* Timestamp */}
                 <p className={`text-[10px] mt-2 text-right ${isMe && message.type !== 'tour_card' ? 'text-blue-100' : 'text-gray-400'}`}>
-                    {new Date(message.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                    {new Date(message.createdAt || Date.now()).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
                 </p>
             </div>
         </div>

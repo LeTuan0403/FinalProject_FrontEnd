@@ -49,6 +49,8 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 function App() {
+  const { user } = useAuth(); // Hook into auth state to force re-render on login/logout
+
   return (
     <ComparisonProvider>
       <Toaster position="top-center" reverseOrder={false} />
@@ -105,7 +107,9 @@ function App() {
 
       </Routes>
       <ComparisonFloatingBar />
-      <ChatWidget />
+      <ComparisonFloatingBar />
+      {/* Force remount when user changes (via ID or fallback to 'guest') */}
+      <ChatWidget key={user ? String(user.userId) : 'guest'} />
     </ComparisonProvider>
   );
 }

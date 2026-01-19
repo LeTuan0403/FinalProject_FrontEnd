@@ -14,7 +14,7 @@ const Sidebar = () => {
     };
 
     const navItems = [
-        { margin: false, id: '', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
+        { margin: false, id: '', label: 'Tổng quan', icon: <LayoutDashboard size={20} /> },
         { margin: false, id: 'chat', label: 'Tin nhắn CSKH', icon: <MessageCircle size={20} />, badge: counts.messages },
         { margin: false, id: 'tours', label: 'Quản lý Tour', icon: <Calendar size={20} />, badge: counts.tours },
         { margin: false, id: 'locations', label: 'Quản lý Địa điểm', icon: <MapPin size={20} /> },

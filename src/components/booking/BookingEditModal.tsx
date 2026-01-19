@@ -27,7 +27,7 @@ const BookingEditModal: React.FC<BookingEditModalProps> = ({ isOpen, onClose, on
         try {
             await onSubmit(e, formData);
         } catch (err) {
-            const error = err as any;
+            const error = err as { response?: { data?: { msg?: string, message?: string } } };
             const msg = error.response?.data?.msg || error.response?.data?.message || "Lỗi cập nhật!";
             toast.error(msg);
         }

@@ -11,9 +11,11 @@ export interface Message {
     _id?: string;
     senderId: string;
     text: string;
-    createdAt: string;
     type?: 'text' | 'tour_card';
-    tourId?: TourShort;
+    tourId?: string | TourShort; // Populated tour
+    createdAt?: string; // Optional for optimistic/new messages
+    updatedAt?: string;
+    isRead?: boolean;
 }
 
 export interface Conversation {

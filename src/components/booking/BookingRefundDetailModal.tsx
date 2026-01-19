@@ -20,7 +20,7 @@ const BookingRefundDetailModal: React.FC<BookingRefundDetailModalProps> = ({ isO
         if (booking) {
             setStep('form');
         }
-    }, [booking?.donDatId]);
+    }, [booking?.donDatId, booking]);
 
     // Auto-switch to success if status becomes 'Đã hoàn tiền' (Real-time update)
     useEffect(() => {
@@ -44,7 +44,7 @@ const BookingRefundDetailModal: React.FC<BookingRefundDetailModalProps> = ({ isO
             // Refresh data
             onSuccess();
         } catch (error) {
-            const e = error as any;
+            const e = error as { response?: { data?: { msg?: string } } };
             toast.error(e.response?.data?.msg || "Lỗi xác nhận hoàn tiền");
         } finally {
             setIsLoading(false);

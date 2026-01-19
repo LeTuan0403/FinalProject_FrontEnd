@@ -120,6 +120,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.removeItem('soDienThoai');
     localStorage.removeItem('diaChi');
     localStorage.removeItem('hanCheThanhToan');
+
+    // Clear Chat Session
+    localStorage.removeItem('chat_conversation_id');
+    localStorage.removeItem('chat_guest_id');
+
     setUser(null);
   };
 

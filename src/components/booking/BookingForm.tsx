@@ -93,7 +93,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ formData, onChange, tour }) =
                     >
                         <option value="">-- Chọn ngày --</option>
                         {tour.ngayKhoiHanh
-                            .map((d: any) => new Date(d))
+                            .map((d: string | Date) => new Date(d))
                             .filter((d: Date) => d.getTime() >= new Date().setHours(0, 0, 0, 0))
                             .sort((a: Date, b: Date) => a.getTime() - b.getTime())
                             .map((date: Date, idx: number) => {

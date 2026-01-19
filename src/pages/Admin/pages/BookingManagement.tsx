@@ -74,8 +74,7 @@ const BookingManagement = () => {
         return () => {
             socket.off("admin_notification", handleNotification);
         };
-    }, [socket]);
-
+    }, [socket, refreshCounts]);
     // Sync refundDetailBooking when global bookings list update
     useEffect(() => {
         if (refundDetailBooking) {
@@ -84,7 +83,7 @@ const BookingManagement = () => {
                 setRefundDetailBooking(updated);
             }
         }
-    }, [bookings]);
+    }, [bookings, refundDetailBooking]);
 
     const handleStatusUpdate = async (id: number, status: string) => {
         try {

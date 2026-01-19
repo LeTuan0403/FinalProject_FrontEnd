@@ -77,16 +77,26 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
         }
     };
 
+    const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
+        e.dataTransfer.effectAllowed = "copy";
+        e.dataTransfer.setData("application/tour-data", JSON.stringify(tour));
+        // Optional: Set a custom drag image if needed, but default ghost image is usually fine
+    };
+
     const durationText = calculateDuration(tour);
     const nextDepartureText = getNextDeparture(tour);
     const tourCode = getTourCode(tour);
     const remainingSeats = getRemainingSeats(tour);
     // Handle case where tourId might be an object or missing (use _id fallback)
-    const linkId = (tour.tourId && typeof tour.tourId !== 'object') ? tour.tourId : (tour as any)._id;
+    const linkId = (tour.tourId && typeof tour.tourId !== 'object') ? tour.tourId : tour._id;
 
     if (variant === 'vertical') {
         return (
-            <div className="bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all overflow-hidden flex flex-col border border-gray-100 group relative">
+            <div
+                draggable="true"
+                onDragStart={handleDragStart}
+                className="bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all overflow-hidden flex flex-col border border-gray-100 group relative cursor-grab active:cursor-grabbing"
+            >
                 {/* Favorite Button */}
                 <TourActionButton
                     onClick={handleToggleFavorite}
@@ -157,7 +167,11 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
 
     // Horizontal Variant
     return (
-        <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all overflow-hidden flex flex-col md:flex-row border border-gray-100 group relative">
+        <div
+            draggable="true"
+            onDragStart={handleDragStart}
+            className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all overflow-hidden flex flex-col md:flex-row border border-gray-100 group relative cursor-grab active:cursor-grabbing"
+        >
             {/* Favorite Button (Horizontal Mobile) */}
             <TourActionButton
                 onClick={handleToggleFavorite}

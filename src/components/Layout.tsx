@@ -11,6 +11,7 @@ const Layout = () => {
         <Outlet />
       </main>
       <Footer />
+      <Footer />
       <FloatingContact />
     </div>
   );

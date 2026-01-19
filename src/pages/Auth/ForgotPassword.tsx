@@ -30,9 +30,6 @@ const ForgotPassword = () => {
             setError(typeof errorMessage === 'string' ? errorMessage : 'Có lỗi xảy ra.');
         }
     };
-
-
-
     return (
         <div className="relative flex justify-center items-center py-8 font-sans min-h-[calc(100vh-80px)]"
             style={{
@@ -79,7 +76,6 @@ const ForgotPassword = () => {
                     </div>
                 ) : (
                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-
                         <div className="space-y-1">
                             <InputField
                                 icon={Mail}

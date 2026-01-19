@@ -23,6 +23,12 @@ const AdminChat = () => {
     const [tours, setTours] = useState<TourShort[]>([]);
     const [tourSearch, setTourSearch] = useState("");
 
+    // Typing & Read Status
+    const [typingStatus, setTypingStatus] = useState<{ [key: string]: boolean }>({});
+    const [hasCustomerRead, setHasCustomerRead] = useState(false);
+    const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
+
     const fetchAllTours = async () => {
         try {
             const res = await axios.get("http://localhost:5000/api/tours");
@@ -114,6 +120,8 @@ const AdminChat = () => {
             // Join Room as Admin
             if (socket) {
                 socket.emit("admin_join_room", selectedConv._id);
+                socket.emit("mark_read", selectedConv._id); // Notify User that Admin entered/read
+
                 // Handle Re-connection
                 const handleConnect = () => {
                     socket.emit("admin_join_room", selectedConv._id);
@@ -131,6 +139,7 @@ const AdminChat = () => {
         if (!socket) { return; }
 
         // Listen for new messages in current room
+        // Listen for new messages in current room
         socket.on("receive_message", (data: Message) => {
             // Only append if it belongs to current conversation
             if (selectedConv && data.senderId !== 'admin') {
@@ -139,12 +148,39 @@ const AdminChat = () => {
                 // Actually, data contains conversationId? Yes.
                 // let's check
                 setMessages(prev => [...prev, data]);
+                // Mark read immediately if we are viewing this conversation
+                socket.emit("mark_read", selectedConv._id);
             }
+        });
+
+        // Typing Indicators
+        socket.on("typing", (convId: string) => {
+            setTypingStatus(prev => ({ ...prev, [convId]: true }));
+            // Auto scroll if current conv?
+            if (selectedConv?._id === convId) {
+                // messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+            }
+        });
+
+        socket.on("stop_typing", (convId: string) => {
+            setTypingStatus(prev => ({ ...prev, [convId]: false }));
+        });
+
+        // Read Receipts - Update UI if user read our message
+        socket.on("message_read", (convId: string) => {
+            if (selectedConv?._id === convId) {
+                setHasCustomerRead(true);
+            }
+        });
+
+        // Presence
+        socket.on("get_users", (users: string[]) => {
+            setOnlineUsers(users);
         });
 
         // Listen for Global Notifications (to update conversation list order/badges)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        socket.on("admin_notification", (data: any) => {
+        const handleAdminNotification = (data: any) => {
             // data = { conversationId, text, senderId ... }
             if (data.senderId === 'admin') { return; } // Ignore self
 
@@ -157,12 +193,13 @@ const AdminChat = () => {
                     newList.unshift({
                         ...existing,
                         lastMessage: data.text,
-                        isReadByAdmin: selectedConv?._id === data.conversationId, // Read if currently open
+                        // Fix for "Read" status false positive:
+                        // Logic: If I am currently viewing this conversation, it's read by me.
+                        // Otherwise, it is NOT read by me.
+                        isReadByAdmin: selectedConv?._id === data.conversationId,
                         updatedAt: new Date().toISOString()
                     });
                 } else {
-                    // New conversation? We might need to refetch or manually add if we have full conv object
-                    // For now, simpler to refetch
                     fetchConversations();
                 }
                 return newList;
@@ -171,15 +208,42 @@ const AdminChat = () => {
             // Play Sound?
             const audio = new Audio("/notification.mp3"); // Ensure this file exists or use URL
             audio.play().catch(() => { }); // Ignore auto-play errors
-        });
+        };
+
+        socket.on("admin_notification", handleAdminNotification);
 
         return () => {
             socket.off("receive_message");
-            socket.off("admin_notification");
+            // IMPORTANT: Pass the handler to only remove THIS listener, not Global ones
+            socket.off("admin_notification", handleAdminNotification);
+            socket.off("typing");
+            socket.off("stop_typing");
+            socket.off("message_read");
         }
-    }, [socket, selectedConv]);
+    }, [socket, selectedConv]); // selectedConv is dependency, so effect re-runs on change
+
+    // Handle Input Change for Typing
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setNewMessage(e.target.value);
+
+        if (socket && selectedConv) {
+            socket.emit("typing", selectedConv._id);
+
+            if (typingTimeoutRef.current) {
+                clearTimeout(typingTimeoutRef.current);
+            }
+
+            typingTimeoutRef.current = setTimeout(() => {
+                socket.emit("stop_typing", selectedConv._id);
+            }, 2000);
+        }
+    };
 
     // Auto-scroll
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [messages, selectedConv]);
+
     const handleDeleteMessage = async (msgId: string) => {
         if (!selectedConv || !window.confirm("Xóa tin nhắn này?")) { return; }
 
@@ -226,6 +290,7 @@ const AdminChat = () => {
         // Optimistic
         setMessages(prev => [...prev, msgData]);
         setNewMessage("");
+        setHasCustomerRead(false); // Reset read status on new message
 
         try {
             await axios.post("http://localhost:5000/api/chat/message", msgData);
@@ -304,7 +369,19 @@ const AdminChat = () => {
                                     <div>
                                         <h3 className="font-bold text-gray-800">{selectedConv.guestName}</h3>
                                         <span className="text-xs text-green-500 font-medium flex items-center gap-1">
-                                            <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span> Online
+                                            {typingStatus[selectedConv._id] ? (
+                                                <span className="text-blue-500 italic animate-pulse">Đang soạn tin...</span>
+                                            ) : (
+                                                <>
+                                                    {selectedConv.members.some((m: string) => onlineUsers.includes(m) && m !== 'admin') ? (
+                                                        <>
+                                                            <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span> Online
+                                                        </>
+                                                    ) : (
+                                                        <span className="text-gray-400">Offline</span>
+                                                    )}
+                                                </>
+                                            )}
                                         </span>
                                     </div>
                                 </div>
@@ -323,12 +400,19 @@ const AdminChat = () => {
                                 {messages.map((msg, idx) => {
                                     const isMe = msg.senderId === 'admin';
                                     return (
-                                        <ChatBubble
-                                            key={idx}
-                                            message={msg}
-                                            isMe={isMe}
-                                            onDelete={handleDeleteMessage}
-                                        />
+                                        <div key={idx}>
+                                            <ChatBubble
+                                                message={msg}
+                                                isMe={isMe}
+                                                onDelete={handleDeleteMessage}
+                                            />
+                                            {/* Read Receipt */}
+                                            {isMe && idx === messages.length - 1 && hasCustomerRead && (
+                                                <div className="text-right mr-1">
+                                                    <span className="text-[10px] text-gray-400 font-medium">Đã xem</span>
+                                                </div>
+                                            )}
+                                        </div>
                                     );
                                 })}
                                 <div ref={messagesEndRef} />
@@ -351,7 +435,7 @@ const AdminChat = () => {
                                     <input
                                         type="text"
                                         value={newMessage}
-                                        onChange={(e) => setNewMessage(e.target.value)}
+                                        onChange={handleInputChange}
                                         placeholder="Nhập tin nhắn..."
                                         className="flex-1 bg-transparent px-4 py-2 outline-none text-gray-700 font-medium placeholder-gray-400"
                                     />
@@ -423,8 +507,8 @@ const AdminChat = () => {
                         </div>
                     )
                 }
-            </div>
-        </div>
+            </div >
+        </div >
     );
 };
 

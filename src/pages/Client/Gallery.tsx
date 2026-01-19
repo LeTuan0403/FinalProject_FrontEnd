@@ -21,41 +21,44 @@ const Gallery = () => {
   const getCityFromLocation = (loc: DiaDiem): string => {
     const text = `${loc.tenDiaDiem} ${loc.diaChiCuThe || ''}`.toLowerCase();
 
-    // Northern Vietnam
-    if (text.includes('hà nội')) { return 'Hà Nội'; }
-    if (text.includes('hạ long') || text.includes('quảng ninh') || text.includes('bãi cháy')) { return 'Hạ Long'; }
-    if (text.includes('sapa') || text.includes('lào cai') || text.includes('fansipan')) { return 'Sapa'; }
-    if (text.includes('ninh bình') || text.includes('tràng an') || text.includes('tam cốc')) { return 'Ninh Bình'; }
-    if (text.includes('hà giang') || text.includes('đồng văn') || text.includes('mã pí lèng')) { return 'Hà Giang'; }
-    if (text.includes('cao bằng') || text.includes('bản giốc')) { return 'Cao Bằng'; }
-    if (text.includes('mộc châu') || text.includes('sơn la')) { return 'Mộc Châu'; }
-    if (text.includes('mai châu') || text.includes('hòa bình')) { return 'Hòa Bình'; }
-    if (text.includes('hải phòng') || text.includes('cát bà') || text.includes('đồ sơn')) { return 'Hải Phòng'; }
-    if (text.includes('bắc kạn') || text.includes('ba bể')) { return 'Bắc Kạn'; }
+    const cityMappings = [
+      { keywords: ['hà nội'], city: 'Hà Nội' },
+      { keywords: ['hạ long', 'quảng ninh', 'bãi cháy'], city: 'Hạ Long' },
+      { keywords: ['sapa', 'lào cai', 'fansipan'], city: 'Sapa' },
+      { keywords: ['ninh bình', 'tràng an', 'tam cốc'], city: 'Ninh Bình' },
+      { keywords: ['hà giang', 'đồng văn', 'mã pí lèng'], city: 'Hà Giang' },
+      { keywords: ['cao bằng', 'bản giốc'], city: 'Cao Bằng' },
+      { keywords: ['mộc châu', 'sơn la'], city: 'Mộc Châu' },
+      { keywords: ['mai châu', 'hòa bình'], city: 'Hòa Bình' },
+      { keywords: ['hải phòng', 'cát bà', 'đồ sơn'], city: 'Hải Phòng' },
+      { keywords: ['bắc kạn', 'ba bể'], city: 'Bắc Kạn' },
+      { keywords: ['huế', 'thừa thiên'], city: 'Huế' },
+      { keywords: ['đà nẵng', 'bà nà'], city: 'Đà Nẵng' },
+      { keywords: ['hội an', 'quảng nam', 'mỹ sơn'], city: 'Hội An' },
+      { keywords: ['phong nha', 'quảng bình', 'thiên đường'], city: 'Quảng Bình' },
+      { keywords: ['nha trang', 'khánh hòa', 'cam ranh'], city: 'Nha Trang' },
+      { keywords: ['quy nhơn', 'bình định'], city: 'Quy Nhơn' },
+      { keywords: ['phú yên', 'tuy hòa'], city: 'Phú Yên' },
+      { keywords: ['đà lạt', 'lâm đồng'], city: 'Đà Lạt' },
+      { keywords: ['phan thiết', 'mũi né', 'bình thuận'], city: 'Phan Thiết' },
+      { keywords: ['buôn ma thuột', 'đắk lắk'], city: 'Buôn Ma Thuột' },
+      { keywords: ['kon tum', 'măng đen'], city: 'Kon Tum' },
+      { keywords: ['hồ chí minh', 'sài gòn'], city: 'TP. Hồ Chí Minh' },
+      { keywords: ['vũng tàu', 'bà rịa'], city: 'Vũng Tàu' },
+      { keywords: ['phú quốc', 'kiên giang'], city: 'Phú Quốc' },
+      { keywords: ['cần thơ', 'ninh kiều'], city: 'Cần Thơ' },
+      { keywords: ['côn đảo'], city: 'Côn Đảo' },
+      { keywords: ['bến tre'], city: 'Bến Tre' },
+      { keywords: ['tiền giang', 'mỹ tho'], city: 'Tiền Giang' },
+      { keywords: ['cà mau'], city: 'Cà Mau' },
+      { keywords: ['tây ninh', 'bà đen'], city: 'Tây Ninh' }
+    ];
 
-    // Central Vietnam
-    if (text.includes('huế') || text.includes('thừa thiên')) { return 'Huế'; }
-    if (text.includes('đà nẵng') || text.includes('bà nà')) { return 'Đà Nẵng'; }
-    if (text.includes('hội an') || text.includes('quảng nam') || text.includes('mỹ sơn')) { return 'Hội An'; }
-    if (text.includes('phong nha') || text.includes('quảng bình') || text.includes('thiên đường')) { return 'Quảng Bình'; }
-    if (text.includes('nha trang') || text.includes('khánh hòa') || text.includes('cam ranh')) { return 'Nha Trang'; }
-    if (text.includes('quy nhơn') || text.includes('bình định')) { return 'Quy Nhơn'; }
-    if (text.includes('phú yên') || text.includes('tuy hòa')) { return 'Phú Yên'; }
-    if (text.includes('đà lạt') || text.includes('lâm đồng')) { return 'Đà Lạt'; }
-    if (text.includes('phan thiết') || text.includes('mũi né') || text.includes('bình thuận')) { return 'Phan Thiết'; }
-    if (text.includes('buôn ma thuột') || text.includes('đắk lắk')) { return 'Buôn Ma Thuột'; }
-    if (text.includes('kon tum') || text.includes('măng đen')) { return 'Kon Tum'; }
-
-    // Southern Vietnam
-    if (text.includes('hồ chí minh') || text.includes('sài gòn')) { return 'TP. Hồ Chí Minh'; }
-    if (text.includes('vũng tàu') || text.includes('bà rịa')) { return 'Vũng Tàu'; }
-    if (text.includes('phú quốc') || text.includes('kiên giang')) { return 'Phú Quốc'; }
-    if (text.includes('cần thơ') || text.includes('ninh kiều')) { return 'Cần Thơ'; }
-    if (text.includes('côn đảo')) { return 'Côn Đảo'; }
-    if (text.includes('bến tre')) { return 'Bến Tre'; }
-    if (text.includes('tiền giang') || text.includes('mỹ tho')) { return 'Tiền Giang'; }
-    if (text.includes('cà mau')) { return 'Cà Mau'; }
-    if (text.includes('tây ninh') || text.includes('bà đen')) { return 'Tây Ninh'; }
+    for (const mapping of cityMappings) {
+      if (mapping.keywords.some(k => text.includes(k))) {
+        return mapping.city;
+      }
+    }
 
     return 'Địa điểm khác';
   };

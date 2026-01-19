@@ -56,10 +56,10 @@ const RefundModal: React.FC<RefundModalProps> = ({ isOpen, onClose, booking, onS
         if (isOpen) {
             setStep(1);
             setFormData({
-                reason: '',
-                bankName: '',
-                accountNumber: '',
-                accountHolder: '',
+                reason: booking.refundReason || '',
+                bankName: booking.refundBankName || '',
+                accountNumber: booking.refundAccountNumber || '',
+                accountHolder: booking.refundAccountHolder || '',
                 isCommitted: false
             });
             setOtp('');

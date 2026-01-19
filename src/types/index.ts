@@ -36,6 +36,7 @@ export interface Tour_ChiTiet {
 }
 
 export interface Tour {
+  _id?: string; // MongoDB ID
   tourId: number;
   maTour?: string; // Code from DB
   tenTour: string;
