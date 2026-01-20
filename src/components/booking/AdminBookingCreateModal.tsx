@@ -8,11 +8,8 @@ import BookingForm from './BookingForm';
 interface AdminBookingCreateModalProps {
     isOpen: boolean;
     onClose: () => void;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onSubmit: (data: any) => Promise<void>;
 }
-
-// ... (in render)
 
 const AdminBookingCreateModal: React.FC<AdminBookingCreateModalProps> = ({ isOpen, onClose, onSubmit }) => {
     const [tours, setTours] = useState<Tour[]>([]);

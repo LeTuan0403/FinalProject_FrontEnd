@@ -225,6 +225,16 @@ const MyBookings = () => {
                                                 Hủy / Hoàn tiền
                                             </button>
                                         )}
+
+                                        {booking.trangThai === 'Đã hủy' && (
+                                            <Link
+                                                to={`/booking/${booking.tourId}`}
+                                                state={{ rebookData: booking }}
+                                                className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg font-bold hover:bg-blue-100 transition"
+                                            >
+                                                Đặt lại
+                                            </Link>
+                                        )}
                                     </div>
                                 </div>
                             </div>

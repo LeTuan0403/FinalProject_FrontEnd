@@ -62,7 +62,7 @@ const ChatWidget = () => {
                         localStorage.setItem("chat_conversation_id", savedConvId!);
                     }
                 } catch (e) {
-                    // console.log("No existing conversation found for user");
+
                     // It's okay, maybe first time chatting
                 }
             }
@@ -83,7 +83,7 @@ const ChatWidget = () => {
                     const unread = res.data.filter((m: Message) => m.senderId === 'admin' && !m.isRead).length;
                     setUnreadCount(unread);
                 } catch (e) {
-                    // console.error("Failed to load messages", e);
+
                 }
             }
         }

@@ -5,6 +5,5 @@ export const paymentService = {
         return axiosClient.get<{ status: string }>(`/payment/check-status/${bookingId}`);
     },
 
-    // Optional: Simulate webhook trigger from client (for testing only)
-    // simulateWebhook: (bookingId: number | string, amount: number) => { ... } removed for production
+
 };

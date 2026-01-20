@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { AxiosError } from 'axios';
 import { isFutureDate } from '../../utils/dateUtils';
 import { tourService } from '../../services/tourService';
@@ -13,6 +13,7 @@ import { useAuth } from '../../hooks/useAuth';
 const Booking = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const { user } = useAuth();
     const [tour, setTour] = useState<Tour | null>(null);
     const [loading, setLoading] = useState(true);
@@ -97,18 +98,32 @@ const Booking = () => {
                     // We can also store this availability state to use in render
                     setTour({ ...res.data, availabilityMap } as Tour & { availabilityMap: Record<string, number> });
 
+                    // Re-book Data Handling
+                    const rebookData = location.state?.rebookData;
+
                     setFormData(prev => ({
                         ...prev,
                         departureDate: initialDate,
-                        fullName: user?.hoTen || prev.fullName,
-                        // If Custom Tour, use the Requested Capacity as default Adults count
-                        adults: res.data.isTuChon ? (res.data.soLuongCho || 1) : 1
+                        fullName: rebookData?.nguoiLienHe || user?.hoTen || prev.fullName,
+                        email: rebookData?.emailLienHe || prev.email,
+                        phone: rebookData?.sdtLienHe || prev.phone,
+                        address: (rebookData?.ghiChu?.match(/Địa chỉ: (.*?)\./) || [])[1] || prev.address,
+                        adults: rebookData ? rebookData.soLuongNguoiLon : (res.data.isTuChon ? (res.data.soLuongCho || 1) : 1),
+                        children: rebookData ? rebookData.soLuongTreEm : 0,
+                        note: rebookData ? (rebookData.ghiChu?.match(/Ghi chú: (.*?)\./) || [])[1] : ''
                     }));
                 } else {
+                    // Re-book Data Handling (No dates case)
+                    const rebookData = location.state?.rebookData;
                     setFormData(prev => ({
                         ...prev,
-                        fullName: user?.hoTen || prev.fullName,
-                        adults: res.data.isTuChon ? (res.data.soLuongCho || 1) : 1
+                        fullName: rebookData?.nguoiLienHe || user?.hoTen || prev.fullName,
+                        email: rebookData?.emailLienHe || prev.email,
+                        phone: rebookData?.sdtLienHe || prev.phone,
+                        address: (rebookData?.ghiChu?.match(/Địa chỉ: (.*?)\./) || [])[1] || prev.address,
+                        adults: rebookData ? rebookData.soLuongNguoiLon : (res.data.isTuChon ? (res.data.soLuongCho || 1) : 1),
+                        children: rebookData ? rebookData.soLuongTreEm : 0,
+                        note: rebookData ? (rebookData.ghiChu?.match(/Ghi chú: (.*?)\./) || [])[1] : ''
                     }));
                 }
             } catch (err) {
@@ -119,7 +134,7 @@ const Booking = () => {
         };
 
         fetchTour();
-    }, [id, user?.hoTen]);
+    }, [id, user?.hoTen, location.state]);
 
     if (loading) { return <div className="min-h-screen flex text-center justify-center items-center text-gray-500 gap-2"><Loader className="animate-spin" /> Loading tour info...</div>; }
     if (error || !tour) { return <div className="min-h-screen flex text-center justify-center items-center text-red-500">{error || 'Tour not found'}</div>; }
@@ -142,7 +157,6 @@ const Booking = () => {
     };
 
     const errors = validate();
-    // const isValid = Object.keys(errors).length === 0; // Removed unused variable
 
     const handleBlur = (field: string) => {
         setTouched(prev => ({ ...prev, [field]: true }));

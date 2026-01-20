@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import axios from "axios";
-// import { useChat } from "./ChatContext"; // Ensure path is correct or use direct io if ChatContext is strict
+
 // Reuse ChatContext socket if available, or just rely on API for v1. 
 // Given ChatContext is global, we can use it.
 import { useChat } from "./ChatContext";
@@ -68,7 +68,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
             // data = { type: 'booking' | 'contact' ... }
             // For simplicity, just refetch all counts to be accurate
             // Or optimistically increment if we trust the event
-            // console.log("Admin Notification Received:", data);
+
             if (data) { fetchCounts(); }
         };
 
