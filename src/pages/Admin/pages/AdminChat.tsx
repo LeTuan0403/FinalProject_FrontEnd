@@ -84,21 +84,50 @@ const AdminChat = () => {
         }
     };
 
+
+    // Helper: Sort Conversations (Unread -> Oldest First; Read -> Newest First)
+    const sortConversations = (convs: Conversation[]) => {
+        return [...convs].sort((a, b) => {
+            // Priority 1: Unread comes first
+            if (a.isReadByAdmin !== b.isReadByAdmin) {
+                return a.isReadByAdmin ? 1 : -1; // false (0) < true (1)
+            }
+
+            // Priority 2:
+            // If Unread: Oldest unreadSince (FIFO - waiting longest)
+            if (!a.isReadByAdmin) {
+                // If unreadSince exists fallback to updatedAt for legacy data
+                const dateA = a.unreadSince ? new Date(a.unreadSince).getTime() : new Date(a.updatedAt).getTime();
+                const dateB = b.unreadSince ? new Date(b.unreadSince).getTime() : new Date(b.updatedAt).getTime();
+                return dateA - dateB;
+            }
+
+            // If Read: Newest First (LIFO - recent history)
+            return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+        });
+    };
+
     // 1. Fetch Conversations
-    const fetchConversations = async () => {
+    const fetchConversations = async (query = "") => {
         try {
-            const res = await axios.get("http://localhost:5000/api/chat/conversations");
-            setConversations(res.data);
+            const url = query
+                ? `http://localhost:5000/api/chat/conversations?search=${encodeURIComponent(query)}`
+                : "http://localhost:5000/api/chat/conversations";
+            const res = await axios.get(url);
+            setConversations(sortConversations(res.data));
         } catch (e) {
             console.error("Fetch convs failed", e);
         }
     };
 
     useEffect(() => {
-        fetchConversations();
-    }, []);
+        const delayDebounceFn = setTimeout(() => {
+            fetchConversations(searchTerm);
+        }, 500);
 
-    // 2. Select Conversation & Fetch Messages
+        return () => clearTimeout(delayDebounceFn);
+    }, [searchTerm]);
+
     // 2. Select Conversation & Fetch Messages
     useEffect(() => {
         if (selectedConv) {
@@ -106,11 +135,20 @@ const AdminChat = () => {
                 try {
                     const res = await axios.get(`http://localhost:5000/api/chat/message/${selectedConv._id}`);
                     setMessages(res.data);
-                    // Mark as read
-                    await axios.put(`http://localhost:5000/api/chat/conversation/read/${selectedConv._id}`, { role: 'admin' });
-                    // Update local state isRead
-                    setConversations(prev => prev.map(c => c._id === selectedConv._id ? { ...c, isReadByAdmin: true } : c));
-                    refreshCounts();
+
+                    // Only mark as read if it's currently unread
+                    if (!selectedConv.isReadByAdmin) {
+                        await axios.put(`http://localhost:5000/api/chat/conversation/read/${selectedConv._id}`, { role: 'admin' });
+                        refreshCounts();
+
+                        // Update local state and RE-SORT
+                        setConversations(prev => {
+                            const updated = prev.map(c =>
+                                c._id === selectedConv._id ? { ...c, isReadByAdmin: true, unreadSince: undefined } : c
+                            );
+                            return sortConversations(updated);
+                        });
+                    }
                 } catch (e) {
                     console.error("Fetch msgs failed", e);
                 }
@@ -132,24 +170,22 @@ const AdminChat = () => {
                 };
             }
         }
-    }, [selectedConv, socket, refreshCounts]);
+    }, [selectedConv]); // Removed socket/refreshCounts dep to avoid loop, though safe with good implementation
 
     // 3. Socket Listeners
     useEffect(() => {
         if (!socket) { return; }
 
         // Listen for new messages in current room
-        // Listen for new messages in current room
         socket.on("receive_message", (data: Message) => {
             // Only append if it belongs to current conversation
             if (selectedConv && data.senderId !== 'admin') {
-                // Note: we can't easily check convId here unless we attach it to data
-                // But typically specific room events work.
-                // Actually, data contains conversationId? Yes.
-                // let's check
-                setMessages(prev => [...prev, data]);
-                // Mark read immediately if we are viewing this conversation
-                socket.emit("mark_read", selectedConv._id);
+                // If it matches current conversation
+                if (data.conversationId === selectedConv._id) {
+                    setMessages(prev => [...prev, data]);
+                    // Mark read immediately if we are viewing this conversation
+                    socket.emit("mark_read", selectedConv._id);
+                }
             }
         });
 
@@ -181,28 +217,37 @@ const AdminChat = () => {
         // Listen for Global Notifications (to update conversation list order/badges)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const handleAdminNotification = (data: any) => {
-            // data = { conversationId, text, senderId ... }
+            // data = { conversationId, text, senderId, unreadSince ... }
             if (data.senderId === 'admin') { return; } // Ignore self
 
             setConversations(prev => {
-                const existing = prev.find(c => c._id === data.conversationId);
+                const existingIndex = prev.findIndex(c => c._id === data.conversationId);
                 let newList = [...prev];
-                if (existing) {
-                    // Move to top and update text
-                    newList = prev.filter(c => c._id !== data.conversationId);
-                    newList.unshift({
+
+                if (existingIndex > -1) {
+                    const existing = newList[existingIndex];
+                    // Update info
+                    const updatedConv = {
                         ...existing,
                         lastMessage: data.text,
-                        // Fix for "Read" status false positive:
-                        // Logic: If I am currently viewing this conversation, it's read by me.
-                        // Otherwise, it is NOT read by me.
+                        // If selected, it remains read. If not selected, it becomes unread.
                         isReadByAdmin: selectedConv?._id === data.conversationId,
-                        updatedAt: new Date().toISOString()
-                    });
+                        updatedAt: new Date().toISOString(),
+                        // If becoming unread (and wasn't before? or just update?)
+                        // If it's ALREADY unread, backend sends the OLD unreadSince (or we keep existing)
+                        // Backend data.unreadSince should be authoritative
+                        unreadSince: selectedConv?._id === data.conversationId ? undefined : (data.unreadSince || existing.unreadSince || new Date().toISOString())
+                    };
+
+                    newList[existingIndex] = updatedConv;
                 } else {
-                    fetchConversations();
+                    // New conversation, trigger fetch or add optimistically?
+                    // Fetch safer to get guestName etc.
+                    fetchConversations(searchTerm);
+                    return prev;
                 }
-                return newList;
+
+                return sortConversations(newList);
             });
 
             // Play Sound?
@@ -220,7 +265,7 @@ const AdminChat = () => {
             socket.off("stop_typing");
             socket.off("message_read");
         }
-    }, [socket, selectedConv]); // selectedConv is dependency, so effect re-runs on change
+    }, [socket, selectedConv, searchTerm]); // selectedConv is dependency, so effect re-runs on change
 
     // Handle Input Change for Typing
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -298,8 +343,12 @@ const AdminChat = () => {
 
             // Update local conversation preview
             setConversations(prev => {
-                const updatedList = prev.map(c => c._id === selectedConv._id ? { ...c, lastMessage: msgData.text, updatedAt: new Date().toISOString() } : c);
-                return updatedList.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+                const updatedList = prev.map(c =>
+                    c._id === selectedConv._id
+                        ? { ...c, lastMessage: msgData.text, updatedAt: new Date().toISOString() }
+                        : c
+                );
+                return sortConversations(updatedList);
             });
         } catch (e) {
             console.error("Send failed", e);
@@ -316,11 +365,13 @@ const AdminChat = () => {
                 {/* Sidebar: Conversation List */}
                 <div className="w-1/3 border-r border-gray-100 bg-gray-50 flex flex-col">
                     <div className="p-4 border-b border-gray-200 bg-white">
-                        <h2 className="text-xl font-bold text-gray-800 mb-4">Tin nhắn <span className="text-blue-600">({conversations.filter(c => !c.isReadByAdmin).length})</span></h2>
+                        <h2 className="text-xl font-bold text-gray-800 mb-4">
+                            {searchTerm ? "Kết quả tìm kiếm" : "Tin nhắn"} <span className="text-blue-600">({searchTerm ? conversations.length : conversations.filter(c => !c.isReadByAdmin).length})</span>
+                        </h2>
                         <div className="relative">
                             <input
                                 type="text"
-                                placeholder="Tìm kiếm khách hàng..."
+                                placeholder="Tìm kiếm khách hàng hoặc nội dung..."
                                 className="w-full pl-10 pr-4 py-2 bg-gray-100 border-none rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm transition-all"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -330,7 +381,7 @@ const AdminChat = () => {
                     </div>
 
                     <div className="flex-1 overflow-y-auto">
-                        {conversations.filter(c => c.guestName?.toLowerCase().includes(searchTerm.toLowerCase())).map(conv => (
+                        {conversations.map(conv => (
                             <div
                                 key={conv._id}
                                 onClick={() => setSelectedConv(conv)}

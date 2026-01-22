@@ -15,6 +15,7 @@ export interface Message {
     tourId?: string | TourShort; // Populated tour
     createdAt?: string; // Optional for optimistic/new messages
     updatedAt?: string;
+    conversationId?: string;
     isRead?: boolean;
 }
 
@@ -25,4 +26,5 @@ export interface Conversation {
     isReadByAdmin: boolean;
     guestName: string;
     updatedAt: string;
+    unreadSince?: string | Date; // Added field
 }
