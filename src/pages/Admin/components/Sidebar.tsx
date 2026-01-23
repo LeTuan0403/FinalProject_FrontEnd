@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Calendar, Settings, LogOut, Mail, Star, MapPin, MessageCircle } from 'lucide-react';
+import { LayoutDashboard, Users, Calendar, Settings, LogOut, Mail, Star, MapPin, MessageCircle, Ticket } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
 import { useNotification } from '../../../context/NotificationContext';
 
@@ -22,6 +22,7 @@ const Sidebar = () => {
         { margin: false, id: 'users', label: 'Quản lý Người dùng', icon: <Users size={20} /> },
         { margin: false, id: 'reviews', label: 'Đánh giá', icon: <Star size={20} />, badge: counts.reviews },
         { margin: false, id: 'contacts', label: 'Liên hệ', icon: <Mail size={20} />, badge: counts.contacts },
+        { margin: false, id: 'coupons', label: 'Mã giảm giá', icon: <Ticket size={20} /> },
         { margin: true, id: 'settings', label: 'Cài đặt', icon: <Settings size={20} /> },
     ];
 

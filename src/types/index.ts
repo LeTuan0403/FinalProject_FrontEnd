@@ -76,6 +76,12 @@ export interface Tour {
     bookedSeats: number;
     remainingSeats: number;
   }[];
+
+  // Specific Date Discounts
+  discounts?: {
+    date: Date | string;
+    percentage: number;
+  }[];
 }
 
 export interface DonDatTour {

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { toast } from "react-hot-toast";
-import { MessageCircle, Search, Send, MoreVertical, MapPin, X, Trash2 } from "lucide-react";
+import { MessageCircle, Search, Send, MapPin, X, Trash2, ChevronUp, ChevronDown } from "lucide-react";
 import axios from "axios";
 import { useChat } from "../../../context/ChatContext";
 import { useNotification } from "../../../context/NotificationContext";
@@ -16,7 +16,7 @@ const AdminChat = () => {
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState("");
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const [searchTerm, setSearchTerm] = useState("");
+    const [searchParams, setSearchParams] = useState({ guestName: '', messageContent: '' });
 
     // Tour Recommendation
     const [isTourModalOpen, setIsTourModalOpen] = useState(false);
@@ -84,7 +84,6 @@ const AdminChat = () => {
         }
     };
 
-
     // Helper: Sort Conversations (Unread -> Oldest First; Read -> Newest First)
     const sortConversations = (convs: Conversation[]) => {
         return [...convs].sort((a, b) => {
@@ -108,11 +107,16 @@ const AdminChat = () => {
     };
 
     // 1. Fetch Conversations
-    const fetchConversations = async (query = "") => {
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const fetchConversations = async (guestName = "", messageContent = "") => {
         try {
-            const url = query
-                ? `http://localhost:5000/api/chat/conversations?search=${encodeURIComponent(query)}`
-                : "http://localhost:5000/api/chat/conversations";
+            const params = new URLSearchParams();
+            if (guestName) { params.append('searchGuest', guestName); }
+            if (messageContent) { params.append('searchContent', messageContent); }
+
+            const queryString = params.toString();
+            const url = `http://localhost:5000/api/chat/conversations${queryString ? `?${queryString}` : ''}`;
+
             const res = await axios.get(url);
             setConversations(sortConversations(res.data));
         } catch (e) {
@@ -122,11 +126,12 @@ const AdminChat = () => {
 
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
-            fetchConversations(searchTerm);
+            fetchConversations(searchParams.guestName, searchParams.messageContent);
         }, 500);
 
         return () => clearTimeout(delayDebounceFn);
-    }, [searchTerm]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchParams]);
 
     // 2. Select Conversation & Fetch Messages
     useEffect(() => {
@@ -170,7 +175,7 @@ const AdminChat = () => {
                 };
             }
         }
-    }, [selectedConv]); // Removed socket/refreshCounts dep to avoid loop, though safe with good implementation
+    }, [selectedConv, socket, refreshCounts]);
 
     // 3. Socket Listeners
     useEffect(() => {
@@ -222,7 +227,7 @@ const AdminChat = () => {
 
             setConversations(prev => {
                 const existingIndex = prev.findIndex(c => c._id === data.conversationId);
-                let newList = [...prev];
+                const newList = [...prev];
 
                 if (existingIndex > -1) {
                     const existing = newList[existingIndex];
@@ -243,7 +248,7 @@ const AdminChat = () => {
                 } else {
                     // New conversation, trigger fetch or add optimistically?
                     // Fetch safer to get guestName etc.
-                    fetchConversations(searchTerm);
+                    fetchConversations(searchParams.guestName, searchParams.messageContent);
                     return prev;
                 }
 
@@ -265,7 +270,8 @@ const AdminChat = () => {
             socket.off("stop_typing");
             socket.off("message_read");
         }
-    }, [socket, selectedConv, searchTerm]); // selectedConv is dependency, so effect re-runs on change
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [socket, selectedConv, searchParams]); // selectedConv is dependency, so effect re-runs on change
 
     // Handle Input Change for Typing
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -355,6 +361,75 @@ const AdminChat = () => {
         }
     };
 
+    // Navigation for Search Matches
+    const [currentMatchIdx, setCurrentMatchIdx] = useState(0);
+    const [matchIndices, setMatchIndices] = useState<number[]>([]);
+
+    // Helper: Highlight Text
+    const HighlightText = ({ text, highlight }: { text: string, highlight: string }) => {
+        if (!highlight.trim()) { return <>{text}</>; }
+
+        const parts = text.split(new RegExp(`(${highlight})`, 'gi'));
+        return (
+            <>
+                {parts.map((part, i) =>
+                    part.toLowerCase() === highlight.toLowerCase() ? (
+                        <span key={i} className="bg-yellow-200 text-gray-800 font-semibold rounded-[2px] px-0.5 animate-pulse">
+                            {part}
+                        </span>
+                    ) : (
+                        <span key={i}>{part}</span>
+                    )
+                )}
+            </>
+        );
+    };
+
+    // Calculate matches when messages or search term changes
+    useEffect(() => {
+        if (!searchParams.messageContent.trim() || !messages.length) {
+            setMatchIndices([]);
+            setCurrentMatchIdx(0);
+            return;
+        }
+
+        const indices = messages.reduce((acc, msg, idx) => {
+            if (msg.text.toLowerCase().includes(searchParams.messageContent.toLowerCase())) {
+                acc.push(idx);
+            }
+            return acc;
+        }, [] as number[]);
+
+        setMatchIndices(indices);
+        // If matches found, jump to the last one (most recent usually) or remain?
+        // Let's jump to the first one for now (oldest) or last?
+        // Telegram style: jumps to newest match (bottom).
+        if (indices.length > 0) {
+            setCurrentMatchIdx(indices.length - 1); // Jump to last matching message
+        } else {
+            setCurrentMatchIdx(0);
+        }
+    }, [messages, searchParams.messageContent]);
+
+    // Scroll to current match
+    useEffect(() => {
+        if (matchIndices.length > 0 && matchIndices[currentMatchIdx] !== undefined) {
+            const msgIndex = matchIndices[currentMatchIdx];
+            const el = document.getElementById(`msg-${msgIndex}`);
+            el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }, [currentMatchIdx, matchIndices]);
+
+    const handleNextMatch = () => {
+        if (matchIndices.length === 0) { return; }
+        setCurrentMatchIdx(prev => (prev + 1) % matchIndices.length);
+    };
+
+    const handlePrevMatch = () => {
+        if (matchIndices.length === 0) { return; }
+        setCurrentMatchIdx(prev => (prev - 1 + matchIndices.length) % matchIndices.length);
+    };
+
     return (
         <div className="h-full flex flex-col bg-gray-50">
 
@@ -366,17 +441,29 @@ const AdminChat = () => {
                 <div className="w-1/3 border-r border-gray-100 bg-gray-50 flex flex-col">
                     <div className="p-4 border-b border-gray-200 bg-white">
                         <h2 className="text-xl font-bold text-gray-800 mb-4">
-                            {searchTerm ? "Kết quả tìm kiếm" : "Tin nhắn"} <span className="text-blue-600">({searchTerm ? conversations.length : conversations.filter(c => !c.isReadByAdmin).length})</span>
+                            {(searchParams.guestName || searchParams.messageContent) ? "Kết quả tìm kiếm" : "Tin nhắn"} <span className="text-blue-600">({(searchParams.guestName || searchParams.messageContent) ? conversations.length : conversations.filter(c => !c.isReadByAdmin).length})</span>
                         </h2>
-                        <div className="relative">
-                            <input
-                                type="text"
-                                placeholder="Tìm kiếm khách hàng hoặc nội dung..."
-                                className="w-full pl-10 pr-4 py-2 bg-gray-100 border-none rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm transition-all"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <div className="flex flex-col gap-2">
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    placeholder="Tìm tên khách..."
+                                    className="w-full pl-9 pr-3 py-2 bg-gray-100 border-none rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-sm"
+                                    value={searchParams.guestName}
+                                    onChange={(e) => setSearchParams(prev => ({ ...prev, guestName: e.target.value }))}
+                                />
+                                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                            </div>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    placeholder="Tìm nội dung tin nhắn..."
+                                    className="w-full pl-9 pr-3 py-2 bg-gray-100 border-none rounded-lg focus:ring-1 focus:ring-blue-500 outline-none text-sm"
+                                    value={searchParams.messageContent}
+                                    onChange={(e) => setSearchParams(prev => ({ ...prev, messageContent: e.target.value }))}
+                                />
+                                <MessageCircle size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                            </div>
                         </div>
                     </div>
 
@@ -390,13 +477,15 @@ const AdminChat = () => {
                             >
                                 <div className="flex justify-between items-start mb-1">
                                     <h4 className={`text-sm ${!conv.isReadByAdmin ? 'font-bold text-gray-900' : 'font-medium text-gray-700'}`}>
-                                        {conv.guestName}
+                                        <HighlightText text={conv.guestName} highlight={searchParams.guestName} />
                                     </h4>
                                     <span className="text-[10px] text-gray-400">{new Date(conv.updatedAt).toLocaleDateString('vi-VN')}</span>
                                 </div>
                                 <div className="flex justify-between items-center">
                                     <p className={`text-xs truncate max-w-[180px] ${!conv.isReadByAdmin ? 'text-gray-800 font-semibold' : 'text-gray-500'}`}>
-                                        {conv.lastMessage || "Hình ảnh/File..."}
+                                        {conv.lastMessage ? (
+                                            <HighlightText text={conv.lastMessage} highlight={searchParams.messageContent} />
+                                        ) : "Hình ảnh/File..."}
                                     </p>
                                     {!conv.isReadByAdmin && (
                                         <span className="w-2.5 h-2.5 bg-blue-600 rounded-full shadow-sm animate-pulse"></span>
@@ -436,13 +525,30 @@ const AdminChat = () => {
                                         </span>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-1">
-                                    <button onClick={handleDeleteConversation} className="p-2 hover:bg-red-50 text-red-500 rounded-full transition" title="Xóa cuộc trò chuyện">
-                                        <Trash2 size={20} />
-                                    </button>
-                                    <button className="p-2 hover:bg-gray-100 rounded-full text-gray-500">
-                                        <MoreVertical size={20} />
-                                    </button>
+
+                                {/* Controls: Search Navigation & Actions */}
+                                <div className="flex items-center gap-3">
+                                    {searchParams.messageContent && matchIndices.length > 0 && (
+                                        <div className="flex items-center gap-2 bg-yellow-50 px-3 py-1.5 rounded-full border border-yellow-100">
+                                            <span className="text-xs font-medium text-yellow-700">
+                                                {currentMatchIdx + 1} / {matchIndices.length}
+                                            </span>
+                                            <div className="flex gap-1 border-l border-yellow-200 pl-2">
+                                                <button onClick={handlePrevMatch} className="p-1 hover:bg-yellow-100 rounded text-yellow-600">
+                                                    <ChevronUp size={14} />
+                                                </button>
+                                                <button onClick={handleNextMatch} className="p-1 hover:bg-yellow-100 rounded text-yellow-600">
+                                                    <ChevronDown size={14} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="flex items-center gap-1">
+                                        <button onClick={handleDeleteConversation} className="p-2 hover:bg-red-50 text-red-500 rounded-full transition" title="Xóa cuộc trò chuyện">
+                                            <Trash2 size={20} />
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 
@@ -451,11 +557,12 @@ const AdminChat = () => {
                                 {messages.map((msg, idx) => {
                                     const isMe = msg.senderId === 'admin';
                                     return (
-                                        <div key={idx}>
+                                        <div key={idx} id={`msg-${idx}`}>
                                             <ChatBubble
                                                 message={msg}
                                                 isMe={isMe}
                                                 onDelete={handleDeleteMessage}
+                                                highlight={searchParams.messageContent}
                                             />
                                             {/* Read Receipt */}
                                             {isMe && idx === messages.length - 1 && hasCustomerRead && (

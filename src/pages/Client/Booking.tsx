@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { AxiosError } from 'axios';
-import { isFutureDate } from '../../utils/dateUtils';
+import { isFutureDate, getLocalDateStr } from '../../utils/dateUtils';
 import { tourService } from '../../services/tourService';
 import { bookingService } from '../../services/bookingService';
 import type { Tour } from '../../types';
-import { X, Loader, AlertTriangle, CheckCircle } from 'lucide-react';
+import { couponService } from '../../services/couponService';
+import { X, Loader, AlertTriangle, CheckCircle, Ticket, List } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
 // eslint-disable-next-line complexity
@@ -20,6 +21,14 @@ const Booking = () => {
     const [error, setError] = useState('');
     const [errorModal, setErrorModal] = useState<{ isOpen: boolean; message: string }>({ isOpen: false, message: '' });
     const [successModal, setSuccessModal] = useState<{ isOpen: boolean; bookingId: string }>({ isOpen: false, bookingId: '' });
+
+    // Coupon State
+    const [couponCode, setCouponCode] = useState('');
+    const [couponDiscount, setCouponDiscount] = useState(0);
+    const [isCouponApplied, setIsCouponApplied] = useState(false);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [availableCoupons, setAvailableCoupons] = useState<any[]>([]);
+    const [showCouponModal, setShowCouponModal] = useState(false);
 
     // Form Stats
     const [formData, setFormData] = useState({
@@ -40,10 +49,12 @@ const Booking = () => {
     const handleQuantityChange = (field: 'adults' | 'children', value: string) => {
         if (value === '') {
             setFormData(prev => ({ ...prev, [field]: '' }));
+            if (isCouponApplied) { setIsCouponApplied(false); setCouponDiscount(0); } // Reset coupon on change
             return;
         }
         const num = parseInt(value);
         setFormData(prev => ({ ...prev, [field]: isNaN(num) ? '' : num }));
+        if (isCouponApplied) { setIsCouponApplied(false); setCouponDiscount(0); toast.error("Đã thay đổi số lượng, vui lòng áp dụng lại mã giảm giá."); }
     };
 
     useEffect(() => {
@@ -136,15 +147,102 @@ const Booking = () => {
         fetchTour();
     }, [id, user?.hoTen, location.state]);
 
+    // For Custom Tour, tongGiaDuKien is TOTAL. Retrieve Unit Price by dividing by capacity.
+    // For Standard Tour, tongGiaDuKien is Unit Price.
+    let priceAdult = 0;
+    if (tour) {
+        priceAdult = tour.isTuChon ? Math.round(tour.tongGiaDuKien / (tour.soLuongCho || 1)) : tour.tongGiaDuKien;
+    }
+
+    // Check for Discount on selected date
+    let appliedDiscount = 0;
+    if (tour && tour.discounts && formData.departureDate) {
+        const selectedDateStr = formData.departureDate; // Already YYYY-MM-DD from select/input
+        const discount = tour.discounts.find(d => {
+            const dDateStr = getLocalDateStr(new Date(d.date));
+            return dDateStr === selectedDateStr;
+        });
+
+        if (discount) {
+            appliedDiscount = discount.percentage;
+            priceAdult = priceAdult * (1 - appliedDiscount / 100);
+        }
+    }
+
+    const priceChild = priceAdult * 0.75; // 75% for children
+    const baseTotalPrice = (Number(formData.adults || 0) * priceAdult) + (Number(formData.children || 0) * priceChild);
+    const totalPrice = Math.max(0, baseTotalPrice - couponDiscount);
+
+    // Helper to calc discount for sorting/validation
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const calcDiscount = (coupon: any, price: number) => {
+        if (price < coupon.minOrder) return 0;
+        let discount = 0;
+        if (coupon.type === 'PERCENT') {
+            discount = (price * coupon.value) / 100;
+            if (coupon.maxDiscount > 0) discount = Math.min(discount, coupon.maxDiscount);
+        } else {
+            discount = coupon.value;
+        }
+        return Math.min(discount, price);
+    };
+
+    // Auto-fetch and organize coupons
+    useEffect(() => {
+        const fetchAndOptimize = async () => {
+            if (!baseTotalPrice || !tour) return;
+            try {
+                const res = await couponService.getAvailable();
+                const rawCoupons = res.data;
+
+                // Process Coupons
+                const processed = rawCoupons.map((c: any) => ({
+                    ...c,
+                    potentialDiscount: calcDiscount(c, baseTotalPrice)
+                }))
+                    .filter((c: any) => c.potentialDiscount > 0)
+                    .sort((a: any, b: any) => b.potentialDiscount - a.potentialDiscount);
+
+                setAvailableCoupons(processed);
+
+                // Auto Apply Best Coupon (ONLY if not applied yet, AND available)
+                if (!isCouponApplied && processed.length > 0) {
+                    const best = processed[0];
+                    setCouponCode(best.code);
+                    setCouponDiscount(best.potentialDiscount);
+                    setIsCouponApplied(true);
+                    toast.success(`Đã tự động áp dụng mã tốt nhất: ${best.code} (-${best.potentialDiscount.toLocaleString()}đ)`);
+                }
+            } catch (e) {
+                console.error("Failed to fetch coupons", e);
+            }
+        };
+
+        if (user && formData.adults && !loading) { // Logic triggers when price relevant params exist
+            fetchAndOptimize();
+        }
+    }, [baseTotalPrice, user, formData.adults, formData.children, loading]);
+
     if (loading) { return <div className="min-h-screen flex text-center justify-center items-center text-gray-500 gap-2"><Loader className="animate-spin" /> Loading tour info...</div>; }
     if (error || !tour) { return <div className="min-h-screen flex text-center justify-center items-center text-red-500">{error || 'Tour not found'}</div>; }
 
-    // For Custom Tour, tongGiaDuKien is TOTAL. Retrieve Unit Price by dividing by capacity.
-    // For Standard Tour, tongGiaDuKien is Unit Price.
-    const priceAdult = tour.isTuChon ? Math.round(tour.tongGiaDuKien / (tour.soLuongCho || 1)) : tour.tongGiaDuKien;
-    const priceChild = priceAdult * 0.75; // 75% for children
-
-    const totalPrice = (Number(formData.adults || 0) * priceAdult) + (Number(formData.children || 0) * priceChild);
+    const handleApplyCoupon = async () => {
+        if (!couponCode.trim()) {
+            toast.error("Vui lòng nhập mã giảm giá");
+            return;
+        }
+        try {
+            const res = await couponService.validate(couponCode, baseTotalPrice);
+            setCouponDiscount(res.data.discountAmount);
+            setIsCouponApplied(true);
+            toast.success(res.data.msg || "Áp dụng mã thành công!");
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (error: any) {
+            setCouponDiscount(0);
+            setIsCouponApplied(false);
+            toast.error(error.response?.data?.msg || "Mã giảm giá không hợp lệ");
+        }
+    };
 
     const validate = () => {
         const errors: Record<string, string> = {};
@@ -212,7 +310,8 @@ const Booking = () => {
                 sdtLienHe: formData.phone,
 
                 // Note
-                ghiChu: `Địa chỉ: ${formData.address}. ${formData.note ? `Ghi chú: ${formData.note}.` : ''} Thanh toán: ${paymentMethod}`
+                ghiChu: `Địa chỉ: ${formData.address}. ${formData.note ? `Ghi chú: ${formData.note}.` : ''} Thanh toán: ${paymentMethod}`,
+                couponCode: isCouponApplied ? couponCode : undefined,
             };
 
             if (paymentMethod === 'transfer') {
@@ -288,6 +387,16 @@ const Booking = () => {
 
                         <div className="mt-8 pt-6 border-t border-blue-800">
                             <div className="text-sm opacity-75 mb-1">Tổng tiền tạm tính</div>
+                            {appliedDiscount > 0 && (
+                                <div className="flex items-center gap-2 mb-1">
+                                    <span className="text-sm line-through text-gray-300">
+                                        {((Number(formData.adults || 0) * (tour.isTuChon ? Math.round(tour.tongGiaDuKien / (tour.soLuongCho || 1)) : tour.tongGiaDuKien) + Number(formData.children || 0) * (tour.isTuChon ? Math.round(tour.tongGiaDuKien / (tour.soLuongCho || 1)) : tour.tongGiaDuKien) * 0.75)).toLocaleString()} ₫
+                                    </span>
+                                    <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full animate-pulse">
+                                        Giảm {appliedDiscount}%
+                                    </span>
+                                </div>
+                            )}
                             <div className="text-3xl font-black text-orange-400">{totalPrice.toLocaleString()} ₫</div>
                         </div>
                     </div>
@@ -440,6 +549,59 @@ const Booking = () => {
                                     value={formData.note}
                                     onChange={e => setFormData({ ...formData, note: e.target.value })}
                                 ></textarea>
+                            </div>
+
+
+
+                            {/* Coupon Section */}
+                            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm mb-6">
+                                <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                                    <Ticket size={16} className="text-blue-600" /> Mã giảm giá
+                                </label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        className="flex-1 p-3 border border-gray-200 rounded-lg uppercase font-bold focus:ring-2 focus:ring-blue-100 outline-none"
+                                        value={couponCode}
+                                        onChange={e => {
+                                            setCouponCode(e.target.value.toUpperCase());
+                                            if (isCouponApplied) { setIsCouponApplied(false); setCouponDiscount(0); }
+                                        }}
+                                        disabled={isCouponApplied}
+                                    />
+                                    {isCouponApplied ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => { setIsCouponApplied(false); setCouponCode(''); setCouponDiscount(0); }}
+                                            className="px-4 py-2 bg-red-100 text-red-600 rounded-lg font-bold hover:bg-red-200"
+                                        >
+                                            Hủy
+                                        </button>
+                                    ) : (
+                                        <>
+                                            <button
+                                                type="button"
+                                                onClick={handleApplyCoupon}
+                                                className="px-4 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700"
+                                                disabled={!couponCode}
+                                            >
+                                                Áp dụng
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowCouponModal(true)}
+                                                className="px-4 py-2 bg-orange-100 text-orange-600 rounded-lg font-bold hover:bg-orange-200 flex items-center gap-1"
+                                            >
+                                                <List size={18} /> Chọn mã
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
+                                {isCouponApplied && (
+                                    <div className="mt-2 text-sm text-green-600 font-medium flex items-center gap-1">
+                                        <CheckCircle size={14} /> Đã giảm {couponDiscount.toLocaleString()}đ
+                                    </div>
+                                )}
                             </div>
 
                             {/* Payment Method Selection */}
@@ -723,6 +885,62 @@ const Booking = () => {
                     </div>
                 )
             }
+            {/* Coupon Selection Modal */}
+            {showCouponModal && (
+                <div className="fixed inset-0 bg-black/50 z-[70] flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden animate-fadeInUp">
+                        <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                            <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
+                                <Ticket size={20} className="text-blue-600" /> Chọn voucher
+                            </h3>
+                            <button onClick={() => setShowCouponModal(false)} className="text-gray-400 hover:text-gray-600"><X size={24} /></button>
+                        </div>
+                        <div className="p-4 max-h-[60vh] overflow-y-auto space-y-3">
+                            {availableCoupons.length === 0 ? (
+                                <div className="text-center py-8 text-gray-500">
+                                    Không có mã giảm giá nào phù hợp.
+                                </div>
+                            ) : (
+                                availableCoupons.map((coupon, idx) => (
+                                    <div
+                                        key={coupon._id}
+                                        className={`border rounded-xl p-4 flex gap-4 transition cursor-pointer hover:border-blue-300 ${coupon.code === couponCode ? 'border-blue-600 bg-blue-50 ring-1 ring-blue-600' : 'border-gray-200'}`}
+                                        onClick={() => {
+                                            setCouponCode(coupon.code);
+                                            setCouponDiscount(coupon.potentialDiscount);
+                                            setIsCouponApplied(true);
+                                            setShowCouponModal(false);
+                                            toast.success(`Đã áp dụng mã ${coupon.code}`);
+                                        }}
+                                    >
+                                        <div className={`w-16 h-16 rounded-lg flex flex-col items-center justify-center text-white font-bold shrink-0 ${idx === 0 ? 'bg-gradient-to-br from-orange-400 to-red-500' : 'bg-blue-600'}`}>
+                                            <span className="text-lg">{coupon.type === 'PERCENT' ? `${coupon.value}%` : `${coupon.value / 1000}k`}</span>
+                                            <span className="text-[10px] uppercase opacity-90">OFF</span>
+                                        </div>
+                                        <div className="flex-1">
+                                            <div className="flex justify-between items-start">
+                                                <h4 className="font-bold text-gray-800">{coupon.code}</h4>
+                                                {idx === 0 && <span className="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-bold">Tốt nhất</span>}
+                                            </div>
+                                            <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                                                Giảm {coupon.potentialDiscount.toLocaleString()}đ
+                                            </p>
+                                            <p className="text-xs text-gray-400 mt-1">
+                                                HSD: {new Date(coupon.expiry).toLocaleDateString('vi-VN')}
+                                            </p>
+                                        </div>
+                                        {coupon.code === couponCode && (
+                                            <div className="flex items-center text-blue-600">
+                                                <CheckCircle size={20} />
+                                            </div>
+                                        )}
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div >
     );
 };

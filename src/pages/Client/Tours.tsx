@@ -96,7 +96,14 @@ const Tours = () => {
 
     // Filter by Transport
     if (transport !== 'all') {
-      result = result.filter(t => t.phuongTien && t.phuongTien.toLowerCase().includes(transport.toLowerCase()));
+      if (transport === 'oto') {
+        result = result.filter(t => {
+          const vehicle = t.phuongTien?.toLowerCase() || '';
+          return vehicle.includes('ô tô') || vehicle.includes('oto') || vehicle.includes('limousine') || vehicle.includes('xe giường nằm') || vehicle.includes('xe du lịch');
+        });
+      } else {
+        result = result.filter(t => t.phuongTien && t.phuongTien.toLowerCase().includes(transport.toLowerCase()));
+      }
     }
 
     // Filter by Search Term
@@ -275,7 +282,7 @@ const Tours = () => {
               <div className="space-y-2">
                 {[
                   { value: 'all', label: 'Tất cả' },
-                  { value: 'Xe du lịch', label: 'Xe du lịch' },
+                  { value: 'oto', label: 'Ô tô' },
                   { value: 'Máy bay', label: 'Máy bay' },
                   { value: 'Tàu hỏa', label: 'Tàu hỏa' }
                 ].map(opt => (

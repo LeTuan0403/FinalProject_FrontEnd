@@ -8,7 +8,7 @@ import BookingForm from './BookingForm';
 interface AdminBookingCreateModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (data: any) => Promise<void>;
+    onSubmit: (data: Record<string, unknown>) => Promise<void>;
 }
 
 const AdminBookingCreateModal: React.FC<AdminBookingCreateModalProps> = ({ isOpen, onClose, onSubmit }) => {
@@ -121,7 +121,7 @@ const AdminBookingCreateModal: React.FC<AdminBookingCreateModalProps> = ({ isOpe
                     <div className="mb-4">
                         <BookingForm
                             formData={formData}
-                            onChange={setFormData}
+                            onChange={(data) => setFormData(data as any)}
                             tour={selectedTour}
                         />
                     </div>

@@ -10,6 +10,7 @@ import Contact from './pages/Client/Contact';
 import MyTours from './pages/Client/MyTours';
 import MyBookings from './pages/Client/MyBookings';
 import MyFavorites from './pages/Client/MyFavorites';
+import MyCoupons from './pages/Client/MyCoupons';
 import Profile from './pages/Client/Profile';
 import PaymentPage from './pages/Client/PaymentPage';
 import BookingSuccess from './pages/Client/BookingSuccess';
@@ -24,6 +25,7 @@ import Dashboard from './pages/Admin/pages/Dashboard';
 import TourManagement from './pages/Admin/pages/TourManagement';
 import BookingManagement from './pages/Admin/pages/BookingManagement';
 import AdminEditTour from './pages/Admin/pages/EditTour';
+import CouponManagement from './pages/Admin/pages/CouponManagement';
 
 import { useAuth } from './hooks/useAuth';
 
@@ -67,6 +69,7 @@ function App() {
           <Route path="my-tours" element={<MyTours />} />
           <Route path="my-bookings" element={<MyBookings />} />
           <Route path="my-favorites" element={<MyFavorites />} />
+          <Route path="my-coupons" element={<MyCoupons />} />
           <Route path="profile" element={<Profile />} />
           <Route path="gallery" element={<Gallery />} />
           <Route path="contact" element={<Contact />} />
@@ -98,9 +101,9 @@ function App() {
           <Route path="locations" element={<LocationManagement />} />
           <Route path="reviews" element={<AdminReviews />} />
           <Route path="contacts" element={<ContactManagement />} />
+          <Route path="coupons" element={<CouponManagement />} />
           <Route path="chat" element={<AdminChat />} />
           <Route path="settings" element={<Settings />} />
-
           <Route path="tours/create" element={<AdminEditTour />} />
           <Route path="tours/edit/:id" element={<AdminEditTour />} />
         </Route>

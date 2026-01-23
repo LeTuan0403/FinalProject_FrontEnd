@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { toast } from 'react-hot-toast';
 import { useParams, useNavigate } from 'react-router-dom';
-import { isFutureDate, formatTimeRange, compareTimeStrings } from '../../utils/dateUtils';
+import { isFutureDate, formatTimeRange, compareTimeStrings, getLocalDateStr } from '../../utils/dateUtils';
 import { ChevronDown, ChevronUp, Share2, Heart, Ticket, Clock, MapPin, Truck, Info, Map, CheckCircle, AlertCircle, Star, MessageSquare, Trash2, Edit, Reply, Check, X, Calendar, UserCheck, Utensils, Image as ImageIcon, ThumbsUp, Camera, Cloud, Bell, BellOff } from 'lucide-react';
 import { tourService } from '../../services/tourService';
 import { reviewService } from '../../services/reviewService';
@@ -1425,10 +1425,61 @@ const TourDetail = () => {
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-cyan-500"></div>
                 <div className="p-6 bg-slate-50 border-b border-gray-100 text-center">
                   <p className="text-gray-500 text-sm font-medium mb-1 uppercase tracking-wider">Giá trọn gói</p>
-                  <p className="text-4xl font-black text-red-600">
-                    {(tour.isTuChon ? Math.round(tour.tongGiaDuKien / (tour.soLuongCho || 1)) : tour.tongGiaDuKien).toLocaleString()}
-                    <span className="text-sm text-gray-500 font-normal"> ₫/khách</span>
-                  </p>
+                  {(() => {
+                    // Calculate Discount Logic for Next Departure
+                    const todayStr = getLocalDateStr(new Date());
+
+                    let displayPrice = (tour.isTuChon ? Math.round(tour.tongGiaDuKien / (tour.soLuongCho || 1)) : tour.tongGiaDuKien);
+                    const originalPrice = displayPrice;
+                    let discountPercent = 0;
+                    let discountDate = "";
+
+                    if (tour.ngayKhoiHanh && tour.discounts) {
+                      // Find next valid date
+                      const sortedDates = tour.ngayKhoiHanh
+                        .map(d => new Date(d))
+                        .filter(d => getLocalDateStr(d) >= todayStr)
+                        .sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+
+                      if (sortedDates.length > 0) {
+                        const nextDate = sortedDates[0];
+                        const nextDateStr = getLocalDateStr(nextDate);
+
+                        const discount = tour.discounts.find(d => {
+                          const dDateStr = getLocalDateStr(new Date(d.date));
+                          return dDateStr === nextDateStr;
+                        });
+
+                        if (discount) {
+                          discountPercent = discount.percentage;
+                          displayPrice = originalPrice * (1 - discountPercent / 100);
+                          discountDate = new Date(nextDate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+                        }
+                      }
+                    }
+
+                    if (discountPercent > 0) {
+                      return (
+                        <div className="flex flex-col items-center animate-in fade-in zoom-in duration-300">
+                          <span className="text-gray-400 line-through text-lg font-medium">{originalPrice.toLocaleString()} ₫</span>
+                          <p className="text-4xl font-black text-red-600">
+                            {displayPrice.toLocaleString()}
+                            <span className="text-sm text-gray-500 font-normal"> ₫/khách</span>
+                          </p>
+                          <div className="mt-2 bg-red-100 text-red-700 text-xs font-bold px-3 py-1 rounded-full animate-pulse border border-red-200">
+                            Giờ chót: Giảm {discountPercent}% ({discountDate})
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <p className="text-4xl font-black text-red-600">
+                        {displayPrice.toLocaleString()}
+                        <span className="text-sm text-gray-500 font-normal"> ₫/khách</span>
+                      </p>
+                    );
+                  })()}
                 </div>
 
                 <div className="p-6 space-y-5">

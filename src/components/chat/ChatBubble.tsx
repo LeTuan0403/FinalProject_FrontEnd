@@ -7,9 +7,10 @@ interface ChatBubbleProps {
     onDelete?: (id: string) => void;
     isAdminView?: boolean;
     showAdminAvatar?: boolean;
+    highlight?: string; // Search Highlight
 }
 
-const ChatBubble = ({ message, isMe, onDelete, showAdminAvatar = false }: ChatBubbleProps) => {
+const ChatBubble = ({ message, isMe, onDelete, showAdminAvatar = false, highlight = "" }: ChatBubbleProps) => {
     return (
         <div className={`flex ${isMe ? 'justify-end' : 'justify-start'} group hover:bg-gray-50/50 rounded-lg transition`}>
             {/* Admin Avatar for User View */}
@@ -60,7 +61,21 @@ const ChatBubble = ({ message, isMe, onDelete, showAdminAvatar = false }: ChatBu
                         </div>
                     </div>
                 ) : (
-                    <p>{message.text}</p>
+                    <p>
+                        {highlight && highlight.trim() ? (
+                            message.text.split(new RegExp(`(${highlight})`, 'gi')).map((part, i) =>
+                                part.toLowerCase() === highlight.toLowerCase() ? (
+                                    <span key={i} className="bg-yellow-200 text-gray-800 font-semibold rounded-[2px] px-0.5 animate-pulse">
+                                        {part}
+                                    </span>
+                                ) : (
+                                    <span key={i}>{part}</span>
+                                )
+                            )
+                        ) : (
+                            message.text
+                        )}
+                    </p>
                 )}
 
                 {/* Timestamp */}

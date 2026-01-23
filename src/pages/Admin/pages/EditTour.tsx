@@ -5,7 +5,7 @@ import { AxiosError } from 'axios';
 import { tourService, diaDiemService } from '../../../services/tourService';
 import type { Tour, DiaDiem } from '../../../types';
 import { compareTimeStrings } from '../../../utils/dateUtils';
-import { Plus, Trash2, Save, X } from 'lucide-react';
+import { Plus, Trash2, X, Save } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
 import UploadImage from '../components/UploadImage';
 import SearchableSelect from '../components/SearchableSelect.tsx';
@@ -41,6 +41,7 @@ const AdminEditTour = () => {
         anToi: 0,
         soLuongCho: 0, // [NEW] Default
         ngayKhoiHanh: [], // [NEW] Default - Array
+        discounts: [], // [NEW] Default for merged discount management
         dichVuBaoGom: '',
         dichVuKhongBaoGom: '',
         chinhSachTour: '',
@@ -123,6 +124,9 @@ const AdminEditTour = () => {
                             // eslint-disable-next-line @typescript-eslint/no-explicit-any
                             ? data.ngayKhoiHanh.map((d: any) => new Date(d).toISOString().split('T')[0])
                             : (data.ngayKhoiHanh ? [new Date(data.ngayKhoiHanh).toISOString().split('T')[0]] : []), // Ensure array
+
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        discounts: Array.isArray(data.discounts) ? data.discounts : [], // Map discounts
                         // If counts are 0, try to calculate from tourDetails (logic for Custom Tours)
                         ...(() => {
                             const as = Number(data.anSang ?? 0);
@@ -219,6 +223,7 @@ const AdminEditTour = () => {
                 anToi: String(formData.anToi || 0),
                 soLuongCho: Number(formData.soLuongCho || 0), // Ensure Number
                 ngayKhoiHanh: formData.ngayKhoiHanh || [], // Send array
+                discounts: formData.discounts || [], // Send discounts array
                 dichVuBaoGom: formData.dichVuBaoGom || "Đang cập nhật",
                 dichVuKhongBaoGom: formData.dichVuKhongBaoGom || "Đang cập nhật",
                 chinhSachTour: formData.chinhSachTour || "Đang cập nhật",
@@ -279,7 +284,8 @@ const AdminEditTour = () => {
                 // Auto-approve new tour if selected
                 // Auto-approve new tour if selected
                 const responseData = response.data as { tourId?: number; id?: number };
-                const newId = responseData.tourId || responseData.id;
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const newId: any = responseData.tourId || responseData.id;
 
                 if (formData.daDuyet && newId) {
                     try {
@@ -466,30 +472,12 @@ const AdminEditTour = () => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2">Ngày khởi hành (Có thể chọn nhiều)</label>
-                        <div className="space-y-2">
-                            <div className="flex flex-wrap gap-2">
-                                {(formData.ngayKhoiHanh || []).map((date, idx) => (
-                                    <div key={idx} className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full flex items-center gap-2">
-                                        <span>{new Date(date).toLocaleDateString('vi-VN')}</span>
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                const newDates = [...(formData.ngayKhoiHanh || [])];
-                                                newDates.splice(idx, 1);
-                                                setFormData({ ...formData, ngayKhoiHanh: newDates });
-                                            }}
-                                            className="hover:text-red-500"
-                                        >
-                                            <X size={14} />
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                            <div className="flex gap-2">
+                        <label className="block text-sm font-bold text-gray-700 mb-2">Ngày khởi hành & Giảm giá</label>
+                        <div className="space-y-3 border p-4 rounded-lg bg-gray-50">
+                            <div className="flex gap-2 mb-4">
                                 <input
                                     type="date"
-                                    className="flex-1 p-3 border rounded-lg"
+                                    className="flex-1 p-2 border rounded-lg"
                                     id="date-picker-input"
                                 />
                                 <button
@@ -508,10 +496,88 @@ const AdminEditTour = () => {
                                             }
                                         }
                                     }}
-                                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-bold"
                                 >
-                                    <Plus size={20} />
+                                    <Plus size={20} /> Thêm Ngày
                                 </button>
+                            </div>
+
+                            <div className="space-y-2 max-h-60 overflow-y-auto">
+                                {(formData.ngayKhoiHanh || []).map((date, idx) => {
+                                    // Find discount for this date
+                                    const discountObj = formData.discounts?.find(d => {
+                                        const d1 = new Date(d.date).setHours(0, 0, 0, 0);
+                                        const d2 = new Date(date).setHours(0, 0, 0, 0);
+                                        return d1 === d2;
+                                    });
+                                    const percentage = discountObj ? discountObj.percentage : 0;
+                                    const isLastMinute = (() => {
+                                        const d = new Date(date);
+                                        d.setHours(0, 0, 0, 0);
+                                        const today = new Date();
+                                        today.setHours(0, 0, 0, 0);
+                                        const diffTime = d.getTime() - today.getTime();
+                                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                        return diffDays >= 0 && diffDays <= 3;
+                                    })();
+
+                                    return (
+                                        <div key={idx} className={`flex items-center justify-between p-3 rounded-lg border ${isLastMinute ? 'bg-orange-50 border-orange-200' : 'bg-white border-gray-200'}`}>
+                                            <div className="flex items-center gap-3">
+                                                <span className="font-bold text-gray-700">{new Date(date).toLocaleDateString('vi-VN')}</span>
+                                                {isLastMinute && <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-bold">Giờ chót</span>}
+                                            </div>
+
+                                            <div className="flex items-center gap-4">
+                                                <div className="flex items-center gap-2">
+                                                    <label className="text-sm font-semibold text-gray-500">Giảm (%):</label>
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        max="100"
+                                                        className="w-20 p-1 border rounded text-center font-bold text-red-600 focus:ring-2 focus:ring-red-200 outline-none"
+                                                        placeholder="0"
+                                                        value={percentage > 0 ? percentage : ''}
+                                                        onChange={(e) => {
+                                                            const val = Number(e.target.value);
+                                                            setFormData(prev => {
+                                                                const newDiscounts = prev.discounts ? [...prev.discounts] : [];
+                                                                const targetDateStr = date;
+                                                                // Remove existing entry for this date if any
+                                                                const cleanDiscounts = newDiscounts.filter(d => {
+                                                                    return new Date(d.date).setHours(0, 0, 0, 0) !== new Date(targetDateStr).setHours(0, 0, 0, 0);
+                                                                });
+
+                                                                if (val > 0) {
+                                                                    // Add new if > 0
+                                                                    cleanDiscounts.push({ date: targetDateStr, percentage: val });
+                                                                }
+                                                                return { ...prev, discounts: cleanDiscounts };
+                                                            });
+                                                        }}
+                                                    />
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const newDates = [...(formData.ngayKhoiHanh || [])];
+                                                        newDates.splice(idx, 1);
+                                                        // Also remove discount
+                                                        setFormData(prev => ({
+                                                            ...prev,
+                                                            ngayKhoiHanh: newDates,
+                                                            discounts: (prev.discounts || []).filter(d => new Date(d.date).getTime() !== new Date(date).getTime())
+                                                        }));
+                                                    }}
+                                                    className="text-gray-400 hover:text-red-500 p-1 rounded-full hover:bg-red-50 transition"
+                                                    title="Xóa ngày này"
+                                                >
+                                                    <X size={18} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
                     </div>

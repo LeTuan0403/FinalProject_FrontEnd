@@ -10,14 +10,15 @@ interface BookingFormProps {
         soLuongTreEm: number;
         ngayKhoiHanh: string;
         ghiChu?: string;
+        [key: string]: any; // Allow other fields like trangThai
     };
-    onChange: (data: any) => void;
+    onChange: (data: BookingFormProps['formData']) => void;
     tour?: Tour | null;
 }
 
 const BookingForm: React.FC<BookingFormProps> = ({ formData, onChange, tour }) => {
 
-    const handleChange = (field: string, value: any) => {
+    const handleChange = (field: keyof BookingFormProps['formData'], value: string | number) => {
         onChange({ ...formData, [field]: value });
     };
 

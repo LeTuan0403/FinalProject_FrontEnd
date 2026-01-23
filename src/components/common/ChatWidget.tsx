@@ -62,8 +62,8 @@ const ChatWidget = () => {
                         localStorage.setItem("chat_conversation_id", savedConvId!);
                     }
                 } catch (e) {
-
                     // It's okay, maybe first time chatting
+                    console.log("No existing conversation found or guest");
                 }
             }
 
@@ -232,7 +232,7 @@ const ChatWidget = () => {
         if (socket) { socket.emit("join_room", currentConvId); }
 
         const msgData = {
-            conversationId: currentConvId,
+            conversationId: currentConvId!,
             senderId: currentUserId, // Use consistent ID
             text: newMessage,
             createdAt: new Date().toISOString() // Optimistic
@@ -321,7 +321,7 @@ const ChatWidget = () => {
                 // Message 1: Text "Chào bạn, mình quan tâm đến tour này, nhờ bạn tư vấn giúp mình nhé!"
                 const msgDataTextUI = {
                     _id: msgId1,
-                    conversationId: currentConvId,
+                    conversationId: currentConvId!,
                     senderId,
                     text: "Chào bạn, mình quan tâm đến tour này, nhờ bạn tư vấn giúp mình nhé!",
                     type: 'text' as const,
@@ -339,7 +339,7 @@ const ChatWidget = () => {
                 // Message 2: Tour Card
                 const msgDataCardUI = {
                     _id: msgId2,
-                    conversationId: currentConvId,
+                    conversationId: currentConvId!,
                     senderId,
                     text: "Shared a tour",
                     type: 'tour_card' as const,
@@ -348,7 +348,7 @@ const ChatWidget = () => {
                 };
 
                 const msgDataCardAPI = {
-                    conversationId: currentConvId,
+                    conversationId: currentConvId!,
                     senderId,
                     text: "Shared a tour",
                     type: 'tour_card',

@@ -8,6 +8,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useComparison } from '../../context/ComparisonContext';
 
 import { calculateDuration, getNextDeparture, getRemainingSeats, getTourCode } from '../../utils/tourUtils';
+import { getLocalDateStr } from '../../utils/dateUtils';
 
 interface TourCardProps {
     tour: Tour;
@@ -90,6 +91,40 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
     // Handle case where tourId might be an object or missing (use _id fallback)
     const linkId = (tour.tourId && typeof tour.tourId !== 'object') ? tour.tourId : tour._id;
 
+    // Last Minute Discount Logic
+    const getDiscountInfo = () => {
+        if (!tour.ngayKhoiHanh || !tour.discounts) { return null; }
+
+        const todayStr = getLocalDateStr(new Date());
+
+        // Find next valid date
+        const sortedDates = tour.ngayKhoiHanh
+            .map(d => new Date(d))
+            .filter(d => getLocalDateStr(d) >= todayStr)
+            .sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+
+        if (sortedDates.length === 0) { return null; }
+
+        const nextDate = sortedDates[0];
+        const nextDateStr = getLocalDateStr(nextDate);
+
+        // Find discount
+        const discount = tour.discounts.find(d => {
+            const dDateStr = getLocalDateStr(new Date(d.date));
+            return dDateStr === nextDateStr;
+        });
+
+        if (!discount) { return null; }
+
+        return {
+            percent: discount.percentage,
+            originalPrice: tour.tongGiaDuKien,
+            finalPrice: tour.tongGiaDuKien * (1 - discount.percentage / 100)
+        };
+    };
+
+    const discountInfo = getDiscountInfo();
+
     if (variant === 'vertical') {
         return (
             <div
@@ -123,8 +158,15 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
                         alt={tour.tenTour}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     />
-                    <div className="absolute top-4 left-4 bg-black/60 text-white px-3 py-1 rounded text-xs font-bold backdrop-blur-sm">
-                        {tourCode}
+                    <div className="absolute top-4 left-4 flex flex-col gap-1 items-start">
+                        <div className="bg-black/60 text-white px-3 py-1 rounded text-xs font-bold backdrop-blur-sm">
+                            {tourCode}
+                        </div>
+                        {discountInfo && (
+                            <div className="bg-red-600 text-white px-3 py-1 rounded text-xs font-bold shadow-md animate-pulse">
+                                Giảm {discountInfo.percent}%
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -151,7 +193,14 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
                     <div className="mt-auto flex justify-between items-center border-t border-gray-100 pt-4">
                         <div>
                             <p className="text-xs text-gray-400">Giá từ</p>
-                            <p className="text-xl font-black text-red-600">{tour.tongGiaDuKien.toLocaleString()} ₫</p>
+                            {discountInfo ? (
+                                <div className="flex flex-col">
+                                    <span className="text-xs text-gray-400 line-through">{discountInfo.originalPrice.toLocaleString()} ₫</span>
+                                    <p className="text-xl font-black text-red-600">{discountInfo.finalPrice.toLocaleString()} ₫</p>
+                                </div>
+                            ) : (
+                                <p className="text-xl font-black text-red-600">{tour.tongGiaDuKien.toLocaleString()} ₫</p>
+                            )}
                         </div>
                         <Link
                             to={`/tours/${linkId}`}
@@ -199,6 +248,11 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
                     alt={tour.tenTour}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                 />
+                {discountInfo && (
+                    <div className="absolute top-4 left-4 bg-red-600 text-white px-3 py-1 rounded text-xs font-bold shadow-md z-10">
+                        Giảm {discountInfo.percent}%
+                    </div>
+                )}
             </div>
 
             {/* Horizontal Content */}
@@ -261,7 +315,14 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
                 <div className="border-t border-gray-100 pt-4 flex justify-between items-end">
                     <div>
                         <p className="text-xs text-gray-500 mb-1">Giá tham khảo</p>
-                        <p className="text-2xl font-black text-red-600">{tour.tongGiaDuKien.toLocaleString()} <span className="text-sm font-normal text-red-600">đ</span></p>
+                        {discountInfo ? (
+                            <div className="flex items-baseline gap-2">
+                                <span className="text-sm text-gray-400 line-through font-medium">{discountInfo.originalPrice.toLocaleString()} đ</span>
+                                <p className="text-2xl font-black text-red-600">{discountInfo.finalPrice.toLocaleString()} <span className="text-sm font-normal text-red-600">đ</span></p>
+                            </div>
+                        ) : (
+                            <p className="text-2xl font-black text-red-600">{tour.tongGiaDuKien.toLocaleString()} <span className="text-sm font-normal text-red-600">đ</span></p>
+                        )}
                     </div>
                     <Link
                         to={`/tours/${linkId}`}

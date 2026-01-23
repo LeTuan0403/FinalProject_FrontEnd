@@ -106,6 +106,7 @@ const Header = () => {
                             <Link to="/my-tours" className="block px-4 py-2 hover:bg-gray-50 rounded-lg text-gray-700 font-medium">Tour của tôi</Link>
                             <Link to="/my-favorites" className="block px-4 py-2 hover:bg-gray-50 rounded-lg text-gray-700 font-medium">Danh sách yêu thích</Link>
                             <Link to="/my-bookings" className="block px-4 py-2 hover:bg-gray-50 rounded-lg text-gray-700 font-medium">Đơn đặt của tôi</Link>
+                            <Link to="/my-coupons" className="block px-4 py-2 hover:bg-gray-50 rounded-lg text-gray-700 font-medium">Kho Voucher</Link>
                           </>
                         ) : (
                           <div className="px-4 py-2 text-gray-500 text-xs italic">Vui lòng đăng nhập</div>
@@ -141,6 +142,7 @@ const Header = () => {
               <Link to="/my-tours" className="block px-4 py-3 hover:bg-gray-50 font-bold text-sm text-blue-600 border-b border-gray-100">TOUR CỦA TÔI</Link>
               <Link to="/my-favorites" className="block px-4 py-3 hover:bg-gray-50 font-bold text-sm text-blue-600 border-b border-gray-100">DANH SÁCH YÊU THÍCH</Link>
               <Link to="/my-bookings" className="block px-4 py-3 hover:bg-gray-50 font-bold text-sm text-blue-600 border-b border-gray-100">ĐƠN ĐẶT CỦA TÔI</Link>
+              <Link to="/my-coupons" className="block px-4 py-3 hover:bg-gray-50 font-bold text-sm text-blue-600 border-b border-gray-100">KHO VOUCHER</Link>
             </>
           )}
           {(user?.role === 'Admin' || user?.role === '1') && (

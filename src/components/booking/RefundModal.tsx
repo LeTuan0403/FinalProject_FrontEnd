@@ -30,7 +30,7 @@ const RefundModal: React.FC<RefundModalProps> = ({ isOpen, onClose, booking, onS
 
     // Calculate Refund Policy
     const { refundAmount, refundInfo } = React.useMemo(() => {
-        if (!booking) return { refundAmount: 0, refundInfo: '' };
+        if (!booking) { return { refundAmount: 0, refundInfo: '' }; }
 
         const departureDate = new Date(booking.ngayKhoiHanh);
         const now = new Date();
@@ -65,7 +65,7 @@ const RefundModal: React.FC<RefundModalProps> = ({ isOpen, onClose, booking, onS
             setOtp('');
             setIsLoading(false);
         }
-    }, [isOpen]);
+    }, [isOpen, booking]);
 
     useEffect(() => {
         let timer: ReturnType<typeof setInterval>;
@@ -93,6 +93,7 @@ const RefundModal: React.FC<RefundModalProps> = ({ isOpen, onClose, booking, onS
             setTimeLeft(60);
             toast.success('Mã OTP đã được gửi đến email của bạn');
         } catch (err) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const error = err as any;
             toast.error(error.response?.data?.msg || 'Gửi OTP thất bại');
         } finally {
@@ -112,6 +113,7 @@ const RefundModal: React.FC<RefundModalProps> = ({ isOpen, onClose, booking, onS
             setStep(3);
             onSuccess();
         } catch (err) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const error = err as any;
             toast.error(error.response?.data?.msg || 'Xác thực thất bại');
         } finally {
