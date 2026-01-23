@@ -86,7 +86,7 @@ export interface Tour {
 
 export interface DonDatTour {
   donDatId: number;
-  tourId: number;
+  tourId: number | string;
   userId: number;
   ngayKhoiHanh: string;
   soLuongNguoi: number;
@@ -99,6 +99,8 @@ export interface DonDatTour {
   tongTienThanhToan: number;
   trangThai: string;
   ngayDat?: string;
+  couponCode?: string;
+  discountAmount?: number;
   tour?: Tour;
   user?: NguoiDung; // Navigation property if included
 

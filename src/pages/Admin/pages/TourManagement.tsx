@@ -156,15 +156,60 @@ const TourManagement = () => {
                                                 <CheckCircle size={10} /> Đã công khai
                                             </span>
                                         )}
+
+                                        {/* Last Minute Badges */}
+                                        {(() => {
+                                            if (!tour.ngayKhoiHanh) {
+                                                return null;
+                                            }
+                                            const today = new Date();
+                                            today.setHours(0, 0, 0, 0);
+                                            const threeDays = new Date(today);
+                                            threeDays.setDate(today.getDate() + 3);
+                                            threeDays.setHours(23, 59, 59, 999);
+
+                                            const lastMinDates = tour.ngayKhoiHanh.filter(d => {
+                                                const dt = new Date(d);
+                                                return dt >= today && dt <= threeDays;
+                                            });
+
+                                            if (lastMinDates.length === 0) {
+                                                return null;
+                                            }
+
+                                            const missingDiscount = lastMinDates.some(d =>
+                                                !tour.discounts?.some(disc => new Date(disc.date).getTime() === new Date(d).getTime())
+                                            );
+
+                                            if (missingDiscount) {
+                                                return (
+                                                    <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-black flex items-center gap-1 animate-pulse border border-red-200">
+                                                        🔔 CẦN GIẢM GIÁ (GIỜ CHÓT)
+                                                    </span>
+                                                );
+                                            }
+
+                                            const maxDisc = Math.max(...(tour.discounts || [])
+                                                .filter(disc => lastMinDates.some(lmd => new Date(lmd).getTime() === new Date(disc.date).getTime()))
+                                                .map(d => d.percentage), 0);
+
+                                            return (
+                                                <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-black flex items-center gap-1 border border-orange-200">
+                                                    🔥 GIỜ CHÓT: -{maxDisc}%
+                                                </span>
+                                            );
+                                        })()}
                                     </div>
                                     <div className="flex flex-wrap gap-4 text-sm text-gray-500">
                                         <span className="flex items-center gap-1"><MapPin size={14} /> {tour.diemKhoiHanh}</span>
                                         <span className="flex items-center gap-1"><Calendar size={14} /> {tour.thoiGian || ((tour.tourChiTiets?.length || 0) + ' ngày')}</span>
                                         <span className="font-medium text-blue-600">{tour.tongGiaDuKien?.toLocaleString()} ₫</span>
                                     </div>
-                                    <p className="text-gray-500 text-xs mt-1">
-                                        {(tour.lichTrinh || tour.tourChiTiets) ? (tour.lichTrinh || tour.tourChiTiets).length : 0} hoạt động • ID: {tour.tourId}
-                                    </p>
+                                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1">
+                                        <p className="text-gray-500 text-xs">
+                                            {(tour.lichTrinh || tour.tourChiTiets) ? (tour.lichTrinh || tour.tourChiTiets).length : 0} hoạt động • ID: {tour.tourId}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                             <div className="flex gap-3 mt-4 md:mt-0 w-full md:w-auto justify-end">

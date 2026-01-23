@@ -18,7 +18,8 @@ const CouponManagement = () => {
         minOrder: 0,
         maxDiscount: 0,
         expiry: '',
-        usageLimit: 0
+        usageLimit: 0,
+        isPublic: false
     });
     const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -77,7 +78,8 @@ const CouponManagement = () => {
             minOrder: 0,
             maxDiscount: 0,
             expiry: '',
-            usageLimit: 0
+            usageLimit: 0,
+            isPublic: false
         });
         setEditingId(null);
     };
@@ -91,14 +93,17 @@ const CouponManagement = () => {
             minOrder: coupon.minOrder,
             maxDiscount: coupon.maxDiscount,
             expiry: new Date(coupon.expiry).toISOString().split('T')[0],
-            usageLimit: coupon.usageLimit
+            usageLimit: coupon.usageLimit,
+            isPublic: coupon.isPublic || false
         });
         setEditingId(coupon._id);
         setShowModal(true);
     };
 
     const handleDelete = async (id: string) => {
-        if (!window.confirm('Bạn có chắc chắn muốn xóa mã này?')) return;
+        if (!window.confirm('Bạn có chắc chắn muốn xóa mã này?')) {
+            return;
+        }
         try {
             await couponService.delete(id);
             toast.success('Xóa mã thành công');
@@ -145,7 +150,9 @@ const CouponManagement = () => {
     };
 
     const handleAssignAll = async () => {
-        if (!assignCouponId || !window.confirm('Bạn có chắc chắn muốn phát mã này cho TOÀN BỘ người dùng?')) return;
+        if (!assignCouponId || !window.confirm('Bạn có chắc chắn muốn phát mã này cho TOÀN BỘ người dùng?')) {
+            return;
+        }
         try {
             await couponService.assignAll(assignCouponId);
             toast.success('Đã phát mã cho toàn bộ người dùng');
@@ -158,7 +165,9 @@ const CouponManagement = () => {
     };
 
     const handleAssignSubmit = async () => {
-        if (!assignCouponId || selectedUsers.length === 0) return;
+        if (!assignCouponId || selectedUsers.length === 0) {
+            return;
+        }
         try {
             await couponService.assign(assignCouponId, selectedUsers);
             toast.success(`Đã phát mã cho ${selectedUsers.length} người dùng`);
@@ -180,7 +189,9 @@ const CouponManagement = () => {
         );
     };
 
-    if (loading) return <div>Loading...</div>;
+    if (loading) {
+        return <div>Loading...</div>;
+    }
 
     return (
         <div>
@@ -242,9 +253,13 @@ const CouponManagement = () => {
                                                 {coupon.isActive ? 'Hoạt động' : 'Đã khóa'}
                                             </button>
 
-                                            {coupon.assignedTo && coupon.assignedTo.length > 0 && (
+                                            {coupon.isPublic ? (
+                                                <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-bold flex items-center gap-1">
+                                                    <Users size={12} /> Công khai
+                                                </span>
+                                            ) : (
                                                 <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold flex items-center gap-1">
-                                                    <User size={12} /> Riêng tư ({coupon.assignedTo.length})
+                                                    <User size={12} /> Riêng tư ({coupon.assignedTo?.length || 0})
                                                 </span>
                                             )}
                                         </div>
@@ -387,6 +402,20 @@ const CouponManagement = () => {
                                         placeholder="0 = Không giới hạn"
                                     />
                                 </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-xl border border-blue-100">
+                                <input
+                                    type="checkbox"
+                                    id="isPublic"
+                                    className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                    checked={formData.isPublic}
+                                    onChange={e => setFormData({ ...formData, isPublic: e.target.checked })}
+                                />
+                                <label htmlFor="isPublic" className="flex-1 cursor-pointer">
+                                    <div className="font-bold text-blue-900 text-sm">Công bố công khai</div>
+                                    <div className="text-xs text-blue-700">Mã này sẽ tự động hiện trong Kho Voucher của tất cả khách hàng.</div>
+                                </label>
                             </div>
 
                             <div className="pt-4 flex justify-end gap-3 border-t border-gray-100 mt-4">

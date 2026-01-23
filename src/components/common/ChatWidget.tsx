@@ -1,11 +1,12 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { MessageCircle, X } from "lucide-react";
 import { useChat } from "../../context/ChatContext";
 import { useAuth } from "../../hooks/useAuth";
 import axios from "axios";
-import { Message } from "../../types/chat";
+import { Message, TourShort } from "../../types/chat";
 import ChatWindow from "../chat/ChatWindow";
 import { calculateDuration } from "../../utils/tourUtils";
+import type { Tour } from "../../types";
 
 const ChatWidget = () => {
     const { socket } = useChat();
@@ -63,7 +64,6 @@ const ChatWidget = () => {
                     }
                 } catch (e) {
                     // It's okay, maybe first time chatting
-                    console.log("No existing conversation found or guest");
                 }
             }
 
@@ -83,10 +83,10 @@ const ChatWidget = () => {
                     const unread = res.data.filter((m: Message) => m.senderId === 'admin' && !m.isRead).length;
                     setUnreadCount(unread);
                 } catch (e) {
-
+                    // Ignore error
                 }
             }
-        }
+        };
         initChat();
     }, [user, isOpen, conversationId]); // Re-run if user logs in/out
 
@@ -150,7 +150,7 @@ const ChatWidget = () => {
             socket.off("typing");
             socket.off("stop_typing");
             socket.off("message_read");
-        }
+        };
     }, [socket, conversationId, currentUserId, isOpen]);
 
     // Handle Input Change for Typing
@@ -182,12 +182,130 @@ const ChatWidget = () => {
 
                 // 2. Persist to DB so it doesn't show as unread next time
                 axios.put(`http://localhost:5000/api/chat/conversation/read/${conversationId}`, { role: 'user' })
-                    .catch(e => console.error("Failed to mark read in DB", e));
+                    .catch(() => {
+                        // Ignore error
+                    });
             }
         }
-    }, [isOpen, messages, conversationId, socket, user]);
-    // Note: removed messages dependency to avoid loop? No, messages change when new one comes.
-    // If we mark read, checking message sender is enough.
+    }, [isOpen, messages, conversationId, socket]);
+
+    const ensureConversation = useCallback(async (senderId: string) => {
+        const res = await axios.post("http://localhost:5000/api/chat/conversation", {
+            senderId,
+            guestName: user ? user.hoTen : "Khách vãng lai"
+        });
+        return res.data._id;
+    }, [user]);
+
+    const shareTour = useCallback(async (tour: Tour) => {
+        setIsOpen(true);
+        const senderId = user ? String(user.userId) : (localStorage.getItem("chat_guest_id") || `guest_${Date.now()}`);
+        let currentConvId = conversationId;
+
+        // 1. Ensure Conversation Exists
+        if (!currentConvId) {
+            try {
+                const newConvId = await ensureConversation(senderId);
+                if (!newConvId) {
+                    return;
+                }
+                currentConvId = newConvId;
+                setConversationId(currentConvId);
+                localStorage.setItem("chat_conversation_id", currentConvId as string);
+                if (socket) {
+                    socket.emit("join_room", currentConvId);
+                }
+            } catch (e) {
+                console.error("Create conv failed", e);
+                return;
+            }
+        }
+
+        if (socket) {
+            socket.emit("join_room", currentConvId);
+        }
+
+        // 2. Prepare Tour Message Data
+        const tourShort: TourShort = {
+            _id: tour._id || "",
+            tourId: tour.tourId,
+            tenTour: tour.tenTour,
+            tongGiaDuKien: tour.tongGiaDuKien,
+            hinhAnhBia: tour.hinhAnhBia || "",
+            thoiGian: calculateDuration(tour)
+        };
+
+        const msgId1 = new Date().toISOString() + "_1";
+        const msgId2 = new Date().toISOString() + "_2";
+
+        const msgDataTextUI = {
+            _id: msgId1,
+            conversationId: currentConvId!,
+            senderId,
+            text: "Chào bạn, mình quan tâm đến tour này, nhờ bạn tư vấn giúp mình nhé!",
+            type: 'text' as const,
+            createdAt: new Date().toISOString()
+        };
+
+        const msgDataTextAPI = {
+            conversationId: currentConvId,
+            senderId,
+            text: "Chào bạn, mình quan tâm đến tour này, nhờ bạn tư vấn giúp mình nhé!",
+            type: 'text',
+            createdAt: new Date().toISOString()
+        };
+
+        const msgDataCardUI = {
+            _id: msgId2,
+            conversationId: currentConvId!,
+            senderId,
+            text: "Shared a tour",
+            type: 'tour_card' as const,
+            tourId: tourShort,
+            createdAt: new Date(Date.now() + 100).toISOString()
+        };
+
+        const msgDataCardAPI = {
+            conversationId: currentConvId!,
+            senderId,
+            text: "Shared a tour",
+            type: 'tour_card',
+            tourId: tour._id,
+            createdAt: new Date(Date.now() + 100).toISOString()
+        };
+
+        // 3. Optimistic Update
+        setMessages(prev => [...prev, msgDataTextUI, msgDataCardUI]);
+
+        // 4. Send to API & Socket
+        try {
+            await axios.post("http://localhost:5000/api/chat/message", msgDataTextAPI);
+            if (socket) {
+                socket.emit("send_message", msgDataTextUI);
+            }
+            await axios.post("http://localhost:5000/api/chat/message", msgDataCardAPI);
+            if (socket) {
+                socket.emit("send_message", msgDataCardUI);
+            }
+        } catch (e) {
+            console.error("Send tour message failed", e);
+        }
+    }, [conversationId, socket, user, ensureConversation]);
+
+    // Handle "Open Chat with Tour" Event (from TourDetail)
+    useEffect(() => {
+        const handleOpenWithTour = (e: Event) => {
+            const customEvent = e as CustomEvent;
+            const tour = customEvent.detail?.tour;
+            if (tour) {
+                shareTour(tour);
+            }
+        };
+        window.addEventListener('open_chat_with_tour', handleOpenWithTour);
+        return () => {
+            window.removeEventListener('open_chat_with_tour', handleOpenWithTour);
+        };
+    }, [shareTour]);
 
     // 3. Handle Greeting on First Open
     useEffect(() => {
@@ -238,11 +356,6 @@ const ChatWidget = () => {
             createdAt: new Date().toISOString() // Optimistic
         };
 
-        // Optimistic UI
-        // setMessages(prev => [...prev, msgData]); // Wait for server ack/broadcast? 
-        // Actually, our backend broadcasts to sender too if using io.in().emit
-        // But we used socket.to().emit which excludes sender.
-        // So we MUST add manually.
         setMessages(prev => [...prev, msgData]);
         setIsRead(false); // <--- RESET READ STATUS ON NEW MESSAGE
         setNewMessage("");
@@ -254,7 +367,6 @@ const ChatWidget = () => {
             if (socket) { socket.emit("send_message", msgData); }
         } catch (e) {
             console.error("Send failed", e);
-            // Revert on fail?
         }
     };
 
@@ -283,115 +395,17 @@ const ChatWidget = () => {
         if (tourDataString) {
             try {
                 const tour = JSON.parse(tourDataString);
-                setIsOpen(true);
-
-                const senderId = user ? String(user.userId) : localStorage.getItem("chat_guest_id")!;
-                let currentConvId = conversationId;
-
-                // 1. Ensure Conversation Exists
-                if (!currentConvId) {
-                    try {
-                        const newConvId = await ensureConversation(senderId);
-                        if (!newConvId) { return; }
-                        currentConvId = newConvId;
-                        setConversationId(currentConvId);
-                        localStorage.setItem("chat_conversation_id", currentConvId as string);
-                        if (socket) { socket.emit("join_room", currentConvId); }
-                    } catch (e) {
-                        console.error("Create conv failed", e);
-                        return;
-                    }
-                }
-
-                if (socket) { socket.emit("join_room", currentConvId); }
-
-                // 2. Prepare Tour Message Data
-                const tourShort = {
-                    _id: tour._id,
-                    tourId: tour.tourId,
-                    tenTour: tour.tenTour,
-                    tongGiaDuKien: tour.tongGiaDuKien,
-                    hinhAnhBia: tour.hinhAnhBia,
-                    thoiGian: calculateDuration(tour)
-                };
-
-                const msgId1 = new Date().toISOString() + "_1";
-                const msgId2 = new Date().toISOString() + "_2";
-
-                // Message 1: Text "Chào bạn, mình quan tâm đến tour này, nhờ bạn tư vấn giúp mình nhé!"
-                const msgDataTextUI = {
-                    _id: msgId1,
-                    conversationId: currentConvId!,
-                    senderId,
-                    text: "Chào bạn, mình quan tâm đến tour này, nhờ bạn tư vấn giúp mình nhé!",
-                    type: 'text' as const,
-                    createdAt: new Date().toISOString()
-                };
-
-                const msgDataTextAPI = {
-                    conversationId: currentConvId,
-                    senderId,
-                    text: "Chào bạn, mình quan tâm đến tour này, nhờ bạn tư vấn giúp mình nhé!",
-                    type: 'text',
-                    createdAt: new Date().toISOString()
-                };
-
-                // Message 2: Tour Card
-                const msgDataCardUI = {
-                    _id: msgId2,
-                    conversationId: currentConvId!,
-                    senderId,
-                    text: "Shared a tour",
-                    type: 'tour_card' as const,
-                    tourId: tourShort,
-                    createdAt: new Date(Date.now() + 100).toISOString() // Slight delay for correct ordering
-                };
-
-                const msgDataCardAPI = {
-                    conversationId: currentConvId!,
-                    senderId,
-                    text: "Shared a tour",
-                    type: 'tour_card',
-                    tourId: tour._id,
-                    createdAt: new Date(Date.now() + 100).toISOString()
-                };
-
-                // 3. Optimistic Update (Both messages)
-                setMessages(prev => [...prev, msgDataTextUI, msgDataCardUI]);
-
-                // 4. Send to API & Socket
-                try {
-                    // Send Text Message
-                    await axios.post("http://localhost:5000/api/chat/message", msgDataTextAPI);
-                    if (socket) { socket.emit("send_message", msgDataTextUI); }
-
-                    // Send Tour Card Message
-                    await axios.post("http://localhost:5000/api/chat/message", msgDataCardAPI);
-                    if (socket) { socket.emit("send_message", msgDataCardUI); }
-                } catch (e) {
-                    console.error("Send tour message failed", e);
-                }
-
+                shareTour(tour);
             } catch (err) {
                 console.error("Failed to parse dropped tour data", err);
             }
         }
     };
 
-    const ensureConversation = async (senderId: string) => {
-        const res = await axios.post("http://localhost:5000/api/chat/conversation", {
-            senderId,
-            guestName: user ? user.hoTen : "Khách vãng lai"
-        });
-        return res.data._id;
-    }
-
     if (user?.role === 'Admin') { return null; }
 
     return (
         <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end pointer-events-none">
-
-            {/* Chat Window Component */}
             <ChatWindow
                 isOpen={isOpen}
                 setIsOpen={setIsOpen}
@@ -409,7 +423,6 @@ const ChatWidget = () => {
                 quickReplies={QUICK_REPLIES}
             />
 
-            {/* Toggle Button */}
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 onDragOver={handleDragOver}
@@ -428,7 +441,6 @@ const ChatWidget = () => {
                     </>
                 )}
 
-                {/* Tooltip */}
                 {!isOpen && (
                     <div className="absolute right-full mr-4 bg-white text-gray-800 px-4 py-2 rounded-xl shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none font-medium text-sm arrow-right">
                         Chat với chúng tôi! 👋

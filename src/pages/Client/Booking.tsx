@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-hot-toast';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { AxiosError } from 'axios';
@@ -27,6 +27,8 @@ const Booking = () => {
     const [couponDiscount, setCouponDiscount] = useState(0);
     const [isCouponApplied, setIsCouponApplied] = useState(false);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [appliedCouponData, setAppliedCouponData] = useState<any>(null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [availableCoupons, setAvailableCoupons] = useState<any[]>([]);
     const [showCouponModal, setShowCouponModal] = useState(false);
 
@@ -49,12 +51,10 @@ const Booking = () => {
     const handleQuantityChange = (field: 'adults' | 'children', value: string) => {
         if (value === '') {
             setFormData(prev => ({ ...prev, [field]: '' }));
-            if (isCouponApplied) { setIsCouponApplied(false); setCouponDiscount(0); } // Reset coupon on change
             return;
         }
         const num = parseInt(value);
         setFormData(prev => ({ ...prev, [field]: isNaN(num) ? '' : num }));
-        if (isCouponApplied) { setIsCouponApplied(false); setCouponDiscount(0); toast.error("Đã thay đổi số lượng, vui lòng áp dụng lại mã giảm giá."); }
     };
 
     useEffect(() => {
@@ -62,7 +62,7 @@ const Booking = () => {
             if (!id) { return; }
             try {
                 setLoading(true);
-                const res = await tourService.getById(Number(id));
+                const res = await tourService.getById(id as string);
                 setTour(res.data);
 
                 // Smart Date Selection: Pick the first available future date if array exists
@@ -173,35 +173,51 @@ const Booking = () => {
     const baseTotalPrice = (Number(formData.adults || 0) * priceAdult) + (Number(formData.children || 0) * priceChild);
     const totalPrice = Math.max(0, baseTotalPrice - couponDiscount);
 
+    interface Voucher {
+        _id?: string;
+        code: string;
+        type: string;
+        value: number;
+        minOrder: number;
+        maxDiscount: number;
+        expiry?: string;
+        potentialDiscount?: number;
+    }
+
     // Helper to calc discount for sorting/validation
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const calcDiscount = (coupon: any, price: number) => {
-        if (price < coupon.minOrder) return 0;
+    const calcDiscount = useCallback((coupon: Voucher, price: number) => {
+        if (price < coupon.minOrder) {
+            return 0;
+        }
         let discount = 0;
         if (coupon.type === 'PERCENT') {
             discount = (price * coupon.value) / 100;
-            if (coupon.maxDiscount > 0) discount = Math.min(discount, coupon.maxDiscount);
+            if (coupon.maxDiscount > 0) {
+                discount = Math.min(discount, coupon.maxDiscount);
+            }
         } else {
             discount = coupon.value;
         }
         return Math.min(discount, price);
-    };
+    }, []);
 
     // Auto-fetch and organize coupons
     useEffect(() => {
         const fetchAndOptimize = async () => {
-            if (!baseTotalPrice || !tour) return;
+            if (!baseTotalPrice || !tour) {
+                return;
+            }
             try {
                 const res = await couponService.getAvailable();
-                const rawCoupons = res.data;
+                const rawCoupons: Voucher[] = res.data;
 
                 // Process Coupons
-                const processed = rawCoupons.map((c: any) => ({
+                const processed = rawCoupons.map((c: Voucher) => ({
                     ...c,
                     potentialDiscount: calcDiscount(c, baseTotalPrice)
                 }))
-                    .filter((c: any) => c.potentialDiscount > 0)
-                    .sort((a: any, b: any) => b.potentialDiscount - a.potentialDiscount);
+                    .filter((c: Voucher) => (c.potentialDiscount || 0) > 0)
+                    .sort((a: Voucher, b: Voucher) => (b.potentialDiscount || 0) - (a.potentialDiscount || 0));
 
                 setAvailableCoupons(processed);
 
@@ -210,21 +226,38 @@ const Booking = () => {
                     const best = processed[0];
                     setCouponCode(best.code);
                     setCouponDiscount(best.potentialDiscount);
+                    setAppliedCouponData(best);
                     setIsCouponApplied(true);
-                    toast.success(`Đã tự động áp dụng mã tốt nhất: ${best.code} (-${best.potentialDiscount.toLocaleString()}đ)`);
                 }
-            } catch (e) {
-                console.error("Failed to fetch coupons", e);
+            } catch (error) {
+                // Ignore coupon fetch error
             }
         };
 
         if (user && formData.adults && !loading) { // Logic triggers when price relevant params exist
             fetchAndOptimize();
         }
-    }, [baseTotalPrice, user, formData.adults, formData.children, loading]);
+    }, [baseTotalPrice, user, formData.adults, formData.children, loading, isCouponApplied, tour, calcDiscount]);
 
-    if (loading) { return <div className="min-h-screen flex text-center justify-center items-center text-gray-500 gap-2"><Loader className="animate-spin" /> Loading tour info...</div>; }
-    if (error || !tour) { return <div className="min-h-screen flex text-center justify-center items-center text-red-500">{error || 'Tour not found'}</div>; }
+    // REAL-TIME RECALCULATION: Keep discount synced with guest count
+    useEffect(() => {
+        if (isCouponApplied && appliedCouponData) {
+            const newDiscount = calcDiscount(appliedCouponData, baseTotalPrice);
+            if (newDiscount !== couponDiscount) {
+                setCouponDiscount(newDiscount);
+                if (newDiscount === 0 && baseTotalPrice < (appliedCouponData.minOrder || 0)) {
+                    toast.error(`Đơn hàng hiện thấp hơn mức tối thiểu (${appliedCouponData.minOrder.toLocaleString()}đ) để dùng mã này.`);
+                }
+            }
+        }
+    }, [baseTotalPrice, isCouponApplied, appliedCouponData, couponDiscount, calcDiscount]);
+
+    if (loading) {
+        return <div className="min-h-screen flex text-center justify-center items-center text-gray-500 gap-2"><Loader className="animate-spin" /> Loading tour info...</div>;
+    }
+    if (error || !tour) {
+        return <div className="min-h-screen flex text-center justify-center items-center text-red-500">{error || 'Tour not found'}</div>;
+    }
 
     const handleApplyCoupon = async () => {
         if (!couponCode.trim()) {
@@ -233,11 +266,11 @@ const Booking = () => {
         }
         try {
             const res = await couponService.validate(couponCode, baseTotalPrice);
+            setAppliedCouponData(res.data.coupon);
             setCouponDiscount(res.data.discountAmount);
             setIsCouponApplied(true);
-            toast.success(res.data.msg || "Áp dụng mã thành công!");
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
+        } catch (err: unknown) {
+            const error = err as { response?: { data?: { msg?: string } } };
             setCouponDiscount(0);
             setIsCouponApplied(false);
             toast.error(error.response?.data?.msg || "Mã giảm giá không hợp lệ");
@@ -297,7 +330,7 @@ const Booking = () => {
                 : 1;
 
             const bookingPayload = {
-                tourId: Number(id),
+                tourId: tour?.tourId || id,
                 ngayKhoiHanh: formData.departureDate,
                 soLuongNguoi: adultsCount + Number(formData.children || 0),
                 soLuongNguoiLon: adultsCount,
@@ -550,9 +583,6 @@ const Booking = () => {
                                     onChange={e => setFormData({ ...formData, note: e.target.value })}
                                 ></textarea>
                             </div>
-
-
-
                             {/* Coupon Section */}
                             <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm mb-6">
                                 <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
@@ -565,14 +595,21 @@ const Booking = () => {
                                         value={couponCode}
                                         onChange={e => {
                                             setCouponCode(e.target.value.toUpperCase());
-                                            if (isCouponApplied) { setIsCouponApplied(false); setCouponDiscount(0); }
+                                            if (isCouponApplied) {
+                                                setIsCouponApplied(false);
+                                                setCouponDiscount(0);
+                                            }
                                         }}
                                         disabled={isCouponApplied}
                                     />
                                     {isCouponApplied ? (
                                         <button
                                             type="button"
-                                            onClick={() => { setIsCouponApplied(false); setCouponCode(''); setCouponDiscount(0); }}
+                                            onClick={() => {
+                                                setIsCouponApplied(false);
+                                                setCouponCode('');
+                                                setCouponDiscount(0);
+                                            }}
                                             className="px-4 py-2 bg-red-100 text-red-600 rounded-lg font-bold hover:bg-red-200"
                                         >
                                             Hủy
@@ -907,6 +944,7 @@ const Booking = () => {
                                         className={`border rounded-xl p-4 flex gap-4 transition cursor-pointer hover:border-blue-300 ${coupon.code === couponCode ? 'border-blue-600 bg-blue-50 ring-1 ring-blue-600' : 'border-gray-200'}`}
                                         onClick={() => {
                                             setCouponCode(coupon.code);
+                                            setAppliedCouponData(coupon);
                                             setCouponDiscount(coupon.potentialDiscount);
                                             setIsCouponApplied(true);
                                             setShowCouponModal(false);

@@ -3,7 +3,7 @@ import { toast } from 'react-hot-toast';
 import { X, Loader, Plus } from 'lucide-react';
 import { tourService } from '../../services/tourService';
 import type { Tour } from '../../types';
-import BookingForm from './BookingForm';
+import BookingForm, { BookingFormProps } from './BookingForm';
 
 interface AdminBookingCreateModalProps {
     isOpen: boolean;
@@ -120,8 +120,8 @@ const AdminBookingCreateModal: React.FC<AdminBookingCreateModalProps> = ({ isOpe
 
                     <div className="mb-4">
                         <BookingForm
-                            formData={formData}
-                            onChange={(data) => setFormData(data as any)}
+                            formData={formData as BookingFormProps['formData']}
+                            onChange={(data) => setFormData(data as typeof formData)}
                             tour={selectedTour}
                         />
                     </div>

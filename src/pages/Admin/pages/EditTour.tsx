@@ -121,11 +121,9 @@ const AdminEditTour = () => {
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         soLuongCho: data.soLuongCho ?? (data as any).SoLuongCho ?? 0,
                         ngayKhoiHanh: Array.isArray(data.ngayKhoiHanh)
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
                             ? data.ngayKhoiHanh.map((d: any) => new Date(d).toISOString().split('T')[0])
                             : (data.ngayKhoiHanh ? [new Date(data.ngayKhoiHanh).toISOString().split('T')[0]] : []), // Ensure array
 
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         discounts: Array.isArray(data.discounts) ? data.discounts : [], // Map discounts
                         // If counts are 0, try to calculate from tourDetails (logic for Custom Tours)
                         ...(() => {

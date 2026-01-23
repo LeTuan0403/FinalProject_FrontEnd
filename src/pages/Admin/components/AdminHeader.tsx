@@ -18,6 +18,7 @@ const AdminHeader = ({ onMenuClick }: { onMenuClick?: () => void }) => {
 
     const notifications = [
         { id: 'bookings', label: 'đơn đặt tour mới', count: counts.bookings, path: '/admin/bookings', color: 'text-blue-600', bg: 'bg-blue-50' },
+        { id: 'lastMinute', label: 'tour đang ở trạng thái giờ chót', count: counts.lastMinute, path: '/admin/tours', color: 'text-orange-600', bg: 'bg-orange-50' },
         { id: 'contacts', label: 'liên hệ mới', count: counts.contacts, path: '/admin/contacts', color: 'text-purple-600', bg: 'bg-purple-50' },
         { id: 'reviews', label: 'đánh giá chưa trả lời', count: counts.reviews, path: '/admin/reviews', color: 'text-yellow-600', bg: 'bg-yellow-50' },
         { id: 'tours', label: 'tour cần duyệt', count: counts.tours, path: '/admin/tours', color: 'text-green-600', bg: 'bg-green-50' },
