@@ -81,6 +81,7 @@ const Header = () => {
             <nav className="hidden lg:flex gap-6 items-center uppercase font-bold text-sm text-gray-700">
               <Link to="/" className="hover:text-blue-600 transition text-blue-600">TRANG CHỦ</Link>
               <Link to="/tours" className="hover:text-blue-600 transition">DANH SÁCH TOUR</Link>
+              <Link to="/community" className="hover:text-blue-600 transition">CỘNG ĐỒNG</Link>
               <Link to="/custom-tour" className="hover:text-blue-600 transition">TỰ THIẾT KẾ</Link>
               <Link to="/gallery" className="hover:text-blue-600 transition">HÌNH ẢNH</Link>
               <Link to="/contact" className="hover:text-blue-600 transition">LIÊN HỆ</Link>

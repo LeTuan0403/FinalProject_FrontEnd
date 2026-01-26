@@ -9,6 +9,7 @@ import { useChat } from "./ChatContext";
 interface NotificationCounts {
     bookings: number;
     tours: number;
+    lastMinute: number;
     contacts: number;
     reviews: number;
     messages: number;
@@ -23,6 +24,7 @@ interface NotificationContextType {
 const defaultCounts: NotificationCounts = {
     bookings: 0,
     tours: 0,
+    lastMinute: 0, // Default 0
     contacts: 0,
     reviews: 0,
     messages: 0,

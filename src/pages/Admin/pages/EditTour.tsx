@@ -121,7 +121,7 @@ const AdminEditTour = () => {
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         soLuongCho: data.soLuongCho ?? (data as any).SoLuongCho ?? 0,
                         ngayKhoiHanh: Array.isArray(data.ngayKhoiHanh)
-                            ? data.ngayKhoiHanh.map((d: any) => new Date(d).toISOString().split('T')[0])
+                            ? data.ngayKhoiHanh.map((d: string | Date) => new Date(d).toISOString().split('T')[0])
                             : (data.ngayKhoiHanh ? [new Date(data.ngayKhoiHanh).toISOString().split('T')[0]] : []), // Ensure array
 
                         discounts: Array.isArray(data.discounts) ? data.discounts : [], // Map discounts

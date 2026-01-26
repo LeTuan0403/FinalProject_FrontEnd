@@ -23,6 +23,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const email = localStorage.getItem('email');
     const soDienThoai = localStorage.getItem('soDienThoai');
     const diaChi = localStorage.getItem('diaChi');
+    const avatar = localStorage.getItem('avatar');
     const hanCheThanhToan = localStorage.getItem('hanCheThanhToan') === 'true';
 
     if (token && hoTen && role) {
@@ -34,6 +35,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         email: email || undefined,
         soDienThoai: soDienThoai || undefined,
         diaChi: diaChi || undefined,
+        avatar: avatar || undefined,
         hanCheThanhToan
       });
     }
@@ -66,6 +68,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const email = data.email || data.user?.email || data.result?.email;
     const soDienThoai = data.soDienThoai || data.user?.soDienThoai || data.result?.soDienThoai;
     const diaChi = data.diaChi || data.user?.diaChi || data.result?.diaChi;
+    const avatar = data.avatar || data.user?.avatar || data.result?.avatar;
     const hanCheThanhToan = data.hanCheThanhToan || data.user?.hanCheThanhToan || false;
 
     // 1. Try to get ID from response body
@@ -95,6 +98,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (email) { localStorage.setItem('email', email); }
     if (soDienThoai) { localStorage.setItem('soDienThoai', soDienThoai); }
     if (diaChi) { localStorage.setItem('diaChi', diaChi); }
+    if (avatar) { localStorage.setItem('avatar', avatar); }
     if (hanCheThanhToan) { localStorage.setItem('hanCheThanhToan', 'true'); }
     else { localStorage.removeItem('hanCheThanhToan'); }
 
@@ -107,6 +111,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       email,
       soDienThoai,
       diaChi,
+      avatar,
       hanCheThanhToan
     });
   };
@@ -119,6 +124,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.removeItem('email');
     localStorage.removeItem('soDienThoai');
     localStorage.removeItem('diaChi');
+    localStorage.removeItem('avatar');
     localStorage.removeItem('hanCheThanhToan');
 
     // Clear Chat Session

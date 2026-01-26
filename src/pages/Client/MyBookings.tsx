@@ -226,7 +226,7 @@ const MyBookings = () => {
                                             </button>
                                         )}
 
-                                        {booking.trangThai === 'Đã hủy' && (
+                                        {booking.trangThai === 'Hoàn tất' && (
                                             <Link
                                                 to={`/booking/${booking.tourId}`}
                                                 state={{ rebookData: booking }}

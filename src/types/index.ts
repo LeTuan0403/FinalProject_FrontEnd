@@ -126,6 +126,7 @@ export interface LoginResponse {
   soDienThoai?: string;
   diaChi?: string;
   ngaySinh?: string;
+  avatar?: string;
   hanCheThanhToan?: boolean; // Added
 }
 

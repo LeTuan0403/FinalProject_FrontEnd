@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { MessageCircle, X } from "lucide-react";
+import { MessageCircle, X, Phone, Facebook } from "lucide-react";
 import { useChat } from "../../context/ChatContext";
 import { useAuth } from "../../hooks/useAuth";
 import axios from "axios";
@@ -7,11 +7,13 @@ import { Message, TourShort } from "../../types/chat";
 import ChatWindow from "../chat/ChatWindow";
 import { calculateDuration } from "../../utils/tourUtils";
 import type { Tour } from "../../types";
+import ZaloIcon from "../icons/ZaloIcon";
 
 const ChatWidget = () => {
     const { socket } = useChat();
     const { user } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
+    const [isHovered, setIsHovered] = useState(false);
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState("");
     const [conversationId, setConversationId] = useState<string | null>(null);
@@ -20,6 +22,30 @@ const ChatWidget = () => {
     const [isRead, setIsRead] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
     const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const CONTACT_OPTIONS = [
+        {
+            label: 'Zalo',
+            icon: <ZaloIcon className="w-5 h-5" />,
+            color: 'bg-blue-600',
+            href: 'https://zalo.me/0967087527',
+            delay: 'delay-100'
+        },
+        {
+            label: 'Facebook',
+            icon: <Facebook size={20} />,
+            color: 'bg-blue-800',
+            href: 'https://www.facebook.com/le.tuan.10681/',
+            delay: 'delay-200'
+        },
+        {
+            label: 'Hotline',
+            icon: <Phone size={20} />,
+            color: 'bg-red-500',
+            href: 'tel:0967087527',
+            delay: 'delay-300'
+        }
+    ];
 
     // Unified User ID strategy (Hoisted)
     const currentUserId = user ? String(user.userId) : (localStorage.getItem("chat_guest_id") || `guest_${Date.now()}`);
@@ -405,7 +431,11 @@ const ChatWidget = () => {
     if (user?.role === 'Admin') { return null; }
 
     return (
-        <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end pointer-events-none">
+        <div
+            className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3 pointer-events-none group"
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+        >
             <ChatWindow
                 isOpen={isOpen}
                 setIsOpen={setIsOpen}
@@ -423,11 +453,33 @@ const ChatWidget = () => {
                 quickReplies={QUICK_REPLIES}
             />
 
+            {/* Quick Contact Options (Rendered on Hover) */}
+            {!isOpen && (
+                <div className={`flex flex-col gap-3 transition-all duration-300 ${isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}`}>
+                    {CONTACT_OPTIONS.map((opt, idx) => (
+                        <a
+                            key={idx}
+                            href={opt.href}
+                            target="_blank"
+                            rel="noreferrer"
+                            className={`pointer-events-auto flex items-center justify-end gap-2 pr-1 pl-4 py-1.5 rounded-full shadow-lg transform transition-all hover:scale-110 ${opt.delay} ${isHovered ? 'translate-x-0 opacity-100' : 'translate-x-10 opacity-0'}`}
+                        >
+                            <span className="bg-white text-gray-700 text-[10px] font-bold px-2 py-1 rounded shadow-sm whitespace-nowrap">
+                                {opt.label}
+                            </span>
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white shadow-md ${opt.color}`}>
+                                {opt.icon}
+                            </div>
+                        </a>
+                    ))}
+                </div>
+            )}
+
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}
-                className={`pointer-events-auto p-4 rounded-full shadow-xl transition-all duration-300 transform hover:scale-110 flex items-center justify-center relative group ${isOpen ? 'bg-gray-400 text-white rotate-90' : 'bg-blue-600 text-white'
+                className={`pointer-events-auto p-4 rounded-full shadow-xl transition-all duration-300 transform hover:scale-110 flex items-center justify-center relative ${isOpen ? 'bg-gray-400 text-white rotate-90' : 'bg-blue-600 text-white'
                     }`}
             >
                 {isOpen ? <X size={24} /> : (
@@ -441,7 +493,7 @@ const ChatWidget = () => {
                     </>
                 )}
 
-                {!isOpen && (
+                {!isOpen && !isHovered && (
                     <div className="absolute right-full mr-4 bg-white text-gray-800 px-4 py-2 rounded-xl shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none font-medium text-sm arrow-right">
                         Chat với chúng tôi! 👋
                     </div>

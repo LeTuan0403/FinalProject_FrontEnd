@@ -26,6 +26,7 @@ import TourManagement from './pages/Admin/pages/TourManagement';
 import BookingManagement from './pages/Admin/pages/BookingManagement';
 import AdminEditTour from './pages/Admin/pages/EditTour';
 import CouponManagement from './pages/Admin/pages/CouponManagement';
+import PostManagement from './pages/Admin/pages/PostManagement';
 
 import { useAuth } from './hooks/useAuth';
 
@@ -35,6 +36,7 @@ import ContactManagement from './pages/Admin/pages/ContactManagement';
 import Settings from './pages/Admin/pages/Settings';
 import AdminReviews from './pages/Admin/pages/AdminReviews';
 import AdminChat from './pages/Admin/pages/AdminChat';
+import CommunityPage from './pages/Client/CommunityPage';
 
 import { ComparisonProvider } from './context/ComparisonContext';
 import ComparisonFloatingBar from './components/common/ComparisonFloatingBar';
@@ -73,6 +75,7 @@ function App() {
           <Route path="profile" element={<Profile />} />
           <Route path="gallery" element={<Gallery />} />
           <Route path="contact" element={<Contact />} />
+          <Route path="community" element={<CommunityPage />} />
           <Route path="compare" element={<ComparePage />} />
           <Route path="login" element={<AuthPage />} />
           <Route path="register" element={<AuthPage />} />
@@ -97,6 +100,7 @@ function App() {
           <Route index element={<Dashboard />} />
           <Route path="tours" element={<TourManagement />} />
           <Route path="bookings" element={<BookingManagement />} />
+          <Route path="posts" element={<PostManagement />} />
           <Route path="users" element={<UserManagement />} />
           <Route path="locations" element={<LocationManagement />} />
           <Route path="reviews" element={<AdminReviews />} />
