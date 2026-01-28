@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { X, Loader2, AlertCircle, Send } from 'lucide-react';
 import { postService, Post, Comment } from '../../services/postService';
 import PostCard from './PostCard';
+import CommentItem from './CommentItem';
 import { useAuth } from '../../hooks/useAuth';
 import { toast } from 'react-hot-toast';
 
@@ -18,6 +19,9 @@ const PostDetailModal = ({ postId, onClose, onCommentUpdate }: PostDetailModalPr
     const [error, setError] = useState<string | null>(null);
     const [commentText, setCommentText] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    const [replyingTo, setReplyingTo] = useState<{ id: string; name: string } | null>(null);
+    const [editingComment, setEditingComment] = useState<{ id: string; content: string; replyId?: string } | null>(null);
+    const [activeMenu, setActiveMenu] = useState<string | null>(null);
 
     useEffect(() => {
         // Lock body scroll when modal is open
@@ -58,24 +62,76 @@ const PostDetailModal = ({ postId, onClose, onCommentUpdate }: PostDetailModalPr
             toast.error('Vui lòng đăng nhập để bình luận');
             return;
         }
-        if (!commentText.trim() || !post) return;
+        if (!commentText.trim() || !post) { return; }
 
         setSubmitting(true);
         try {
-            const res = await postService.commentPost(post._id, commentText);
+            let res;
+            if (replyingTo) {
+                res = await postService.replyToComment(post._id, replyingTo.id, commentText);
+            } else {
+                res = await postService.commentPost(post._id, commentText);
+            }
             const newComments = res.data;
             setPost({ ...post, comments: newComments });
             setCommentText('');
+            setReplyingTo(null);
             if (onCommentUpdate) {
                 onCommentUpdate(post._id, newComments);
             }
-            toast.success('Đã gửi bình luận!');
+            toast.success(replyingTo ? 'Đã trả lời bình luận!' : 'Đã gửi bình luận!');
         } catch (error) {
             toast.error('Lỗi khi gửi bình luận');
         } finally {
             setSubmitting(false);
         }
     };
+
+    const handleLikeComment = async (commentId: string, replyId?: string) => {
+        if (!user || !post) { return; }
+        try {
+            const res = await postService.likeComment(post._id, commentId, replyId);
+            setPost({ ...post, comments: res.data });
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    const handleDeleteComment = async (commentId: string, replyId?: string) => {
+        if (!confirm('Bạn có chắc muốn xóa bình luận này?')) { return; }
+        if (!post) { return; }
+        try {
+            const res = await postService.deleteComment(post._id, commentId, replyId);
+            setPost({ ...post, comments: res.data });
+            toast.success('Đã xóa bình luận');
+        } catch (error) {
+            toast.error('Lỗi khi xóa bình luận');
+        }
+    };
+
+    const handleUpdateComment = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingComment || !post) { return; }
+
+        try {
+            const res = await postService.updateComment(post._id, editingComment.id, editingComment.content, editingComment.replyId);
+            setPost({ ...post, comments: res.data });
+            setEditingComment(null);
+            toast.success('Đã cập nhật bình luận');
+        } catch (error) {
+            toast.error('Lỗi cập nhật bình luận');
+        }
+    };
+
+    // Close menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if ((e.target as HTMLElement).closest('.comment-menu-trigger')) { return; }
+            setActiveMenu(null);
+        };
+        document.addEventListener('click', handleClickOutside);
+        return () => document.removeEventListener('click', handleClickOutside);
+    }, []);
 
     if (!postId) {
         return null;
@@ -139,26 +195,24 @@ const PostDetailModal = ({ postId, onClose, onCommentUpdate }: PostDetailModalPr
                                 <div className="space-y-4 px-2 pb-24">
                                     {post.comments && post.comments.length > 0 ? (
                                         post.comments.map((cmt) => (
-                                            <div key={cmt._id} className="flex gap-3 text-left group">
-                                                <div className="w-10 h-10 rounded-full bg-gray-800 flex-shrink-0 overflow-hidden shadow-inner ring-1 ring-gray-700/50">
-                                                    {cmt.userId?.avatar ? (
-                                                        <img src={cmt.userId.avatar} alt="" className="w-full h-full object-cover" />
-                                                    ) : (
-                                                        <div className="w-full h-full flex items-center justify-center text-gray-500 font-bold bg-gray-800">
-                                                            {cmt.userId?.hoTen?.charAt(0) || '?'}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <div className="flex-1">
-                                                    <div className="bg-gray-800/60 rounded-2xl px-4 py-2 border border-gray-700/30 group-hover:border-gray-600/50 transition">
-                                                        <p className="font-bold text-blue-400 text-sm">{cmt.userId?.hoTen || 'Người dùng'}</p>
-                                                        <p className="text-gray-200 text-sm whitespace-pre-wrap leading-relaxed">{cmt.content}</p>
-                                                    </div>
-                                                    <span className="text-[10px] text-gray-500 mt-1 ml-2 font-medium">
-                                                        {new Date(cmt.createdAt).toLocaleDateString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
-                                                    </span>
-                                                </div>
-                                            </div>
+                                            <CommentItem
+                                                key={cmt._id}
+                                                cmt={cmt}
+                                                user={user}
+                                                editingComment={editingComment}
+                                                setEditingComment={setEditingComment}
+                                                handleUpdateComment={handleUpdateComment}
+                                                activeMenu={activeMenu}
+                                                setActiveMenu={setActiveMenu}
+                                                handleDeleteComment={handleDeleteComment}
+                                                handleLikeComment={handleLikeComment}
+                                                replyingTo={replyingTo}
+                                                setReplyingTo={setReplyingTo}
+                                                commentText={commentText}
+                                                setCommentText={setCommentText}
+                                                handleComment={handleComment}
+                                                submitting={submitting}
+                                            />
                                         ))
                                     ) : (
                                         <div className="py-20 text-center">
@@ -171,40 +225,41 @@ const PostDetailModal = ({ postId, onClose, onCommentUpdate }: PostDetailModalPr
                         ) : null}
                     </div>
 
-                    {/* Fixed Bottom Input (Like requested in screenshot) */}
-                    {post && (
-                        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[95%] bg-gray-800/90 backdrop-blur-xl border border-gray-700/40 rounded-full p-2 px-3 flex items-center gap-3 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.5)] transition hover:ring-1 hover:ring-gray-600/50 z-20">
-                            <div className="w-10 h-10 rounded-full bg-blue-600/20 flex items-center justify-center overflow-hidden border border-blue-500/20">
-                                {user?.avatar ? (
-                                    <img src={user.avatar} alt="" className="w-full h-full object-cover border-2 border-white" />
-                                ) : (
-                                    <div className="text-blue-400 font-black text-xs">{user?.hoTen?.charAt(0) || 'U'}</div>
-                                )}
-                            </div>
+                    {/* Fixed Bottom Input - Only show when NOT replying to a specific comment */}
+                    {post && !replyingTo && (
+                        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[95%] z-20 flex flex-col items-center gap-2">
+                            <div className="w-full bg-gray-800/90 backdrop-blur-xl border border-gray-700/40 rounded-full p-2 px-3 flex items-center gap-3 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.5)] transition hover:ring-1 hover:ring-gray-600/50">
+                                <div className="w-10 h-10 rounded-full bg-blue-600/20 flex items-center justify-center overflow-hidden border border-blue-500/20">
+                                    {user?.avatar ? (
+                                        <img src={user.avatar} alt="" className="w-full h-full object-cover border-2 border-white" />
+                                    ) : (
+                                        <div className="text-blue-400 font-black text-xs">{user?.hoTen?.charAt(0) || 'U'}</div>
+                                    )}
+                                </div>
 
-                            <form onSubmit={handleComment} className="flex-1 flex gap-2">
-                                <input
-                                    type="text"
-                                    value={commentText}
-                                    onChange={(e) => setCommentText(e.target.value)}
-                                    placeholder="Viết bình luận công khai..."
-                                    className="flex-1 bg-transparent border-none text-white text-sm outline-none placeholder:text-gray-500 py-2"
-                                />
-                                <button
-                                    type="submit"
-                                    disabled={submitting || !commentText.trim()}
-                                    className="p-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-full transition disabled:opacity-50 disabled:grayscale shadow-lg shadow-blue-900/20 active:scale-95 flex items-center justify-center"
-                                >
-                                    {submitting ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
-                                </button>
-                            </form>
+                                <form onSubmit={handleComment} className="flex-1 flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={commentText}
+                                        onChange={(e) => setCommentText(e.target.value)}
+                                        placeholder="Viết bình luận công khai..."
+                                        className="flex-1 bg-transparent border-none text-white text-sm outline-none placeholder:text-gray-500 py-2"
+                                    />
+                                    <button
+                                        type="submit"
+                                        disabled={submitting || !commentText.trim()}
+                                        className="p-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-full transition disabled:opacity-50 disabled:grayscale shadow-lg shadow-blue-900/20 active:scale-95 flex items-center justify-center"
+                                    >
+                                        {submitting ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
+                                    </button>
+                                </form>
+                            </div>
                         </div>
                     )}
                 </div>
-            </div>
 
-            <style dangerouslySetInnerHTML={{
-                __html: `
+                <style dangerouslySetInnerHTML={{
+                    __html: `
                 .custom-scrollbar-dark::-webkit-scrollbar {
                     width: 6px;
                 }
@@ -219,6 +274,7 @@ const PostDetailModal = ({ postId, onClose, onCommentUpdate }: PostDetailModalPr
                     background: rgba(255, 255, 255, 0.2);
                 }
             ` }} />
+            </div>
         </div>
     );
 };

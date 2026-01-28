@@ -199,8 +199,8 @@ const AdminEditTour = () => {
             const calculatedDuration = maxDay > 0 ? `${maxDay} ngày` : (formData.thoiGian || "1 ngày"); // Fixed syntax
             // Base payload construction (common for both Create and Edit)
             const commonPayload = {
-                nguoiTaoId: user?.userId || 1, // Fallback safe ID
-                userId: user?.userId || 1,     // Ensure compatibility
+                nguoiTaoId: formData.nguoiTaoId || user?.userId || 1, // Preserve original creator or use current user
+                userId: formData.userId || user?.userId || 1,     // Preserve original userId
                 maTour: formData.maTour,
                 tenTour: formData.tenTour,
                 moTa: formData.moTa,

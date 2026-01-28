@@ -22,6 +22,7 @@ const ChatWidget = () => {
     const [isRead, setIsRead] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
     const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const CONTACT_OPTIONS = [
         {
@@ -428,13 +429,26 @@ const ChatWidget = () => {
         }
     };
 
+    const handleHoverEnter = () => {
+        if (hoverTimeoutRef.current) {
+            clearTimeout(hoverTimeoutRef.current);
+            hoverTimeoutRef.current = null;
+        }
+        setIsHovered(true);
+    };
+
+    const handleHoverLeave = () => {
+        hoverTimeoutRef.current = setTimeout(() => {
+            setIsHovered(false);
+        }, 300); // 300ms delay to bridge gaps
+    };
+
     if (user?.role === 'Admin') { return null; }
 
     return (
         <div
-            className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3 pointer-events-none group"
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
+            className="fixed bottom-6 right-6 z-[9999] flex flex-col items-end gap-4 pointer-events-none group"
+            onMouseLeave={handleHoverLeave}
         >
             <ChatWindow
                 isOpen={isOpen}
@@ -455,19 +469,23 @@ const ChatWidget = () => {
 
             {/* Quick Contact Options (Rendered on Hover) */}
             {!isOpen && (
-                <div className={`flex flex-col gap-3 transition-all duration-300 ${isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}`}>
+                <div
+                    className={`flex flex-col gap-3 transition-all duration-500 ease-in-out ${isHovered ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-10 pointer-events-none'}`}
+                    onMouseEnter={handleHoverEnter}
+                >
                     {CONTACT_OPTIONS.map((opt, idx) => (
                         <a
                             key={idx}
                             href={opt.href}
                             target="_blank"
                             rel="noreferrer"
-                            className={`pointer-events-auto flex items-center justify-end gap-2 pr-1 pl-4 py-1.5 rounded-full shadow-lg transform transition-all hover:scale-110 ${opt.delay} ${isHovered ? 'translate-x-0 opacity-100' : 'translate-x-10 opacity-0'}`}
+                            className={`flex items-center justify-end gap-3 pr-0.5 group/opt hover:scale-105 transition-all duration-300 ${opt.delay} ${isHovered ? 'translate-x-0 opacity-100' : 'translate-x-10 opacity-0'}`}
+                            onMouseEnter={handleHoverEnter}
                         >
-                            <span className="bg-white text-gray-700 text-[10px] font-bold px-2 py-1 rounded shadow-sm whitespace-nowrap">
+                            <span className="bg-white text-gray-800 text-[11px] font-bold px-3 py-1.5 rounded-lg shadow-xl border border-gray-100 whitespace-nowrap opacity-0 group-hover/opt:opacity-100 transition-opacity duration-300">
                                 {opt.label}
                             </span>
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white shadow-md ${opt.color}`}>
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white shadow-[0_4px_15px_rgba(0,0,0,0.15)] transition-transform duration-300 group-hover/opt:rotate-12 ${opt.color}`}>
                                 {opt.icon}
                             </div>
                         </a>
@@ -477,25 +495,28 @@ const ChatWidget = () => {
 
             <button
                 onClick={() => setIsOpen(!isOpen)}
+                onMouseEnter={handleHoverEnter}
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}
-                className={`pointer-events-auto p-4 rounded-full shadow-xl transition-all duration-300 transform hover:scale-110 flex items-center justify-center relative ${isOpen ? 'bg-gray-400 text-white rotate-90' : 'bg-blue-600 text-white'
+                className={`pointer-events-auto w-14 h-14 rounded-full shadow-[0_8px_25px_rgba(0,0,0,0.2)] transition-all duration-500 transform hover:scale-110 flex items-center justify-center relative ${isOpen ? 'bg-gray-500 text-white rotate-90 scale-90' : 'bg-[#0084FF] text-white'
                     }`}
             >
                 {isOpen ? <X size={24} /> : (
                     <>
-                        <MessageCircle size={28} className="fill-current" />
+                        <MessageCircle size={32} className="fill-current" />
                         {unreadCount > 0 && (
-                            <span className="absolute -top-1 -right-1 min-w-[20px] h-5 bg-red-500 text-white text-xs font-bold rounded-full border-2 border-white animate-bounce-custom flex items-center justify-center px-1">
+                            <span className="absolute -top-1 -right-1 min-w-[22px] h-5.5 bg-[#FF3B30] text-white text-[10px] font-black rounded-full border-2 border-white flex items-center justify-center px-1 shadow-lg animate-pulse">
                                 {unreadCount > 9 ? '9+' : unreadCount}
                             </span>
                         )}
                     </>
                 )}
 
+                {/* Greeting Tooltip */}
                 {!isOpen && !isHovered && (
-                    <div className="absolute right-full mr-4 bg-white text-gray-800 px-4 py-2 rounded-xl shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none font-medium text-sm arrow-right">
+                    <div className="absolute right-full mr-5 bg-white text-gray-800 px-5 py-2.5 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.15)] whitespace-nowrap opacity-0 group-hover:block group-hover:opacity-100 transition-all duration-300 pointer-events-none font-bold text-sm border border-gray-50 animate-bounce-subtle">
                         Chat với chúng tôi! 👋
+                        <div className="absolute top-1/2 -right-2 -translate-y-1/2 border-8 border-transparent border-l-white"></div>
                     </div>
                 )}
             </button>

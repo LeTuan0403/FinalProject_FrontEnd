@@ -119,7 +119,7 @@ const Booking = () => {
                         email: rebookData?.emailLienHe || prev.email,
                         phone: rebookData?.sdtLienHe || prev.phone,
                         address: (rebookData?.ghiChu?.match(/Địa chỉ: (.*?)\./) || [])[1] || prev.address,
-                        adults: rebookData ? rebookData.soLuongNguoiLon : (res.data.isTuChon ? (res.data.soLuongCho || 1) : 1),
+                        adults: rebookData ? rebookData.soLuongNguoiLon : (res.data.isTuChon ? Math.max(5, res.data.soLuongCho || 0) : 1),
                         children: rebookData ? rebookData.soLuongTreEm : 0,
                         note: rebookData ? (rebookData.ghiChu?.match(/Ghi chú: (.*?)\./) || [])[1] : ''
                     }));
@@ -132,7 +132,7 @@ const Booking = () => {
                         email: rebookData?.emailLienHe || prev.email,
                         phone: rebookData?.sdtLienHe || prev.phone,
                         address: (rebookData?.ghiChu?.match(/Địa chỉ: (.*?)\./) || [])[1] || prev.address,
-                        adults: rebookData ? rebookData.soLuongNguoiLon : (res.data.isTuChon ? (res.data.soLuongCho || 1) : 1),
+                        adults: rebookData ? rebookData.soLuongNguoiLon : (res.data.isTuChon ? Math.max(5, res.data.soLuongCho || 0) : 1),
                         children: rebookData ? rebookData.soLuongTreEm : 0,
                         note: rebookData ? (rebookData.ghiChu?.match(/Ghi chú: (.*?)\./) || [])[1] : ''
                     }));
@@ -156,7 +156,7 @@ const Booking = () => {
 
     // Check for Discount on selected date
     let appliedDiscount = 0;
-    if (tour && tour.discounts && formData.departureDate) {
+    if (tour && tour.discounts && formData.departureDate && !tour.isTuChon) {
         const selectedDateStr = formData.departureDate; // Already YYYY-MM-DD from select/input
         const discount = tour.discounts.find(d => {
             const dDateStr = getLocalDateStr(new Date(d.date));
@@ -204,7 +204,7 @@ const Booking = () => {
     // Auto-fetch and organize coupons
     useEffect(() => {
         const fetchAndOptimize = async () => {
-            if (!baseTotalPrice || !tour) {
+            if (!baseTotalPrice || !tour || tour.isTuChon) {
                 return;
             }
             try {
@@ -262,6 +262,10 @@ const Booking = () => {
     const handleApplyCoupon = async () => {
         if (!couponCode.trim()) {
             toast.error("Vui lòng nhập mã giảm giá");
+            return;
+        }
+        if (baseTotalPrice <= 0) {
+            toast.error("Đơn hàng chưa có giá trị thanh toán, không thể áp dụng mã.");
             return;
         }
         try {
@@ -538,19 +542,23 @@ const Booking = () => {
 
                             <div className="flex gap-6 p-6 bg-blue-50 rounded-xl border border-blue-100">
                                 <div className="flex-1">
-                                    <label className="block text-sm font-bold text-gray-700 mb-2">Người lớn ({priceAdult.toLocaleString()} ₫)</label>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Người lớn ({priceAdult.toLocaleString()} ₫) {tour.isTuChon && <span className="text-red-500 text-xs">(Tối thiểu 5)</span>}</label>
                                     <input
                                         type="number"
-                                        min="1"
+                                        min={tour.isTuChon ? 5 : 1}
                                         className={`w-full p-3 border rounded-xl font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500 ${touched.adults && errors.adults ? 'border-red-500 bg-red-50' : 'border-gray-200 bg-gray-50'}`}
                                         value={formData.adults}
                                         onKeyDown={(e) => ["-", "e", "E", "+"].includes(e.key) && e.preventDefault()}
                                         onChange={e => handleQuantityChange('adults', e.target.value)}
                                         onBlur={() => {
                                             setTouched({ ...touched, adults: true });
-                                            // Enforce minimum 1 on blur
-                                            if (formData.adults === '' || Number(formData.adults) < 1) {
-                                                setFormData(prev => ({ ...prev, adults: 1 }));
+                                            // Enforce minimum
+                                            const minVal = tour.isTuChon ? 5 : 1;
+                                            if (formData.adults === '' || Number(formData.adults) < minVal) {
+                                                if (tour.isTuChon && Number(formData.adults) < 5) {
+                                                    toast.error("Tour thiết kế yêu cầu tối thiểu 5 người lớn");
+                                                }
+                                                setFormData(prev => ({ ...prev, adults: minVal }));
                                             }
                                         }}
                                     />
@@ -585,59 +593,68 @@ const Booking = () => {
                             </div>
                             {/* Coupon Section */}
                             <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm mb-6">
-                                <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                                <label className="text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
                                     <Ticket size={16} className="text-blue-600" /> Mã giảm giá
                                 </label>
-                                <div className="flex gap-2">
-                                    <input
-                                        type="text"
-                                        className="flex-1 p-3 border border-gray-200 rounded-lg uppercase font-bold focus:ring-2 focus:ring-blue-100 outline-none"
-                                        value={couponCode}
-                                        onChange={e => {
-                                            setCouponCode(e.target.value.toUpperCase());
-                                            if (isCouponApplied) {
-                                                setIsCouponApplied(false);
-                                                setCouponDiscount(0);
-                                            }
-                                        }}
-                                        disabled={isCouponApplied}
-                                    />
-                                    {isCouponApplied ? (
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                setIsCouponApplied(false);
-                                                setCouponCode('');
-                                                setCouponDiscount(0);
-                                            }}
-                                            className="px-4 py-2 bg-red-100 text-red-600 rounded-lg font-bold hover:bg-red-200"
-                                        >
-                                            Hủy
-                                        </button>
-                                    ) : (
-                                        <>
-                                            <button
-                                                type="button"
-                                                onClick={handleApplyCoupon}
-                                                className="px-4 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700"
-                                                disabled={!couponCode}
-                                            >
-                                                Áp dụng
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowCouponModal(true)}
-                                                className="px-4 py-2 bg-orange-100 text-orange-600 rounded-lg font-bold hover:bg-orange-200 flex items-center gap-1"
-                                            >
-                                                <List size={18} /> Chọn mã
-                                            </button>
-                                        </>
-                                    )}
-                                </div>
-                                {isCouponApplied && (
-                                    <div className="mt-2 text-sm text-green-600 font-medium flex items-center gap-1">
-                                        <CheckCircle size={14} /> Đã giảm {couponDiscount.toLocaleString()}đ
+                                {tour.isTuChon ? (
+                                    <div className="bg-orange-50 p-4 rounded-xl border border-orange-200 text-orange-800 text-sm flex items-center gap-2">
+                                        <Ticket size={16} />
+                                        <span>Tour thiết kế tự chọn không áp dụng mã giảm giá.</span>
                                     </div>
+                                ) : (
+                                    <>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                className="flex-1 p-3 border border-gray-200 rounded-lg uppercase font-bold focus:ring-2 focus:ring-blue-100 outline-none"
+                                                value={couponCode}
+                                                onChange={e => {
+                                                    setCouponCode(e.target.value.toUpperCase());
+                                                    if (isCouponApplied) {
+                                                        setIsCouponApplied(false);
+                                                        setCouponDiscount(0);
+                                                    }
+                                                }}
+                                                disabled={isCouponApplied}
+                                            />
+                                            {isCouponApplied ? (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setIsCouponApplied(false);
+                                                        setCouponCode('');
+                                                        setCouponDiscount(0);
+                                                    }}
+                                                    className="px-4 py-2 bg-red-100 text-red-600 rounded-lg font-bold hover:bg-red-200"
+                                                >
+                                                    Hủy
+                                                </button>
+                                            ) : (
+                                                <>
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleApplyCoupon}
+                                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700"
+                                                        disabled={!couponCode}
+                                                    >
+                                                        Áp dụng
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowCouponModal(true)}
+                                                        className="px-4 py-2 bg-orange-100 text-orange-600 rounded-lg font-bold hover:bg-orange-200 flex items-center gap-1"
+                                                    >
+                                                        <List size={18} /> Chọn mã
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
+                                        {isCouponApplied && (
+                                            <div className="mt-2 text-sm text-green-600 font-medium flex items-center gap-1">
+                                                <CheckCircle size={14} /> Đã giảm {couponDiscount.toLocaleString()}đ
+                                            </div>
+                                        )}
+                                    </>
                                 )}
                             </div>
 

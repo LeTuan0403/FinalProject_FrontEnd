@@ -65,17 +65,36 @@ const ContactSection: React.FC<{
 
 const GuestsSection: React.FC<{
     formData: BookingFormProps['formData'],
-    onChange: (field: keyof BookingFormProps['formData'], value: number) => void
-}> = ({ formData, onChange }) => (
+    onChange: (field: keyof BookingFormProps['formData'], value: number) => void,
+    isCustomTour?: boolean
+}> = ({ formData, onChange, isCustomTour }) => (
     <>
         <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1">Số người lớn</label>
+            <label className="block text-sm font-bold text-gray-700 mb-1">Số người lớn {isCustomTour && <span className="text-red-500 text-xs">(Tối thiểu 5)</span>}</label>
             <input
                 type="number"
-                min="1"
+                min={isCustomTour ? 5 : 1}
                 className="w-full p-3 border rounded-lg"
                 value={formData.soLuongNguoiLon || 0}
-                onChange={e => onChange('soLuongNguoiLon', e.target.value === '' ? 0 : Number(e.target.value))}
+                onChange={e => {
+                    const val = Number(e.target.value);
+                    onChange('soLuongNguoiLon', val);
+                    // Optional: Immediate feedback or Toast here if violation? 
+                    // Better to just enforce via min/validation on submit or simple toast if onChange tries to go below
+                    if (isCustomTour && val < 5 && val !== 0) { // allow 0 temporarily if clearing? No.
+                        // Actually standard input behavior lets users type. We will validate on blur or submit usually, 
+                        // but setting min attribute helps UI.
+                    }
+                }}
+                onBlur={(e) => {
+                    const val = Number(e.target.value);
+                    if (isCustomTour && val < 5) {
+                        toast.error("Tour thiết kế yêu cầu tối thiểu 5 người lớn");
+                        onChange('soLuongNguoiLon', 5);
+                    } else if (val < 1) {
+                        onChange('soLuongNguoiLon', 1);
+                    }
+                }}
             />
         </div>
         <div>
@@ -143,7 +162,7 @@ const VoucherSection: React.FC<{
     onChange: (data: BookingFormProps['formData']) => void
 }> = ({ couponInput, setCouponInput, handleApplyCoupon, isValidating, setIsCouponModalOpen, formData, onChange }) => (
     <div className="col-span-2 bg-blue-50/50 p-4 rounded-xl border border-blue-100">
-        <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+        <label className="text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
             <Ticket size={16} className="text-blue-600" /> Mã giảm giá
         </label>
         <div className="flex gap-2">
@@ -284,7 +303,7 @@ const BookingForm: React.FC<BookingFormProps> = ({ formData, onChange, tour }) =
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <ContactSection formData={formData} onChange={handleChange} />
-            <GuestsSection formData={formData} onChange={handleChange} />
+            <GuestsSection formData={formData} onChange={handleChange} isCustomTour={tour?.isTuChon} />
             <DepartureSection tour={tour} formData={formData} onChange={handleChange} />
             <VoucherSection
                 couponInput={couponInput}

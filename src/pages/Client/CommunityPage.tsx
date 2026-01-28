@@ -5,8 +5,11 @@ import CreatePostModal from '../../components/community/CreatePostModal';
 import PostDetailModal from '../../components/community/PostDetailModal';
 import { postService, Post } from '../../services/postService';
 import { useAuth } from '../../hooks/useAuth';
-import { Plus, Users, Globe, User as UserIcon } from 'lucide-react';
+import { Plus, Users, Globe, User as UserIcon, Flame, Clock } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { useTours } from '../../hooks/useTours';
+import TourCard from '../../components/common/TourCard';
+import { getLocalDateStr } from '../../utils/dateUtils';
 
 const CommunityPage = () => {
     const { user } = useAuth();
@@ -19,6 +22,42 @@ const CommunityPage = () => {
     const [sharingPost, setSharingPost] = useState<Post | null>(null);
 
     const viewingPostId = searchParams.get('post');
+    const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+
+    const { tours } = useTours();
+
+    // Get Last Minute Tours (within 3 days from Tomorrow)
+    const lastMinuteTours = tours.filter(t => {
+        if (!t.daDuyet || t.isTuChon) { return false; }
+        if (!t.ngayKhoiHanh || !Array.isArray(t.ngayKhoiHanh)) { return false; }
+
+        // Tomorrow String
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const tomorrowStr = getLocalDateStr(tomorrow);
+
+        // End Date (Tomorrow + 3 days)
+        const endDate = new Date(tomorrow);
+        endDate.setDate(endDate.getDate() + 3);
+        const endDateStr = getLocalDateStr(endDate);
+
+        // Check if ANY departure date is within [tomorrow, tomorrow+3]
+        return t.ngayKhoiHanh.some(d => {
+            const dStr = new Date(d).toISOString().split('T')[0];
+            return dStr >= tomorrowStr && dStr <= endDateStr;
+        });
+    });
+
+    // Auto-slide effect
+    useEffect(() => {
+        if (lastMinuteTours.length <= 1) { return; }
+        const interval = setInterval(() => {
+            setCurrentSlideIndex(prev => (prev + 1) % lastMinuteTours.length);
+        }, 5000); // 5 seconds per slide
+
+        return () => clearInterval(interval);
+    }, [lastMinuteTours.length]);
 
     const fetchPosts = useCallback(async () => {
         setLoading(true);
@@ -144,12 +183,41 @@ const CommunityPage = () => {
                     {/* Sidebar */}
                     <div className="hidden lg:block space-y-6">
                         <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 sticky top-24">
-                            <h4 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
-                                <span className="w-1 h-5 bg-blue-500 rounded-full"></span>
-                                Tour đang hot
-                            </h4>
-                            <div className="space-y-4">
-                                <div className="text-sm text-gray-500 italic">Tính năng đang cập nhật...</div>
+                            <h2 className="text-xl font-bold bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent mb-6 flex items-center gap-2">
+                                <Flame className="text-orange-500 animate-pulse" />
+                                Tour giờ chót
+                            </h2>
+                            <div className="relative overflow-hidden min-h-[400px]">
+                                {lastMinuteTours.length > 0 ? (
+                                    <>
+                                        <div
+                                            className="flex transition-transform duration-500 ease-in-out"
+                                            style={{ transform: `translateX(-${currentSlideIndex * 100}%)` }}
+                                        >
+                                            {lastMinuteTours.map((tour) => (
+                                                <div key={tour.tourId} className="w-full flex-shrink-0 px-1">
+                                                    <TourCard tour={tour} variant="vertical" />
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        {/* Dots Navigation */}
+                                        <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2">
+                                            {lastMinuteTours.map((_, idx) => (
+                                                <button
+                                                    key={idx}
+                                                    onClick={() => setCurrentSlideIndex(idx)}
+                                                    className={`w-2 h-2 rounded-full transition-all ${idx === currentSlideIndex ? 'bg-blue-600 w-4' : 'bg-gray-300 hover:bg-gray-400'}`}
+                                                />
+                                            ))}
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="text-center py-6 bg-gray-50 rounded-lg">
+                                        <Clock className="mx-auto text-gray-300 mb-2" />
+                                        <div className="text-sm text-gray-500 italic">Chưa có tour giờ chót nào</div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>

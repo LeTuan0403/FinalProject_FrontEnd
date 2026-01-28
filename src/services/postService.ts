@@ -10,6 +10,8 @@ export interface Comment {
     };
     content: string;
     createdAt: string;
+    likes?: string[];
+    replies?: Comment[];
 }
 
 export interface Post {
@@ -49,6 +51,15 @@ export const postService = {
     deletePost: (id: string) => api.delete<{ msg: string }>(`/posts/${id}`),
     likePost: (id: string) => api.put<string[]>(`/posts/like/${id}`),
     commentPost: (id: string, content: string) => api.post<Comment[]>(`/posts/comment/${id}`, { content }),
+    replyToComment: (id: string, commentId: string, content: string) => api.post<Comment[]>(`/posts/comment/reply/${id}/${commentId}`, { content }),
+    likeComment: (id: string, commentId: string, replyId?: string) =>
+        api.put<Comment[]>(`/posts/comment/like/${id}/${commentId}${replyId ? `?replyId=${replyId}` : ''}`),
+
+    updateComment: (id: string, commentId: string, content: string, replyId?: string) =>
+        api.put<Comment[]>(`/posts/comment/${id}/${commentId}${replyId ? `?replyId=${replyId}` : ''}`, { content }),
+
+    deleteComment: (id: string, commentId: string, replyId?: string) =>
+        api.delete<Comment[]>(`/posts/comment/${id}/${commentId}${replyId ? `?replyId=${replyId}` : ''}`),
     uploadMedia: (formData: FormData) => api.post<string[]>('/upload/posts', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
 
     // Admin
