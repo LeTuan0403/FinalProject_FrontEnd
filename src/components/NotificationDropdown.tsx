@@ -17,9 +17,14 @@ interface Notification {
     createdAt: string;
 }
 
-const NotificationDropdown = () => {
+interface NotificationDropdownProps {
+    extraSection?: React.ReactNode;
+    extraCount?: number;
+}
+
+const NotificationDropdown = ({ extraSection, extraCount = 0 }: NotificationDropdownProps) => {
     const { user } = useAuth();
-    const { socket } = useChat();
+    const { socket, toggleChat } = useChat();
     const navigate = useNavigate();
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
@@ -58,8 +63,27 @@ const NotificationDropdown = () => {
         socket.emit('join_room', `user_${user.userId}`);
 
         const handleNewNotification = (newNotif: Notification) => {
-            setNotifications(prev => [newNotif, ...prev]);
-            setUnreadCount(prev => prev + 1);
+            // If the new notification says history is deleted, clear local 'MESSAGE' type notifications
+            if (newNotif.type === 'HISTORY_DELETED') {
+                setNotifications(prev => {
+                    const filtered = prev.filter(n => n.type !== 'MESSAGE');
+                    return [newNotif, ...filtered];
+                });
+
+                // Recalculate unread count
+                // Note: We can't easily know exactly how many were unread messages without recalculating from state.
+                // A simpler, safer way is to just setNotifications and then let a separate effect or just fetchCounts handle it?
+                // Or better: manual calc.
+                setNotifications(prev => {
+                    const filtered = prev.filter(n => n.type !== 'MESSAGE');
+                    const newUnreadCount = [newNotif, ...filtered].filter(n => !n.isRead).length;
+                    setUnreadCount(newUnreadCount);
+                    return [newNotif, ...filtered];
+                });
+            } else {
+                setNotifications(prev => [newNotif, ...prev]);
+                setUnreadCount(prev => prev + 1);
+            }
 
             // Optional: Play a sound
             // const audio = new Audio('/notification.mp3');
@@ -89,6 +113,12 @@ const NotificationDropdown = () => {
             await markAsRead(notification._id);
         }
         setIsOpen(false);
+
+        if (notification.type === 'HISTORY_DELETED' || notification.type === 'MESSAGE') {
+            toggleChat(true);
+            return;
+        }
+
         if (notification.link) {
             navigate(notification.link);
         }
@@ -151,9 +181,9 @@ const NotificationDropdown = () => {
                 className="relative p-2.5 bg-white text-gray-700 hover:text-blue-600 transition-all rounded-full shadow-md hover:shadow-lg border border-gray-100 active:scale-95"
             >
                 <Bell size={22} />
-                {unreadCount > 0 && (
+                {(unreadCount + extraCount) > 0 && (
                     <span className="absolute top-0 right-0 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-xs font-bold leading-none text-white transform translate-x-1/4 -translate-y-1/4 bg-red-600 rounded-full border-2 border-white shadow-sm">
-                        {unreadCount > 99 ? '99+' : unreadCount}
+                        {(unreadCount + extraCount) > 99 ? '99+' : (unreadCount + extraCount)}
                     </span>
                 )}
             </button>
@@ -170,6 +200,11 @@ const NotificationDropdown = () => {
                     </div>
 
                     <div className="max-h-96 overflow-y-auto">
+                        {extraSection && (
+                            <div className="border-b border-gray-100 bg-gray-50/30">
+                                {extraSection}
+                            </div>
+                        )}
                         {notifications.length === 0 ? (
                             <div className="p-4 text-center text-gray-500 text-sm py-8">
                                 Không có thông báo nào

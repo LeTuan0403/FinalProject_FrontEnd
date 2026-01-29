@@ -1,15 +1,15 @@
 import { useState } from 'react';
-import { Bell, Menu, LogOut } from 'lucide-react';
+import { Menu, LogOut } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
 import { useNotification } from '../../../context/NotificationContext';
 import { useNavigate } from 'react-router-dom';
+import NotificationDropdown from '../../../components/NotificationDropdown';
 
 const AdminHeader = ({ onMenuClick }: { onMenuClick?: () => void }) => {
     const { user, logout } = useAuth();
     const { counts } = useNotification();
     const navigate = useNavigate();
     const [isProfileOpen, setIsProfileOpen] = useState(false);
-    const [isNotifOpen, setIsNotifOpen] = useState(false);
 
     const handleLogout = () => {
         logout();
@@ -34,56 +34,36 @@ const AdminHeader = ({ onMenuClick }: { onMenuClick?: () => void }) => {
             </div>
 
             <div className="flex items-center gap-4">
-                {/* Notification Bell */}
-                <div className="relative">
-                    <button
-                        onClick={() => setIsNotifOpen(!isNotifOpen)}
-                        className="p-2 hover:bg-gray-100 rounded-full transition relative"
-                    >
-                        <Bell size={20} className="text-gray-600" />
-                        {counts.total > 0 && (
-                            <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border border-white"></span>
-                        )}
-                    </button>
-
-                    {isNotifOpen && (
-                        <>
-                            <div className="fixed inset-0 z-30" onClick={() => setIsNotifOpen(false)}></div>
-                            <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden z-40 animate-fade-in origin-top-right">
-                                <div className="p-4 border-b border-gray-50 bg-gray-50/50 flex justify-between items-center">
-                                    <h3 className="font-bold text-gray-800">Thông báo</h3>
-                                    {counts.total > 0 && <span className="bg-red-100 text-red-600 text-xs px-2 py-0.5 rounded-full font-bold">{counts.total} mới</span>}
+                {/* Combined Notifications */}
+                <NotificationDropdown
+                    extraCount={counts.total}
+                    extraSection={
+                        notifications.length > 0 ? (
+                            <div>
+                                <div className="px-4 py-2 bg-gray-50 border-b border-gray-100 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                                    Cần xử lý
                                 </div>
-                                <div className="max-h-[300px] overflow-y-auto">
-                                    {notifications.length > 0 ? (
-                                        notifications.map((item) => (
-                                            <div
-                                                key={item.id}
-                                                onClick={() => {
-                                                    navigate(item.path);
-                                                    setIsNotifOpen(false);
-                                                }}
-                                                className="p-4 border-b border-gray-50 hover:bg-gray-50 cursor-pointer transition flex items-start gap-3"
-                                            >
-                                                <div className={`w-2 h-2 mt-2 rounded-full ${item.color.replace('text', 'bg')}`}></div>
-                                                <div>
-                                                    <p className="text-sm font-medium text-gray-800">
-                                                        Bạn có <span className={`font-bold ${item.color}`}>{item.count}</span> {item.label}
-                                                    </p>
-                                                    <p className="text-xs text-gray-400 mt-1">Nhấn để xem chi tiết</p>
-                                                </div>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <div className="p-8 text-center text-gray-400 text-sm">
-                                            Không có thông báo mới
+                                {notifications.map((item) => (
+                                    <div
+                                        key={item.id}
+                                        onClick={() => navigate(item.path)}
+                                        className="px-4 py-3 border-b border-gray-50 hover:bg-gray-50 cursor-pointer transition flex items-center justify-between group"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-2 h-2 rounded-full ${item.color.replace('text', 'bg')}`}></div>
+                                            <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600 transition">
+                                                {item.label}
+                                            </span>
                                         </div>
-                                    )}
-                                </div>
+                                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${item.bg} ${item.color}`}>
+                                            {item.count}
+                                        </span>
+                                    </div>
+                                ))}
                             </div>
-                        </>
-                    )}
-                </div>
+                        ) : null
+                    }
+                />
 
                 {/* Vertical Divider */}
                 <div className="h-6 w-px bg-gray-200"></div>

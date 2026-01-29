@@ -10,9 +10,8 @@ import type { Tour } from "../../types";
 import ZaloIcon from "../icons/ZaloIcon";
 
 const ChatWidget = () => {
-    const { socket } = useChat();
+    const { socket, isChatOpen, toggleChat } = useChat();
     const { user } = useAuth();
-    const [isOpen, setIsOpen] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState("");
@@ -64,10 +63,10 @@ const ChatWidget = () => {
 
     useEffect(() => {
         scrollToBottom();
-        if (isOpen) {
+        if (isChatOpen) {
             setUnreadCount(0);
         }
-    }, [messages, isOpen]);
+    }, [messages, isChatOpen]);
 
     // Ensure guest ID is saved if generated on render
     useEffect(() => {
@@ -115,7 +114,7 @@ const ChatWidget = () => {
             }
         };
         initChat();
-    }, [user, isOpen, conversationId]); // Re-run if user logs in/out
+    }, [user, isChatOpen, conversationId]); // Re-run if user logs in/out
 
     // 2. Socket Listeners
     useEffect(() => {
@@ -137,8 +136,14 @@ const ChatWidget = () => {
         socket.on("connect", handleConnect);
 
         socket.on("receive_message", (data: Message) => {
-            setMessages((prev) => [...prev, data]);
-            if (!isOpen) {
+            setMessages((prev) => {
+                // Prevent duplicate messages
+                if (prev.some(m => m._id === data._id)) {
+                    return prev;
+                }
+                return [...prev, data];
+            });
+            if (!isChatOpen) {
                 setUnreadCount(prev => prev + 1);
             }
         });
@@ -178,7 +183,7 @@ const ChatWidget = () => {
             socket.off("stop_typing");
             socket.off("message_read");
         };
-    }, [socket, conversationId, currentUserId, isOpen]);
+    }, [socket, conversationId, currentUserId, isChatOpen]);
 
     // Handle Input Change for Typing
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -199,7 +204,7 @@ const ChatWidget = () => {
 
     // Mark read when opening chat or receiving message
     useEffect(() => {
-        if (isOpen && conversationId && messages.length > 0) {
+        if (isChatOpen && conversationId && messages.length > 0) {
             const lastMsg = messages[messages.length - 1];
 
             // If last message is from admin, we should mark it as read (API + Socket)
@@ -214,7 +219,7 @@ const ChatWidget = () => {
                     });
             }
         }
-    }, [isOpen, messages, conversationId, socket]);
+    }, [isChatOpen, messages, conversationId, socket]);
 
     const ensureConversation = useCallback(async (senderId: string) => {
         const res = await axios.post("http://localhost:5000/api/chat/conversation", {
@@ -225,7 +230,7 @@ const ChatWidget = () => {
     }, [user]);
 
     const shareTour = useCallback(async (tour: Tour) => {
-        setIsOpen(true);
+        toggleChat(true);
         const senderId = user ? String(user.userId) : (localStorage.getItem("chat_guest_id") || `guest_${Date.now()}`);
         let currentConvId = conversationId;
 
@@ -336,7 +341,7 @@ const ChatWidget = () => {
 
     // 3. Handle Greeting on First Open
     useEffect(() => {
-        if (isOpen && messages.length === 0 && !conversationId) {
+        if (isChatOpen && messages.length === 0 && !conversationId) {
             // Fake Greeting
             const greeting: Message = {
                 senderId: "admin",
@@ -345,7 +350,7 @@ const ChatWidget = () => {
             };
             setMessages([greeting]);
         }
-    }, [isOpen, messages.length, conversationId]);
+    }, [isChatOpen, messages.length, conversationId]);
 
     // 4. Send Message
     const handleSend = async () => {
@@ -451,8 +456,8 @@ const ChatWidget = () => {
             onMouseLeave={handleHoverLeave}
         >
             <ChatWindow
-                isOpen={isOpen}
-                setIsOpen={setIsOpen}
+                isOpen={isChatOpen}
+                setIsOpen={toggleChat}
                 messages={messages}
                 newMessage={newMessage}
                 setNewMessage={setNewMessage}
@@ -468,7 +473,7 @@ const ChatWidget = () => {
             />
 
             {/* Quick Contact Options (Rendered on Hover) */}
-            {!isOpen && (
+            {!isChatOpen && (
                 <div
                     className={`flex flex-col gap-3 transition-all duration-500 ease-in-out ${isHovered ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-10 pointer-events-none'}`}
                     onMouseEnter={handleHoverEnter}
@@ -494,14 +499,14 @@ const ChatWidget = () => {
             )}
 
             <button
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={() => toggleChat(!isChatOpen)}
                 onMouseEnter={handleHoverEnter}
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}
-                className={`pointer-events-auto w-14 h-14 rounded-full shadow-[0_8px_25px_rgba(0,0,0,0.2)] transition-all duration-500 transform hover:scale-110 flex items-center justify-center relative ${isOpen ? 'bg-gray-500 text-white rotate-90 scale-90' : 'bg-[#0084FF] text-white'
+                className={`pointer-events-auto w-14 h-14 rounded-full shadow-[0_8px_25px_rgba(0,0,0,0.2)] transition-all duration-500 transform hover:scale-110 flex items-center justify-center relative ${isChatOpen ? 'bg-gray-500 text-white rotate-90 scale-90' : 'bg-[#0084FF] text-white'
                     }`}
             >
-                {isOpen ? <X size={24} /> : (
+                {isChatOpen ? <X size={24} /> : (
                     <>
                         <MessageCircle size={32} className="fill-current" />
                         {unreadCount > 0 && (
@@ -513,7 +518,7 @@ const ChatWidget = () => {
                 )}
 
                 {/* Greeting Tooltip */}
-                {!isOpen && !isHovered && (
+                {!isChatOpen && !isHovered && (
                     <div className="absolute right-full mr-5 bg-white text-gray-800 px-5 py-2.5 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.15)] whitespace-nowrap opacity-0 group-hover:block group-hover:opacity-100 transition-all duration-300 pointer-events-none font-bold text-sm border border-gray-50 animate-bounce-subtle">
                         Chat với chúng tôi! 👋
                         <div className="absolute top-1/2 -right-2 -translate-y-1/2 border-8 border-transparent border-l-white"></div>

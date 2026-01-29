@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { MessageCircle, Search, Send, MapPin, X, Trash2, ChevronUp, ChevronDown } from "lucide-react";
 import axios from "axios";
@@ -130,7 +131,50 @@ const AdminChat = () => {
 
         return () => clearTimeout(delayDebounceFn);
         // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [searchParams]);
+
+    // url params handling
+    const [urlParams] = useSearchParams();
+    const targetConvId = urlParams.get('conversationId');
+
+    // Auto-select conversation from URL if available
+    useEffect(() => {
+        const fetchTargetConversation = async () => {
+            if (!targetConvId) return;
+
+            // 1. Check if it's already in the list
+            const found = conversations.find(c => c._id === targetConvId);
+            if (found) {
+                if (selectedConv?._id !== targetConvId) {
+                    setSelectedConv(found);
+                }
+            } else {
+                // 2. Not found -> Fetch from API
+                try {
+                    const res = await axios.get(`http://localhost:5000/api/chat/conversation/id/${targetConvId}`);
+                    const newConv = res.data;
+
+                    if (newConv) {
+                        setConversations(prev => {
+                            // Check again if added (race condition)
+                            if (prev.some(c => c._id === newConv._id)) return prev;
+                            const newList = [newConv, ...prev];
+                            return sortConversations(newList);
+                        });
+                        setSelectedConv(newConv);
+                    }
+                } catch (e) {
+                    console.error("Failed to fetch target conversation", e);
+                    toast.error("Không tìm thấy cuộc trò chuyện này");
+                }
+            }
+        };
+
+        if (conversations.length > 0 || targetConvId) {
+            fetchTargetConversation();
+        }
+    }, [conversations, targetConvId]);
 
     // 2. Select Conversation & Fetch Messages
     useEffect(() => {

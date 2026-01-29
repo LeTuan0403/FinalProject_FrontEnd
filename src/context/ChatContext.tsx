@@ -1,18 +1,26 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useEffect, useMemo, ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, ReactNode } from "react";
 import io, { Socket } from "socket.io-client";
 import { useAuth } from "../hooks/useAuth";
 
 interface ChatContextType {
     socket: Socket | null;
+    isChatOpen: boolean;
+    toggleChat: (isOpen: boolean) => void;
 }
 
-const ChatContext = createContext<ChatContextType>({ socket: null });
+const ChatContext = createContext<ChatContextType>({
+    socket: null,
+    isChatOpen: false,
+    toggleChat: () => { }
+});
 
 export const useChat = () => useContext(ChatContext);
 
 export const ChatProvider = ({ children }: { children: ReactNode }) => {
     const { user } = useAuth();
+    const [isChatOpen, setIsChatOpen] = useState(false);
+
 
     // Singleton socket instance
     // We use useMemo to keep the SAME socket object reference, 
@@ -46,8 +54,9 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     }, [user?.userId]); // Dependency on userId mainly
 
     return (
-        <ChatContext.Provider value={{ socket }}>
+        <ChatContext.Provider value={{ socket, isChatOpen, toggleChat: setIsChatOpen }}>
             {children}
+
         </ChatContext.Provider>
     );
 };
