@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { User, Menu, X, Map, Phone } from 'lucide-react';
 import { useState } from 'react';
+import NotificationDropdown from './NotificationDropdown';
 
 const Header = () => {
   const { user, logout } = useAuth();
@@ -29,6 +30,7 @@ const Header = () => {
           <div className="flex items-center gap-4 text-sm font-medium">
 
             <div className="flex items-center gap-2">
+              {user && <NotificationDropdown />}
               {user ? (
                 <div className="relative">
                   <div

@@ -200,7 +200,7 @@ const AdminEditTour = () => {
             // Base payload construction (common for both Create and Edit)
             const commonPayload = {
                 nguoiTaoId: formData.nguoiTaoId || user?.userId || 1, // Preserve original creator or use current user
-                userId: formData.userId || user?.userId || 1,     // Preserve original userId
+                // userId: formData.userId || user?.userId || 1,     // REMOVED: Not in Tour type and unused by backend
                 maTour: formData.maTour,
                 tenTour: formData.tenTour,
                 moTa: formData.moTa,

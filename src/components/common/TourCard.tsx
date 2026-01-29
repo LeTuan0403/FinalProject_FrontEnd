@@ -152,7 +152,7 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
                     className="absolute top-4 right-16 z-10"
                 />
 
-                <div className="relative overflow-hidden h-60">
+                <div className="relative overflow-hidden h-32 md:h-60">
                     <img
                         src={tour.hinhAnhBia || "https://placehold.co/400x300?text=Tour"}
                         alt={tour.tenTour}
@@ -170,44 +170,46 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
                     </div>
                 </div>
 
-                <div className="p-5 flex-grow flex flex-col">
-                    <h3 className="text-lg font-bold mb-3 text-gray-800 group-hover:text-blue-600 transition-colors line-clamp-2 min-h-[3.5rem]">
+                <div className="p-2 md:p-5 flex-grow flex flex-col">
+                    <h3 className="text-sm md:text-lg font-bold mb-1 md:mb-2 text-gray-800 group-hover:text-blue-600 transition-colors line-clamp-2 min-h-[2.5rem] md:min-h-[3.5rem]">
                         <Link to={`/tours/${linkId}`}>{tour.tenTour}</Link>
                     </h3>
 
-                    <div className="flex items-center gap-2 mb-4 text-sm text-gray-500">
-                        <Clock className="w-4 h-4" />
-                        <span>{durationText}</span>
-                    </div>
-
-                    <div className="flex items-center gap-2 mb-4 text-sm text-gray-500 -mt-2">
-                        <Calendar className="w-4 h-4" />
-                        <span>K.Hành: <span className="font-semibold text-blue-600">{nextDepartureText}</span></span>
-                    </div>
-
-                    <div className="flex items-center gap-2 mb-4 text-sm text-gray-500 -mt-2">
-                        <User className="w-4 h-4" />
-                        <span>Còn: <span className="font-semibold text-red-500">{remainingSeats} chỗ</span></span>
-                    </div>
-
-                    <div className="mt-auto flex justify-between items-center border-t border-gray-100 pt-4">
-                        <div>
-                            <p className="text-xs text-gray-400">Giá từ</p>
-                            {discountInfo ? (
-                                <div className="flex flex-col">
-                                    <span className="text-xs text-gray-400 line-through">{discountInfo.originalPrice.toLocaleString()} ₫</span>
-                                    <p className="text-xl font-black text-red-600">{discountInfo.finalPrice.toLocaleString()} ₫</p>
-                                </div>
-                            ) : (
-                                <p className="text-xl font-black text-red-600">{tour.tongGiaDuKien.toLocaleString()} ₫</p>
-                            )}
+                    {/* Compact Meta Info for Mobile */}
+                    <div className="grid grid-cols-2 gap-1 md:flex md:flex-col md:gap-0 mb-1 md:mb-4">
+                        <div className="flex items-center gap-1 text-[10px] md:text-sm text-gray-500">
+                            <Clock className="w-3 h-3 md:w-4 md:h-4" />
+                            <span>{durationText}</span>
                         </div>
-                        <Link
-                            to={`/tours/${linkId}`}
-                            className="text-blue-600 font-bold text-sm hover:underline"
-                        >
-                            XEM CHI TIẾT
-                        </Link>
+                        <div className="flex items-center gap-1 text-[10px] md:text-sm text-gray-500">
+                            <User className="w-3 h-3 md:w-4 md:h-4" />
+                            <span>{remainingSeats} chỗ</span>
+                        </div>
+                        <div className="col-span-2 flex items-center gap-1 text-[10px] md:text-sm text-gray-500 md:mt-2">
+                            <Calendar className="w-3 h-3 md:w-4 md:h-4" />
+                            <span className="truncate">KH: <span className="font-semibold text-blue-600">{nextDepartureText}</span></span>
+                        </div>
+                    </div>
+                    <div className="mt-auto border-t border-gray-100 pt-2 md:pt-4">
+                        <div className="flex flex-col gap-1 md:gap-2">
+                            <div className="flex justify-between items-center md:block">
+                                <p className="text-[10px] md:text-xs text-gray-400">Giá từ</p>
+                                {discountInfo ? (
+                                    <div className="flex flex-col md:items-start items-end">
+                                        <span className="text-[10px] md:text-xs text-gray-400 line-through">{discountInfo.originalPrice.toLocaleString()} ₫</span>
+                                        <p className="text-base md:text-xl font-black text-red-600">{discountInfo.finalPrice.toLocaleString()} ₫</p>
+                                    </div>
+                                ) : (
+                                    <p className="text-base md:text-xl font-black text-red-600 md:text-left text-right">{tour.tongGiaDuKien.toLocaleString()} ₫</p>
+                                )}
+                            </div>
+                            <Link
+                                to={`/tours/${linkId}`}
+                                className="text-center w-full bg-blue-50 text-blue-600 py-1.5 md:py-2 rounded-lg font-bold text-xs md:text-sm hover:bg-blue-100 transition-colors"
+                            >
+                                XEM CHI TIẾT
+                            </Link>
+                        </div>
                     </div>
                 </div>
             </div>

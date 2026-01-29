@@ -1,7 +1,7 @@
 // src/types/index.ts
 
 export interface NguoiDung {
-  userId: number;
+  userId: number | string;
   hoTen: string;
   email: string;
   soDienThoai?: string;
@@ -121,7 +121,7 @@ export interface LoginResponse {
   token: string;
   hoTen: string;
   role: string;
-  userId: number;
+  userId: number | string;
   email?: string;
   soDienThoai?: string;
   diaChi?: string;

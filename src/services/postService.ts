@@ -42,7 +42,7 @@ export interface Post {
 
 export const postService = {
     // Public/User
-    getPublicPosts: () => api.get<Post[]>('/posts'),
+    getPublicPosts: (search?: string) => api.get<Post[]>('/posts', { params: { search } }),
     getMyPosts: () => api.get<Post[]>('/posts/my-posts'),
     getPostById: (id: string) => api.get<Post>(`/posts/${id}`),
     createPost: (data: { title?: string; content: string; media?: string[]; linkedTourId?: string }) => api.post<Post>('/posts', data),

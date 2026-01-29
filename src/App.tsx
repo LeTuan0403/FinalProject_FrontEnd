@@ -37,6 +37,7 @@ import Settings from './pages/Admin/pages/Settings';
 import AdminReviews from './pages/Admin/pages/AdminReviews';
 import AdminChat from './pages/Admin/pages/AdminChat';
 import CommunityPage from './pages/Client/CommunityPage';
+import CommunityRedirect from './components/common/CommunityRedirect';
 
 import { ComparisonProvider } from './context/ComparisonContext';
 import ComparisonFloatingBar from './components/common/ComparisonFloatingBar';
@@ -76,6 +77,7 @@ function App() {
           <Route path="gallery" element={<Gallery />} />
           <Route path="contact" element={<Contact />} />
           <Route path="community" element={<CommunityPage />} />
+          <Route path="community/:id" element={<CommunityRedirect />} />
           <Route path="compare" element={<ComparePage />} />
           <Route path="login" element={<AuthPage />} />
           <Route path="register" element={<AuthPage />} />

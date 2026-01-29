@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useEffect, ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, ReactNode } from "react";
 import io, { Socket } from "socket.io-client";
 import { useAuth } from "../hooks/useAuth";
 
@@ -19,9 +19,10 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     // but we will manage its connection state in useEffect.
     // Actually, 'io' returns a socket manager. 
     // If we want to truly clear session, disconnect/connect is enough.
-    const socket = io("http://localhost:5000", {
+    // We use useMemo to ensure we keep the SAME socket instance across renders
+    const socket = useMemo(() => io("http://localhost:5000", {
         autoConnect: false
-    });
+    }), []);
 
     useEffect(() => {
         // When component mounts OR user changes, we ensure connection

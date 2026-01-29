@@ -5,11 +5,10 @@ import CreatePostModal from '../../components/community/CreatePostModal';
 import PostDetailModal from '../../components/community/PostDetailModal';
 import { postService, Post } from '../../services/postService';
 import { useAuth } from '../../hooks/useAuth';
-import { Plus, Users, Globe, User as UserIcon, Flame, Clock } from 'lucide-react';
+import { Plus, Users, Globe, User as UserIcon, Flame, Clock, Search } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { useTours } from '../../hooks/useTours';
+import { useLastMinuteTours } from '../../hooks/useLastMinuteTours';
 import TourCard from '../../components/common/TourCard';
-import { getLocalDateStr } from '../../utils/dateUtils';
 
 const CommunityPage = () => {
     const { user } = useAuth();
@@ -20,34 +19,12 @@ const CommunityPage = () => {
     const [activeTab, setActiveTab] = useState<'public' | 'my'>('public');
     const [editingPost, setEditingPost] = useState<Post | null>(null);
     const [sharingPost, setSharingPost] = useState<Post | null>(null);
+    const [searchTerm, setSearchTerm] = useState('');
 
     const viewingPostId = searchParams.get('post');
     const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
 
-    const { tours } = useTours();
-
-    // Get Last Minute Tours (within 3 days from Tomorrow)
-    const lastMinuteTours = tours.filter(t => {
-        if (!t.daDuyet || t.isTuChon) { return false; }
-        if (!t.ngayKhoiHanh || !Array.isArray(t.ngayKhoiHanh)) { return false; }
-
-        // Tomorrow String
-        const today = new Date();
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        const tomorrowStr = getLocalDateStr(tomorrow);
-
-        // End Date (Tomorrow + 3 days)
-        const endDate = new Date(tomorrow);
-        endDate.setDate(endDate.getDate() + 3);
-        const endDateStr = getLocalDateStr(endDate);
-
-        // Check if ANY departure date is within [tomorrow, tomorrow+3]
-        return t.ngayKhoiHanh.some(d => {
-            const dStr = new Date(d).toISOString().split('T')[0];
-            return dStr >= tomorrowStr && dStr <= endDateStr;
-        });
-    });
+    const { lastMinuteTours } = useLastMinuteTours();
 
     // Auto-slide effect
     useEffect(() => {
@@ -63,7 +40,7 @@ const CommunityPage = () => {
         setLoading(true);
         try {
             const res = activeTab === 'public'
-                ? await postService.getPublicPosts()
+                ? await postService.getPublicPosts(searchTerm)
                 : await postService.getMyPosts();
             setPosts(res.data);
         } catch (error) {
@@ -72,7 +49,8 @@ const CommunityPage = () => {
         } finally {
             setLoading(false);
         }
-    }, [activeTab]);
+
+    }, [activeTab, searchTerm]);
 
     useEffect(() => {
         fetchPosts();
@@ -127,6 +105,20 @@ const CommunityPage = () => {
                     </div>
                 )}
 
+                {/* Search Bar */}
+                <div className="mb-6">
+                    <div className="relative">
+                        <input
+                            type="text"
+                            placeholder="Tìm kiếm bài viết, tác giả, tour..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm transition-all"
+                        />
+                        <Search className="absolute left-3 top-3.5 text-gray-400" size={20} />
+                    </div>
+                </div>
+
                 {/* Feed and Sidebar */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Main Feed */}
@@ -180,14 +172,14 @@ const CommunityPage = () => {
                         )}
                     </div>
 
-                    {/* Sidebar */}
-                    <div className="hidden lg:block space-y-6">
-                        <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 sticky top-24">
-                            <h2 className="text-xl font-bold bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent mb-6 flex items-center gap-2">
+                    {/* Sidebar (Order first on mobile, last on desktop) */}
+                    <div className="space-y-6 order-first lg:order-last lg:col-span-1">
+                        <div className="bg-white p-3 md:p-5 rounded-2xl shadow-sm border border-gray-100 sticky top-4 z-30 max-w-sm mx-auto lg:max-w-none lg:mx-0 w-full">
+                            <h2 className="text-xl font-bold bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent mb-3 md:mb-6 flex items-center gap-2">
                                 <Flame className="text-orange-500 animate-pulse" />
                                 Tour giờ chót
                             </h2>
-                            <div className="relative overflow-hidden min-h-[400px]">
+                            <div className="relative overflow-hidden pb-8">
                                 {lastMinuteTours.length > 0 ? (
                                     <>
                                         <div

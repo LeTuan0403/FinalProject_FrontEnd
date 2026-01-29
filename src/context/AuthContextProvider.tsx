@@ -31,7 +31,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         token,
         hoTen,
         role,
-        userId: Number(userId),
+        userId: (userId && !isNaN(Number(userId)) && userId.length < 10) ? Number(userId) : userId || 0, // Preserve string ID if ObjectId
         email: email || undefined,
         soDienThoai: soDienThoai || undefined,
         diaChi: diaChi || undefined,
@@ -85,9 +85,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       rawId = decoded.nameid || decoded.sub || decoded.UserId || decoded.userId || decoded.id || decoded.UserID || 0;
     }
 
-    const userId = Number(rawId);
+    const userId = rawId; // Keep as string or number
 
-    if (userId === 0) {
+    if (!userId || userId === 0 || userId === '0') {
       toast.error("Cảnh báo: Không tìm thấy ID người dùng. Vui lòng liên hệ hỗ trợ hoặc thử lại.");
     }
 

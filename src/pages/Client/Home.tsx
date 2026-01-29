@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { getLocalDateStr } from '../../utils/dateUtils';
 import { ShieldCheck, HeartHandshake, Phone, BadgePercent, Search, MapPin, Calendar, Clock } from 'lucide-react';
 import { useTours } from '../../hooks/useTours';
+import { useLastMinuteTours } from '../../hooks/useLastMinuteTours';
 import TourCard from '../../components/common/TourCard';
 
 const domesticDestinations = [
@@ -26,6 +26,7 @@ const supportItems = [
 
 const Home = () => {
   const { tours, loading, error } = useTours();
+  const { lastMinuteTours } = useLastMinuteTours();
   const navigate = useNavigate();
   const [searchTab, setSearchTab] = useState<'Trong Nước' | 'Nước Ngoài'>('Trong Nước');
   const [destination, setDestination] = useState('');
@@ -57,7 +58,7 @@ const Home = () => {
     };
 
     const onMouseMove = (e: React.MouseEvent) => {
-      if (!isDragging) {return;}
+      if (!isDragging) { return; }
       e.preventDefault();
       const slider = e.currentTarget as HTMLElement;
       const x = e.pageX - slider.offsetLeft;
@@ -73,16 +74,16 @@ const Home = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const params = new URLSearchParams();
-    if (destination.trim()) {params.append('search', destination.trim());}
+    if (destination.trim()) { params.append('search', destination.trim()); }
     params.append('type', searchTab);
-    if (departurePoint) {params.append('from', departurePoint);}
-    if (departureDate) {params.append('date', departureDate);}
+    if (departurePoint) { params.append('from', departurePoint); }
+    if (departureDate) { params.append('date', departureDate); }
 
     navigate(`/tours?${params.toString()}`);
   };
 
-  if (loading) {return <div className="text-center py-20 text-gray-500">Đang tải tour...</div>;}
-  if (error) {return <div className="text-center py-20 text-red-500">{error}</div>;}
+  if (loading) { return <div className="text-center py-20 text-gray-500">Đang tải tour...</div>; }
+  if (error) { return <div className="text-center py-20 text-red-500">{error}</div>; }
 
   // Get all domestic tours
   const domesticTours = tours.filter(t =>
@@ -106,29 +107,7 @@ const Home = () => {
   });
 
   // Get Last Minute Tours (within 3 days from Tomorrow)
-  const lastMinuteTours = tours.filter(t => {
-    if (!t.daDuyet || t.isTuChon) {return false;}
-    if (!t.ngayKhoiHanh || !Array.isArray(t.ngayKhoiHanh)) {return false;}
-
-    // Robust String Comparison
-
-    // Tomorrow String
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowStr = getLocalDateStr(tomorrow);
-
-    // End Date (Tomorrow + 3 days)
-    const endDate = new Date(tomorrow);
-    endDate.setDate(endDate.getDate() + 3);
-    const endDateStr = getLocalDateStr(endDate);
-
-    // Check if ANY departure date is within [tomorrow, tomorrow+3]
-    return t.ngayKhoiHanh.some(d => {
-      const dStr = new Date(d).toISOString().split('T')[0];
-      return dStr >= tomorrowStr && dStr <= endDateStr;
-    });
-  });
+  // const { lastMinuteTours } = useLastMinuteTours(); // Moved to top
 
   return (
     <div className="bg-gray-50 pb-20">

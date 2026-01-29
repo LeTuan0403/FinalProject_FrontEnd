@@ -47,6 +47,7 @@ interface CommentRowProps {
     onStartEdit: () => void;
 }
 
+// eslint-disable-next-line complexity
 const CommentRow: React.FC<CommentRowProps> = ({
     data, user, isReply,
     isActiveMenu, onToggleMenu,

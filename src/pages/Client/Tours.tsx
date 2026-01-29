@@ -19,6 +19,7 @@ const Tours = () => {
   const [sortBy, setSortBy] = useState<string>('default'); // New: Sort
   const [searchTerm, setSearchTerm] = useState<string>(searchParams.get('search') || '');
   const [startDate, setStartDate] = useState<string>(''); // New: Start Date
+  const [isDiscountedOnly, setIsDiscountedOnly] = useState<boolean>(false); // New: Discount Filter
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -34,8 +35,17 @@ const Tours = () => {
   }, [searchParams]);
 
   useEffect(() => {
-    // Filter: Approved AND Not Custom (Standard Tours only)
-    let result = tours.filter(t => t.daDuyet && !t.isTuChon);
+    // Filter: Approved AND Not Custom (Standard Tours only) AND Has Future Departures
+    let result = tours.filter(t => {
+      if (!t.daDuyet || t.isTuChon) { return false; }
+
+      // Check for future dates
+      if (!t.ngayKhoiHanh || !Array.isArray(t.ngayKhoiHanh) || t.ngayKhoiHanh.length === 0) { return false; }
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Reset time to start of day for accurate comparison
+      const hasFutureDate = t.ngayKhoiHanh.some(date => new Date(date) >= today);
+      return hasFutureDate;
+    });
 
     // Filter by Type (Domestic/International)
     if (selectedType !== 'all') {
@@ -111,6 +121,11 @@ const Tours = () => {
       result = result.filter(t => t.tenTour.toLowerCase().includes(searchTerm.toLowerCase()));
     }
 
+    // Filter by Discount
+    if (isDiscountedOnly) {
+      result = result.filter(t => t.discounts && t.discounts.length > 0);
+    }
+
     // Sorting
     if (sortBy !== 'default') {
       // Create a copy to sort
@@ -131,21 +146,29 @@ const Tours = () => {
           return 1;
         };
 
+        const getMaxDiscount = (t: Tour) => {
+          if (!t.discounts || t.discounts.length === 0) { return 0; }
+          return Math.max(...t.discounts.map(d => d.percentage));
+        };
+
         const durationA = getDuration(a);
         const durationB = getDuration(b);
+        const discountA = getMaxDiscount(a);
+        const discountB = getMaxDiscount(b);
 
         switch (sortBy) {
           case 'price-asc': return a.tongGiaDuKien - b.tongGiaDuKien;
           case 'price-desc': return b.tongGiaDuKien - a.tongGiaDuKien;
           case 'duration-asc': return durationA - durationB;
           case 'duration-desc': return durationB - durationA;
+          case 'discount-desc': return discountB - discountA;
           default: return 0;
         }
       });
     }
 
     setFilteredTours([...result]);
-  }, [selectedRegion, priceRange, searchTerm, selectedType, durationRange, transport, sortBy, startDate, tours]);
+  }, [selectedRegion, priceRange, searchTerm, selectedType, durationRange, transport, sortBy, startDate, tours, isDiscountedOnly]);
 
   if (loading) { return <div className="text-center py-20 text-gray-500">Đang tải danh sách tour...</div>; }
   if (error) { return <div className="text-center py-20 text-red-500">{error}</div>; }
@@ -326,6 +349,24 @@ const Tours = () => {
               </div>
             </div>
 
+            {/* Discount Filter */}
+            <div className="mb-6 p-4 bg-red-50 rounded-lg border border-red-100">
+              <label className="flex items-center gap-3 cursor-pointer select-none">
+                <div className="relative flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={isDiscountedOnly}
+                    onChange={(e) => setIsDiscountedOnly(e.target.checked)}
+                    className="peer w-5 h-5 cursor-pointer appearance-none rounded border border-red-300 shadow-sm checked:bg-red-500 checked:border-red-500 transition-all"
+                  />
+                  <svg className="absolute w-3.5 h-3.5 text-white hidden peer-checked:block pointer-events-none left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </div>
+                <span className="font-bold text-red-600">Chỉ hiện tour đang giảm giá</span>
+              </label>
+            </div>
+
           </div>
         </div>
 
@@ -348,6 +389,7 @@ const Tours = () => {
                 <option value="price-desc">Giá: Cao đến Thấp</option>
                 <option value="duration-asc">Thời gian: Ngắn đến Dài</option>
                 <option value="duration-desc">Thời gian: Dài đến Ngắn</option>
+                <option value="discount-desc">Giảm giá: Nhiều đến Ít</option>
               </select>
             </div>
           </div>
@@ -362,7 +404,7 @@ const Tours = () => {
                 <div className="text-6xl mb-4">🔍</div>
                 <p className="text-xl text-gray-600 font-medium">Không tìm thấy tour phù hợp</p>
                 <button
-                  onClick={() => { setSelectedRegion('all'); setPriceRange('all'); setSearchTerm(''); setTransport('all'); setSortBy('default'); setStartDate(''); }}
+                  onClick={() => { setSelectedRegion('all'); setPriceRange('all'); setSearchTerm(''); setTransport('all'); setSortBy('default'); setStartDate(''); setIsDiscountedOnly(false); }}
                   className="mt-4 text-blue-600 hover:underline"
                 >
                   Xóa bộ lọc
