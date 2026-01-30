@@ -813,8 +813,8 @@ const TourDetail = () => {
                               {isOpen ? <ChevronUp className="text-blue-600" /> : <ChevronDown className="text-gray-400" />}
                             </button>
 
-                            <div className={`transition - all duration - 300 ease -in -out ${isOpen ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'} `}>
-                              <div className="p-6 border-t border-gray-100 bg-white space-y-8 relative">
+                            <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+                              <div className="p-6 border-t border-gray-100 bg-white space-y-8 relative overflow-hidden">
                                 {/* Connector Line */}
                                 <div className="absolute left-[29px] top-8 bottom-8 w-0.5 bg-gray-200"></div>
 
@@ -833,7 +833,7 @@ const TourDetail = () => {
                                       {/* Time Badge (Absolute or Flex) */}
                                       <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4 border-b border-gray-50 pb-3">
                                         <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-blue-100 text-blue-700 font-bold text-sm min-w-[80px]">
-                                          {formatTimeRange(item.thoiGian || `0${8 + idx}: 30`)}
+                                          {formatTimeRange(item.thoiGian || `0${8 + idx}:30`)}
                                         </span>
                                         <h4 className="font-bold text-gray-800 text-lg flex-1">
                                           {item.tieuDe}
@@ -846,9 +846,12 @@ const TourDetail = () => {
                                           <div className="md:w-1/3 shrink-0">
                                             <div className="aspect-video sm:aspect-[4/3] rounded-lg overflow-hidden bg-gray-100">
                                               <img
-                                                src={item.hinhAnh || item.diaDiem?.hinhAnh || "https://images.unsplash.com/photo-1501785888041-af3ef285b470"}
+                                                src={getMediaUrl(item.hinhAnh) || getMediaUrl(item.diaDiem?.hinhAnh) || "https://images.unsplash.com/photo-1501785888041-af3ef285b470"}
                                                 className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-500"
                                                 alt={item.diaDiem?.tenDiaDiem || item.tieuDe}
+                                                onError={(e) => {
+                                                  (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1501785888041-af3ef285b470";
+                                                }}
                                               />
                                             </div>
                                           </div>

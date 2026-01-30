@@ -886,6 +886,7 @@ const AdminEditTour = () => {
                                                         value: loc.diaDiemId,
                                                         label: loc.tenDiaDiem,
                                                         subLabel: `${loc.thoiGianThamQuanDuKien || 2} h`,
+                                                        address: loc.diaChiCuThe, // Pass address for search and display
                                                         disabled: false
                                                     }))}
                                                     onChange={(newId) => {

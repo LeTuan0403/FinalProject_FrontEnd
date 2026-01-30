@@ -5,6 +5,7 @@ interface Option {
     value: string | number;
     label: string;
     subLabel?: string;
+    address?: string; // New: Address for search and display
     disabled?: boolean;
 }
 
@@ -24,7 +25,8 @@ const SearchableSelect = ({ value, options, onChange, placeholder = "Chọn...",
     // Filter options
     const filteredOptions = options.filter(opt =>
         opt.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (opt.subLabel && opt.subLabel.toLowerCase().includes(searchTerm.toLowerCase()))
+        (opt.subLabel && opt.subLabel.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (opt.address && opt.address.toLowerCase().includes(searchTerm.toLowerCase())) // Search by address
     );
 
     const selectedOption = options.find(opt => opt.value === value);
@@ -47,7 +49,7 @@ const SearchableSelect = ({ value, options, onChange, placeholder = "Chọn...",
                 className={`w-full p-2 border rounded bg-white flex items-center justify-between cursor-pointer hover:border-blue-400 transition-colors ${isOpen ? 'ring-2 ring-blue-100 border-blue-400' : 'border-gray-200'}`}
                 onClick={() => {
                     setIsOpen(!isOpen);
-                    if (!isOpen) {setSearchTerm('');}
+                    if (!isOpen) { setSearchTerm(''); }
                 }}
             >
                 <div>
@@ -86,7 +88,7 @@ const SearchableSelect = ({ value, options, onChange, placeholder = "Chọn...",
                             <input
                                 type="text"
                                 className="w-full pl-9 pr-3 py-1.5 text-sm border border-gray-200 rounded-md focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50"
-                                placeholder="Tìm kiếm..."
+                                placeholder="Tìm kiếm tên, địa chỉ..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 autoFocus
@@ -108,11 +110,19 @@ const SearchableSelect = ({ value, options, onChange, placeholder = "Chọn...",
                                         }
                                     }}
                                 >
-                                    <div>
-                                        <div>{opt.label}</div>
-                                        {opt.subLabel && <div className="text-xs text-gray-400">{opt.subLabel}</div>}
+                                    <div className="flex-1 overflow-hidden">
+                                        <div className="truncate">{opt.label}</div>
+                                        <div className="flex items-center gap-2">
+                                            {opt.subLabel && <span className="text-xs text-gray-400 shrink-0">{opt.subLabel}</span>}
+                                            {/* Display Address if available */}
+                                            {opt.address && (
+                                                <span className="text-xs text-gray-400 italic truncate border-l pl-2 border-gray-300">
+                                                    {opt.address}
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
-                                    {opt.value === value && <Check size={16} className="text-blue-600" />}
+                                    {opt.value === value && <Check size={16} className="text-blue-600 shrink-0 ml-2" />}
                                 </div>
                             ))
                         ) : (
