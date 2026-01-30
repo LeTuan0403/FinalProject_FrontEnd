@@ -21,7 +21,6 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     const { user } = useAuth();
     const [isChatOpen, setIsChatOpen] = useState(false);
 
-
     // Singleton socket instance
     // We use useMemo to keep the SAME socket object reference, 
     // but we will manage its connection state in useEffect.

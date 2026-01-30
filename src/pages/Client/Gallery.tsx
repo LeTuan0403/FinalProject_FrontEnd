@@ -6,6 +6,7 @@ import { MapPin } from 'lucide-react';
 const Gallery = () => {
   const [locations, setLocations] = useState<DiaDiem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     diaDiemService.getAll()
@@ -32,6 +33,10 @@ const Gallery = () => {
       { keywords: ['mai châu', 'hòa bình'], city: 'Hòa Bình' },
       { keywords: ['hải phòng', 'cát bà', 'đồ sơn'], city: 'Hải Phòng' },
       { keywords: ['bắc kạn', 'ba bể'], city: 'Bắc Kạn' },
+      { keywords: ['vĩnh phúc', 'tam đảo'], city: 'Vĩnh Phúc' },
+      { keywords: ['yên bái', 'mù cang chải'], city: 'Yên Bái' },
+      { keywords: ['bắc ninh'], city: 'Bắc Ninh' },
+      { keywords: ['hà nam'], city: 'Hà Nam' },
       { keywords: ['huế', 'thừa thiên'], city: 'Huế' },
       { keywords: ['đà nẵng', 'bà nà'], city: 'Đà Nẵng' },
       { keywords: ['hội an', 'quảng nam', 'mỹ sơn'], city: 'Hội An' },
@@ -39,9 +44,13 @@ const Gallery = () => {
       { keywords: ['nha trang', 'khánh hòa', 'cam ranh'], city: 'Nha Trang' },
       { keywords: ['quy nhơn', 'bình định'], city: 'Quy Nhơn' },
       { keywords: ['phú yên', 'tuy hòa'], city: 'Phú Yên' },
+      { keywords: ['nghệ an', 'cửa lò'], city: 'Nghệ An' },
+      { keywords: ['hà tĩnh', 'thiên cầm'], city: 'Hà Tĩnh' },
+      { keywords: ['quảng ngãi', 'lý sơn'], city: 'Quảng Ngãi' },
       { keywords: ['đà lạt', 'lâm đồng'], city: 'Đà Lạt' },
       { keywords: ['phan thiết', 'mũi né', 'bình thuận'], city: 'Phan Thiết' },
-      { keywords: ['buôn ma thuột', 'đắk lắk'], city: 'Buôn Ma Thuột' },
+      { keywords: ['buôn ma thuột', 'đắk lắk', 'dak lak'], city: 'Buôn Ma Thuột' },
+      { keywords: ['đắk nông', 'dak nong'], city: 'Đắk Nông' },
       { keywords: ['kon tum', 'măng đen'], city: 'Kon Tum' },
       { keywords: ['hồ chí minh', 'sài gòn'], city: 'TP. Hồ Chí Minh' },
       { keywords: ['vũng tàu', 'bà rịa'], city: 'Vũng Tàu' },
@@ -50,8 +59,28 @@ const Gallery = () => {
       { keywords: ['côn đảo'], city: 'Côn Đảo' },
       { keywords: ['bến tre'], city: 'Bến Tre' },
       { keywords: ['tiền giang', 'mỹ tho'], city: 'Tiền Giang' },
+      { keywords: ['an giang', 'châu đốc'], city: 'An Giang' },
+      { keywords: ['đồng tháp', 'sa đéc'], city: 'Đồng Tháp' },
       { keywords: ['cà mau'], city: 'Cà Mau' },
-      { keywords: ['tây ninh', 'bà đen'], city: 'Tây Ninh' }
+      { keywords: ['tây ninh', 'bà đen'], city: 'Tây Ninh' },
+      // International
+      { keywords: ['thái lan', 'bangkok', 'pattaya', 'chiang mai', 'phuket'], city: 'Thái Lan' },
+      { keywords: ['singapore', 'sentosa'], city: 'Singapore' },
+      { keywords: ['malaysia', 'kuala lumpur', 'genting'], city: 'Malaysia' },
+      { keywords: ['indonesia', 'bali', 'jakarta'], city: 'Indonesia' },
+      { keywords: ['trung quốc', 'bắc kinh', 'thượng hải', 'lệ giang'], city: 'Trung Quốc' },
+      { keywords: ['hàn quốc', 'seoul', 'jeju'], city: 'Hàn Quốc' },
+      { keywords: ['nhật bản', 'tokyo', 'osaka', 'kyoto'], city: 'Nhật Bản' },
+      { keywords: ['đài loan', 'đài bắc'], city: 'Đài Loan' },
+      { keywords: ['pháp', 'paris'], city: 'Pháp' },
+      { keywords: ['anh', 'london'], city: 'Anh' },
+      { keywords: ['ý', 'rome', 'venice', 'milan', 'vatican'], city: 'Ý' },
+      { keywords: ['tây ban nha', 'madrid', 'barcelona'], city: 'Tây Ban Nha' },
+      { keywords: ['hy lạp', 'athens', 'santorini'], city: 'Hy Lạp' },
+      { keywords: ['áo', 'vienna'], city: 'Áo' },
+      { keywords: ['mỹ', 'hoa kỳ', 'new york', 'california'], city: 'Mỹ' },
+      { keywords: ['úc', 'australia', 'sydney', 'melbourne'], city: 'Úc' },
+      { keywords: ['uae', 'dubai', 'abu dhabi', 'tiểu vương quốc'], city: 'UAE' }
     ];
 
     for (const mapping of cityMappings) {
@@ -63,8 +92,14 @@ const Gallery = () => {
     return 'Địa điểm khác';
   };
 
+  // Filter locations by search term
+  const filteredLocations = locations.filter(loc =>
+    loc.tenDiaDiem.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    getCityFromLocation(loc).toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   // Group locations
-  const groupedLocations = locations.reduce((acc, loc) => {
+  const groupedLocations = filteredLocations.reduce((acc, loc) => {
     const city = getCityFromLocation(loc);
     if (!acc[city]) {
       acc[city] = [];
@@ -89,9 +124,23 @@ const Gallery = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-4xl font-bold text-center text-blue-900 mb-2">Thư Viện Hình Ảnh</h1>
-      <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
+      <p className="text-center text-gray-600 mb-8 max-w-2xl mx-auto">
         Khám phá vẻ đẹp Việt Nam qua những điểm đến hấp dẫn được chúng tôi tuyển chọn.
       </p>
+
+      {/* Search Bar */}
+      <div className="max-w-md mx-auto mb-12 relative">
+        <input
+          type="text"
+          placeholder="Tìm địa điểm, thành phố..."
+          className="w-full pl-10 pr-4 py-3 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        <div className="absolute left-3 top-3.5 text-gray-400">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        </div>
+      </div>
 
       <div className="space-y-16">
         {sortedCities.map(city => (

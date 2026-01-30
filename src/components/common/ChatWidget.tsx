@@ -322,7 +322,7 @@ const ChatWidget = () => {
         } catch (e) {
             console.error("Send tour message failed", e);
         }
-    }, [conversationId, socket, user, ensureConversation]);
+    }, [conversationId, socket, user, ensureConversation, toggleChat]);
 
     // Handle "Open Chat with Tour" Event (from TourDetail)
     useEffect(() => {

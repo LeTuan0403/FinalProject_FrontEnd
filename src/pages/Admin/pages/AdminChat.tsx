@@ -131,7 +131,6 @@ const AdminChat = () => {
 
         return () => clearTimeout(delayDebounceFn);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [searchParams]);
 
     // url params handling
@@ -141,7 +140,7 @@ const AdminChat = () => {
     // Auto-select conversation from URL if available
     useEffect(() => {
         const fetchTargetConversation = async () => {
-            if (!targetConvId) return;
+            if (!targetConvId) { return; }
 
             // 1. Check if it's already in the list
             const found = conversations.find(c => c._id === targetConvId);
@@ -158,7 +157,7 @@ const AdminChat = () => {
                     if (newConv) {
                         setConversations(prev => {
                             // Check again if added (race condition)
-                            if (prev.some(c => c._id === newConv._id)) return prev;
+                            if (prev.some(c => c._id === newConv._id)) { return prev; }
                             const newList = [newConv, ...prev];
                             return sortConversations(newList);
                         });
@@ -174,7 +173,7 @@ const AdminChat = () => {
         if (conversations.length > 0 || targetConvId) {
             fetchTargetConversation();
         }
-    }, [conversations, targetConvId]);
+    }, [conversations, targetConvId, selectedConv]);
 
     // 2. Select Conversation & Fetch Messages
     useEffect(() => {

@@ -4,11 +4,19 @@ import { Search, Filter, ArrowUpDown } from 'lucide-react';
 import { useTours } from '../../hooks/useTours';
 import TourCard from '../../components/common/TourCard';
 import type { Tour } from '../../types';
+import axios from 'axios';
+import { toast } from 'react-hot-toast';
 
 const Tours = () => {
   const { tours, loading, error } = useTours();
   const [searchParams] = useSearchParams();
   const [filteredTours, setFilteredTours] = useState<Tour[]>([]);
+
+  // AI Assistant States
+  const [aiRequirement, setAiRequirement] = useState('');
+  const [aiFilteredIds, setAiFilteredIds] = useState<string[] | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiMessage, setAiMessage] = useState('');
 
   // Filter States
   const [selectedRegion, setSelectedRegion] = useState<string>('all');
@@ -167,15 +175,57 @@ const Tours = () => {
       });
     }
 
+
+    // ... existing filters ...
+
+    // Filter by AI Recommendations
+    if (aiFilteredIds && aiFilteredIds.length > 0) {
+      result = result.filter(t => aiFilteredIds.includes(String(t._id)) || aiFilteredIds.includes(String(t.tourId)));
+    }
+
     setFilteredTours([...result]);
-  }, [selectedRegion, priceRange, searchTerm, selectedType, durationRange, transport, sortBy, startDate, tours, isDiscountedOnly]);
+  }, [selectedRegion, priceRange, searchTerm, selectedType, durationRange, transport, sortBy, startDate, tours, isDiscountedOnly, aiFilteredIds]);
+
+  const handleAIRecommend = async () => {
+    if (!aiRequirement.trim()) return;
+
+    setAiLoading(true);
+    try {
+      const res = await axios.post('http://localhost:5000/api/tours/ai-recommend', { requirement: aiRequirement });
+
+      const { tourIds, message } = res.data;
+      if (tourIds && tourIds.length > 0) {
+        setAiFilteredIds(tourIds);
+        setAiMessage(message);
+        toast.success("Đã tìm thấy các tour phù hợp!");
+      } else {
+        setAiFilteredIds(null);
+        toast(message || "Không tìm thấy tour nào phù hợp với yêu cầu của bạn.", { icon: 'ℹ️' });
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error("Lỗi khi gọi trợ lý AI");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const clearAIFilter = () => {
+    setAiFilteredIds(null);
+    setAiMessage('');
+    setAiRequirement('');
+  };
 
   if (loading) { return <div className="text-center py-20 text-gray-500">Đang tải danh sách tour...</div>; }
   if (error) { return <div className="text-center py-20 text-red-500">{error}</div>; }
 
   return (
     <div className="container mx-auto px-4 py-8">
+
+
+
       <div className="flex flex-col lg:flex-row gap-8">
+
 
         <div className="w-full lg:w-1/4 shrink-0">
           <div className="bg-white rounded-xl shadow-md p-6 sticky top-24 max-h-[calc(100vh-10rem)] overflow-y-auto custom-scrollbar">
@@ -372,6 +422,51 @@ const Tours = () => {
 
         {/* TOUR LIST */}
         <div className="w-full lg:w-3/4">
+
+          {/* AI ASSISTANT (Moved Here) */}
+          <div className="mb-8 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 opacity-10 pointer-events-none">
+              <svg width="300" height="300" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="currentColor" /></svg>
+            </div>
+            <div className="relative z-10 flex flex-col md:flex-row items-center gap-6">
+              <div className="grow">
+                <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
+                  ✨ Trợ lý AI Gợi Ý Tour
+                </h2>
+                <p className="text-blue-100 mb-4">Nhập mong muốn của bạn (ví dụ: "Đi biển giá rẻ dưới 5 triệu", "Tour trăng mật Đà Lạt"...), AI sẽ tìm giúp bạn.</p>
+
+                <div className="relative w-full">
+                  <input
+                    type="text"
+                    placeholder="Bạn muốn đi đâu? Ngân sách thế nào?..."
+                    className="w-full pl-5 pr-14 py-3 rounded-xl text-gray-800 focus:ring-4 focus:ring-blue-400/50 outline-none shadow-lg"
+                    value={aiRequirement}
+                    onChange={(e) => setAiRequirement(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleAIRecommend()}
+                  />
+                  <button
+                    onClick={handleAIRecommend}
+                    disabled={aiLoading}
+                    className="absolute right-2 top-2 bottom-2 bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-70"
+                  >
+                    {aiLoading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <Search size={20} />}
+                  </button>
+                </div>
+
+                {/* AI Feedback Message */}
+                {aiMessage && (
+                  <div className="mt-4 bg-white/10 backdrop-blur-sm p-3 rounded-lg border border-white/20 inline-flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+                    <span className="text-sm">🤖 {aiMessage}</span>
+                    <button onClick={clearAIFilter} className="bg-white/20 hover:bg-white/30 px-2 py-1 rounded text-xs transition">
+                      Xem lại tất cả
+                    </button>
+                  </div>
+                )}
+              </div>
+
+            </div>
+          </div>
+
           <div className="mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
             <h2 className="text-2xl font-bold text-gray-800">Kết quả tìm kiếm ({filteredTours.length})</h2>
 
