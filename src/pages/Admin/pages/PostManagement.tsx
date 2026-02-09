@@ -115,6 +115,33 @@ const PostManagement = () => {
                                 {/* Pass clean UI props if needed, mostly re-using PostCard */}
                                 <PostCard post={post} onDelete={handleDelete} />
 
+                                {/* Admin: AI Moderation Info */}
+                                {post.moderationData && (
+                                    <div className={`mx-4 mb-3 p-3 rounded-lg text-sm border ${post.moderationData.isSafe ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'
+                                        }`}>
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <p className="font-bold flex items-center gap-2">
+                                                    🤖 AI Phân tích: {post.moderationData.isSafe ? 'An toàn' : 'Vi phạm/Nghi vấn'}
+                                                    <span className="text-xs font-normal opacity-70">
+                                                        (Confidence: {Math.round(post.moderationData.confidence * 100)}%)
+                                                    </span>
+                                                </p>
+                                                <p className="mt-1">{post.moderationData.reason}</p>
+                                            </div>
+                                            {post.moderationData.flaggedCategories && post.moderationData.flaggedCategories.length > 0 && (
+                                                <div className="flex flex-col gap-1 items-end">
+                                                    {post.moderationData.flaggedCategories.map((cat: string) => (
+                                                        <span key={cat} className="bg-white/80 px-2 py-0.5 rounded text-xs border border-black/10 font-mono text-red-600 font-bold">
+                                                            {cat}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* Status Overlay - Floating top right */}
                                 <div className="absolute top-4 right-4 z-10">
                                     <StatusBadge status={post.status} />

@@ -1,10 +1,9 @@
-
-import React, { useEffect, useState } from 'react';
-import { Cloud, CloudRain, Sun, Wind, Droplets, Calendar, MapPin, AlertCircle, Loader } from 'lucide-react';
+import React, { useEffect, useState, useMemo } from 'react';
+import { Cloud, CloudRain, Sun, Wind, Droplets, Calendar, MapPin, Loader, AlertCircle } from 'lucide-react';
 
 interface WeatherWidgetProps {
     locationName: string;
-    departureDate?: string | Date; // Optional: Only show weather for this date
+    departureDate?: string | Date;
 }
 
 interface WeatherData {
@@ -13,122 +12,141 @@ interface WeatherData {
     weatherCode: number;
     precipitationProbability?: number;
     date: string;
+    isForecast: boolean; // Merged for cleaner state
 }
+
+// Helper: Normalize string for search
+const normalizeForSearch = (name: string) => {
+    return name.normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "") // Remove accents
+        .replace(/đ/g, "d").replace(/Đ/g, "D");
+};
+
+// Helper: Map WMO code to Icon & Label
+const getWeatherIcon = (code: number) => {
+    if (code === 0) {
+        return { icon: <Sun className="text-yellow-500 animate-pulse-slow" size={32} />, label: "Nắng đẹp" };
+    }
+    if (code >= 1 && code <= 3) {
+        return { icon: <Cloud className="text-gray-400" size={32} />, label: "Có mây" };
+    }
+    if (code >= 45 && code <= 48) {
+        return { icon: <Wind className="text-blue-300" size={32} />, label: "Sương mù" };
+    }
+    if (code >= 51 && code <= 67) {
+        return { icon: <CloudRain className="text-blue-500" size={32} />, label: "Mưa nhỏ" };
+    }
+    if (code >= 71 && code <= 77) {
+        return { icon: <Droplets className="text-blue-200" size={32} />, label: "Tuyết rơi" };
+    }
+    if (code >= 80 && code <= 82) {
+        return { icon: <CloudRain className="text-blue-700" size={32} />, label: "Mưa rào" };
+    }
+    if (code >= 95 && code <= 99) {
+        return { icon: <CloudRain className="text-purple-500" size={32} />, label: "Dông bão" };
+    }
+    return { icon: <Sun className="text-yellow-500" size={32} />, label: "Không xác định" };
+};
 
 const WeatherWidget: React.FC<WeatherWidgetProps> = ({ locationName, departureDate }) => {
     const [weather, setWeather] = useState<WeatherData | null>(null);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [isForecast, setIsForecast] = useState(false); // True if showing future date, False if current
 
-    // Determine target date (standardize to YYYY-MM-DD)
-    const targetDateStr = departureDate ? new Date(departureDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+    // Standardize dates
+    const targetDateStr = useMemo(() =>
+        departureDate ? new Date(departureDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        [departureDate]);
+
     const todayStr = new Date().toISOString().split('T')[0];
 
-    // Check if target date is within reliable forecast range (0-14 days)
-    const diffTime = new Date(targetDateStr).getTime() - new Date(todayStr).getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    // Calculate Diff Days
+    const diffDays = useMemo(() => {
+        const diffTime = new Date(targetDateStr).getTime() - new Date(todayStr).getTime();
+        return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    }, [targetDateStr, todayStr]);
+
     const isWithinRange = diffDays >= 0 && diffDays <= 14;
 
     useEffect(() => {
+        if (!locationName) {
+            return;
+        }
+
+        let isMounted = true;
         const fetchWeather = async () => {
-            if (!locationName) {return;}
             setLoading(true);
-            setError(null);
-
-            // Normalize for better search results (Open-Meteo often prefers unaccented or specific aliases)
-            const normalizeForSearch = (name: string) => {
-                const n = name.normalize("NFD")
-                    .replace(/[\u0300-\u036f]/g, "") // Remove accents
-                    .replace(/đ/g, "d").replace(/Đ/g, "D"); // Handle Vietnamese D
-                return n;
-            };
-
-            const searchName = normalizeForSearch(locationName);
-
             try {
+                const searchName = normalizeForSearch(locationName);
+
                 // 1. Geocoding
                 const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(searchName)}&count=1&language=vi&format=json`);
                 const geoData = await geoRes.json();
 
-                if (!geoData.results || geoData.results.length === 0) {
-                    setError('Không tìm thấy địa điểm');
-                    setLoading(false);
-                    return;
+                if (!geoData.results?.length) {
+                    throw new Error("Location not found");
                 }
 
                 const { latitude, longitude } = geoData.results[0];
 
                 // 2. Weather Forecast
-                // If within range, get daily forecast. If far future, getting "current" weather as reference is better than nothing, OR we just show current weather with a disclaimer.
-                // We'll always fetch 16 days to be safe and pick the right one.
                 const weatherRes = await fetch(
                     `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto`
                 );
                 const weatherData = await weatherRes.json();
 
-                if (!weatherData.daily) {throw new Error("No weather data");}
-
-                // Find the index for the target date
-                const dates = weatherData.daily.time as string[];
-                let index = dates.indexOf(targetDateStr);
-
-                // If target date is not found (too far), fallback to TODAY (index 0) but mark as reference
-                if (index === -1) {
-                    index = 0;
-                    setIsForecast(false);
-                } else {
-                    setIsForecast(true);
+                if (!weatherData.daily) {
+                    throw new Error("No weather data");
                 }
 
-                setWeather({
-                    tempMax: weatherData.daily.temperature_2m_max[index],
-                    tempMin: weatherData.daily.temperature_2m_min[index],
-                    weatherCode: weatherData.daily.weather_code[index],
-                    precipitationProbability: weatherData.daily.precipitation_probability_max?.[index],
-                    date: dates[index]
-                });
+                // Find index
+                const dates = weatherData.daily.time as string[];
+                let index = dates.indexOf(targetDateStr);
+                let isForecast = true;
 
+                // Fallback to today if not found
+                if (index === -1) {
+                    index = 0;
+                    isForecast = false;
+                }
+
+                if (isMounted) {
+                    setWeather({
+                        tempMax: weatherData.daily.temperature_2m_max[index],
+                        tempMin: weatherData.daily.temperature_2m_min[index],
+                        weatherCode: weatherData.daily.weather_code[index],
+                        precipitationProbability: weatherData.daily.precipitation_probability_max?.[index],
+                        date: dates[index],
+                        isForecast
+                    });
+                }
             } catch (err) {
-                console.error("Weather fetch error:", err);
-                setError("Không thể tải thời tiết");
-                setWeather(null); // Ensure weather is null on error to prevent partial rendering if desired
+                console.error("Weather fetch error:", err); // Keep console log for debugging
+                if (isMounted) {
+                    setWeather(null);
+                }
             } finally {
-                setLoading(false);
+                if (isMounted) {
+                    setLoading(false);
+                }
             }
         };
 
         fetchWeather();
-    }, [locationName, targetDateStr]); // Re-run if location or date changes
+        return () => { isMounted = false; };
+    }, [locationName, targetDateStr]);
 
-    // Helper: Map WMO code to Icon & Label
-    const getWeatherIcon = (code: number) => {
-        if (code === 0) {return { icon: <Sun className="text-yellow-500 animate-pulse-slow" size={32} />, label: "Nắng đẹp" };}
-        if (code >= 1 && code <= 3) {return { icon: <Cloud className="text-gray-400" size={32} />, label: "Có mây" };}
-        if (code >= 45 && code <= 48) {return { icon: <Wind className="text-blue-300" size={32} />, label: "Sương mù" };}
-        if (code >= 51 && code <= 67) {return { icon: <CloudRain className="text-blue-500" size={32} />, label: "Mưa nhỏ" };}
-        if (code >= 71 && code <= 77) {return { icon: <Droplets className="text-blue-200" size={32} />, label: "Tuyết rơi" };}
-        if (code >= 80 && code <= 82) {return { icon: <CloudRain className="text-blue-700" size={32} />, label: "Mưa rào" };}
-        if (code >= 95 && code <= 99) {return { icon: <CloudRain className="text-purple-500" size={32} />, label: "Dông bão" };}
-        return { icon: <Sun className="text-yellow-500" size={32} />, label: "Không xác định" };
-    };
-
-    if (loading) {return (
-        <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl border border-blue-100 shadow-sm flex items-center gap-3 animate-pulse">
-            <Loader className="animate-spin text-blue-500" size={20} />
-            <span className="text-sm text-blue-600 font-medium">Đang tải dự báo thời tiết...</span>
-        </div>
-    );}
-
-    if (error || !weather) {return (
-        <div className="bg-red-50 p-4 rounded-xl border border-red-100 text-red-500 text-sm mb-4">
-            <div className="font-bold flex items-center gap-2">
-                <AlertCircle size={16} />
-                Không thể tải thời tiết cho: {locationName}
+    if (loading) {
+        return (
+            <div className="bg-white/80 backdrop-blur-sm p-4 rounded-xl border border-blue-100 shadow-sm flex items-center gap-3 animate-pulse">
+                <Loader className="animate-spin text-blue-500" size={20} />
+                <span className="text-sm text-blue-600 font-medium">Đang tải dự báo thời tiết...</span>
             </div>
-            <div className="text-xs mt-1">Lỗi: {error || "Không có dữ liệu"}</div>
-        </div>
-    );}
+        );
+    }
+
+    if (!weather) {
+        return null;
+    }
 
     const { icon, label } = getWeatherIcon(weather.weatherCode);
 
@@ -145,10 +163,9 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({ locationName, departureDa
                     </div>
 
                     {/* Date Badge */}
-                    {/* Date Badge */}
-                    <div className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 font-medium ${isForecast && isWithinRange ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                    <div className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 font-medium ${weather.isForecast && isWithinRange ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
                         <Calendar size={10} />
-                        {isForecast && isWithinRange
+                        {weather.isForecast && isWithinRange
                             ? (diffDays === 0 ? 'Hôm nay' : `Dự báo ${new Date(weather.date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}`)
                             : 'Thời tiết hiện tại'}
                     </div>

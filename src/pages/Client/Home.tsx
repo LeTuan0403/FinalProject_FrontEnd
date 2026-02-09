@@ -304,9 +304,15 @@ const Home = () => {
           </div>
 
           {asiaTours.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div
+              className="flex overflow-x-auto gap-6 pb-6 custom-scrollbar scroll-smooth snap-x snap-mandatory"
+              {...draggable.events}
+              style={draggable.style}
+            >
               {asiaTours.map((tour) => (
-                <TourCard key={tour.tourId} tour={tour} variant="vertical" />
+                <div key={tour.tourId} className="w-[280px] md:w-[320px] shrink-0 snap-start select-none">
+                  <TourCard tour={tour} variant="vertical" />
+                </div>
               ))}
             </div>
           ) : (
@@ -334,9 +340,15 @@ const Home = () => {
           </div>
 
           {otherTours.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div
+              className="flex overflow-x-auto gap-6 pb-6 custom-scrollbar scroll-smooth snap-x snap-mandatory"
+              {...draggable.events}
+              style={draggable.style}
+            >
               {otherTours.map((tour) => (
-                <TourCard key={tour.tourId} tour={tour} variant="vertical" />
+                <div key={tour.tourId} className="w-[280px] md:w-[320px] shrink-0 snap-start select-none">
+                  <TourCard tour={tour} variant="vertical" />
+                </div>
               ))}
             </div>
           ) : (

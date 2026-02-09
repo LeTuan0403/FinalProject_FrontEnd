@@ -139,22 +139,22 @@ const PostDetailModal = ({ postId, onClose, onCommentUpdate }: PostDetailModalPr
 
     return (
         <div className="fixed inset-0 z-[100] flex flex-col animate-in fade-in duration-300">
-            {/* Backdrop - Removed blur as requested */}
+            {/* Backdrop */}
             <div
-                className="absolute inset-0 bg-gray-950/70"
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
                 onClick={onClose}
             />
 
             {/* Top Bar / Header */}
-            <div className="relative z-10 flex items-center justify-between px-6 py-4 border-b border-gray-800/50 bg-gray-900 shadow-2xl">
+            <div className="relative z-10 flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white shadow-sm">
                 <div className="flex-1" />
-                <h2 className="text-xl font-black text-white text-center">
+                <h2 className="text-xl font-black text-gray-800 text-center">
                     {post ? `Bài viết của ${post.userId?.hoTen || 'Người dùng'}` : 'Đang tải bài viết...'}
                 </h2>
                 <div className="flex-1 flex justify-end">
                     <button
                         onClick={onClose}
-                        className="p-2 bg-gray-800/80 hover:bg-gray-700/80 rounded-full transition text-white shadow-lg border border-gray-700/50"
+                        className="p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition text-gray-500 hover:text-gray-800"
                     >
                         <X size={24} />
                     </button>
@@ -163,7 +163,7 @@ const PostDetailModal = ({ postId, onClose, onCommentUpdate }: PostDetailModalPr
 
             {/* Main Content Area */}
             <div className="relative z-10 flex-1 flex justify-center overflow-hidden py-4">
-                <div className="w-full max-w-3xl flex flex-col bg-gray-900/40 rounded-3xl border border-gray-800/50 shadow-2xl relative">
+                <div className="w-full max-w-3xl flex flex-col bg-white rounded-3xl border border-gray-100 shadow-2xl relative">
 
                     {/* Scrollable Container */}
                     <div className="flex-1 overflow-y-auto custom-scrollbar-dark p-2 sm:p-4">
@@ -185,8 +185,8 @@ const PostDetailModal = ({ postId, onClose, onCommentUpdate }: PostDetailModalPr
 
                                 {/* Comments Header */}
                                 <div className="px-2 mt-2">
-                                    <h3 className="text-white font-black text-lg flex items-center gap-2">
-                                        <div className="w-1.5 h-6 bg-blue-500 rounded-full" />
+                                    <h3 className="text-gray-900 font-black text-lg flex items-center gap-2">
+                                        <div className="w-1.5 h-6 bg-blue-600 rounded-full" />
                                         Bình luận ({post.comments?.length || 0})
                                     </h3>
                                 </div>
@@ -228,12 +228,12 @@ const PostDetailModal = ({ postId, onClose, onCommentUpdate }: PostDetailModalPr
                     {/* Fixed Bottom Input - Only show when NOT replying to a specific comment */}
                     {post && !replyingTo && (
                         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[95%] z-20 flex flex-col items-center gap-2">
-                            <div className="w-full bg-gray-800/90 backdrop-blur-xl border border-gray-700/40 rounded-full p-2 px-3 flex items-center gap-3 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.5)] transition hover:ring-1 hover:ring-gray-600/50">
-                                <div className="w-10 h-10 rounded-full bg-blue-600/20 flex items-center justify-center overflow-hidden border border-blue-500/20">
+                            <div className="w-full bg-white/90 backdrop-blur-xl border border-gray-200 rounded-full p-2 px-3 flex items-center gap-3 shadow-2xl shadow-gray-200/50 transition hover:ring-2 hover:ring-blue-100">
+                                <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center overflow-hidden border border-blue-100">
                                     {user?.avatar ? (
                                         <img src={user.avatar} alt="" className="w-full h-full object-cover border-2 border-white" />
                                     ) : (
-                                        <div className="text-blue-400 font-black text-xs">{user?.hoTen?.charAt(0) || 'U'}</div>
+                                        <div className="text-blue-600 font-black text-xs">{user?.hoTen?.charAt(0) || 'U'}</div>
                                     )}
                                 </div>
 
@@ -243,12 +243,12 @@ const PostDetailModal = ({ postId, onClose, onCommentUpdate }: PostDetailModalPr
                                         value={commentText}
                                         onChange={(e) => setCommentText(e.target.value)}
                                         placeholder="Viết bình luận công khai..."
-                                        className="flex-1 bg-transparent border-none text-white text-sm outline-none placeholder:text-gray-500 py-2"
+                                        className="flex-1 bg-transparent border-none text-gray-800 text-sm outline-none placeholder:text-gray-400 py-2"
                                     />
                                     <button
                                         type="submit"
                                         disabled={submitting || !commentText.trim()}
-                                        className="p-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-full transition disabled:opacity-50 disabled:grayscale shadow-lg shadow-blue-900/20 active:scale-95 flex items-center justify-center"
+                                        className="p-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition disabled:opacity-50 disabled:grayscale shadow-md shadow-blue-200 active:scale-95 flex items-center justify-center"
                                     >
                                         {submitting ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
                                     </button>
@@ -267,11 +267,11 @@ const PostDetailModal = ({ postId, onClose, onCommentUpdate }: PostDetailModalPr
                     background: transparent;
                 }
                 .custom-scrollbar-dark::-webkit-scrollbar-thumb {
-                    background: rgba(255, 255, 255, 0.1);
+                    background: rgba(0, 0, 0, 0.1);
                     border-radius: 10px;
                 }
                 .custom-scrollbar-dark::-webkit-scrollbar-thumb:hover {
-                    background: rgba(255, 255, 255, 0.2);
+                    background: rgba(0, 0, 0, 0.2);
                 }
             ` }} />
             </div>

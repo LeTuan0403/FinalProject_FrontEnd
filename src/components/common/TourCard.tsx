@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import { MapPin, Clock, Truck, Ticket, Heart, Calendar, User, Scale } from 'lucide-react';
+import { MapPin, Clock, Ticket, Heart, Calendar, User, Scale, Plane, Train, Ship, Car, Bus } from 'lucide-react';
 import type { Tour } from '../../types';
 import { useState, useEffect } from 'react';
 import { userService } from '../../services/userService';
@@ -9,6 +9,8 @@ import { useComparison } from '../../context/ComparisonContext';
 
 import { calculateDuration, getNextDeparture, getRemainingSeats, getTourCode } from '../../utils/tourUtils';
 import { getLocalDateStr } from '../../utils/dateUtils';
+import CountdownTimer from './CountdownTimer';
+import { Flame } from 'lucide-react';
 
 interface TourCardProps {
     tour: Tour;
@@ -119,11 +121,30 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
         return {
             percent: discount.percentage,
             originalPrice: tour.tongGiaDuKien,
-            finalPrice: tour.tongGiaDuKien * (1 - discount.percentage / 100)
+            finalPrice: tour.tongGiaDuKien * (1 - discount.percentage / 100),
+            discountDate: new Date(new Date(discount.date).setHours(23, 59, 59, 999)) // Return date for countdown
         };
     };
 
     const discountInfo = getDiscountInfo();
+
+    // eslint-disable-next-line complexity
+    const getVehicleIcon = (vehicle: string = '', className: string = 'w-4 h-4 text-blue-500') => {
+        const v = vehicle.toLowerCase();
+        if (v.includes('bay')) {
+            return <Plane className={className} />;
+        }
+        if (v.includes('thủy') || v.includes('du thuyền') || v.includes('phà')) {
+            return <Ship className={className} />;
+        }
+        if (v.includes('tàu')) {
+            return <Train className={className} />;
+        }
+        if (v.includes('xe') || v.includes('ô tô')) {
+            return <Bus className={className} />;
+        }
+        return <Car className={className} />;
+    };
 
     if (variant === 'vertical') {
         return (
@@ -132,7 +153,13 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
                 onDragStart={handleDragStart}
                 className="bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all overflow-hidden flex flex-col border border-gray-100 group relative cursor-grab active:cursor-grabbing"
             >
-                {/* Favorite Button */}
+                {/* Low Seat Warning Overlay (Vertical) */}
+                {remainingSeats > 0 && remainingSeats <= 5 && (
+                    <div className="absolute top-4 left-4 z-20 animate-pulse bg-red-600 text-white text-[10px] font-black px-2 py-1 rounded-full shadow-lg flex items-center gap-1 border border-white/30 backdrop-blur-sm">
+                        <Flame size={12} className="fill-yellow-300 text-yellow-300" />
+                        CHỈ CÒN {remainingSeats} CHỖ!
+                    </div>
+                )}
                 <TourActionButton
                     onClick={handleToggleFavorite}
                     title="Yêu thích"
@@ -159,14 +186,28 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     />
                     <div className="absolute top-4 left-4 flex flex-col gap-1 items-start">
-                        <div className="bg-black/60 text-white px-3 py-1 rounded text-xs font-bold backdrop-blur-sm">
+                        <div className={`bg-black/60 text-white px-3 py-1 rounded text-xs font-bold backdrop-blur-sm ${remainingSeats <= 5 ? 'mt-8' : ''}`}>
                             {tourCode}
                         </div>
                         {discountInfo && (
-                            <div className="bg-red-600 text-white px-3 py-1 rounded text-xs font-bold shadow-md animate-pulse">
+                            <div className="bg-red-600 text-white px-3 py-1 rounded text-xs font-bold shadow-lg animate-pulse border-2 border-white/30 backdrop-blur-sm">
                                 Giảm {discountInfo.percent}%
                             </div>
                         )}
+                        {/* Countdown Timer for Vertical Card */}
+                        {discountInfo && (
+                            <div className="bg-gradient-to-r from-red-600 to-orange-500 text-white px-2 py-1 rounded text-[10px] font-bold shadow-lg border border-white/20 backdrop-blur-sm flex items-center gap-1 mt-1">
+                                <span className="uppercase">Kết thúc sau:</span>
+                                <CountdownTimer targetDate={discountInfo.discountDate} size="sm" className="text-white" showIcon={false} />
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Hover Description Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-4 z-20">
+                        <p className="text-white text-xs md:text-sm font-medium line-clamp-3 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                            {tour.moTa}
+                        </p>
                     </div>
                 </div>
 
@@ -182,8 +223,17 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
                             <span>{durationText}</span>
                         </div>
                         <div className="flex items-center gap-1 text-[10px] md:text-sm text-gray-500">
-                            <User className="w-3 h-3 md:w-4 md:h-4" />
-                            <span>{remainingSeats} chỗ</span>
+                            {remainingSeats <= 5 ? (
+                                <span className="font-bold text-red-600 flex items-center gap-1 animate-pulse">
+                                    <Flame size={14} className="fill-red-600" />
+                                    Chỉ còn {remainingSeats} chỗ!
+                                </span>
+                            ) : (
+                                <>
+                                    <User className="w-3 h-3 md:w-4 md:h-4" />
+                                    <span>{remainingSeats} chỗ</span>
+                                </>
+                            )}
                         </div>
                         <div className="col-span-2 flex items-center gap-1 text-[10px] md:text-sm text-gray-500 md:mt-2">
                             <Calendar className="w-3 h-3 md:w-4 md:h-4" />
@@ -207,7 +257,7 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
                                 to={`/tours/${linkId}`}
                                 className="text-center w-full bg-blue-50 text-blue-600 py-1.5 md:py-2 rounded-lg font-bold text-xs md:text-sm hover:bg-blue-100 transition-colors"
                             >
-                                XEM CHI TIẾT
+                                XEM LỊCH TRÌNH
                             </Link>
                         </div>
                     </div>
@@ -223,6 +273,14 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
             onDragStart={handleDragStart}
             className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all overflow-hidden flex flex-col md:flex-row border border-gray-100 group relative cursor-grab active:cursor-grabbing"
         >
+            {/* Low Seat Warning Overlay (Horizontal) */}
+            {remainingSeats > 0 && remainingSeats <= 5 && (
+                <div className="absolute top-4 left-4 z-30 animate-pulse bg-red-600 text-white text-[10px] font-black px-2 py-1 rounded-full shadow-lg flex items-center gap-1 border border-white/30 backdrop-blur-sm">
+                    <Flame size={12} className="fill-yellow-300 text-yellow-300" />
+                    CHỈ CÒN {remainingSeats} CHỖ!
+                </div>
+            )}
+
             {/* Favorite Button (Horizontal Mobile) */}
             <TourActionButton
                 onClick={handleToggleFavorite}
@@ -251,10 +309,24 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                 />
                 {discountInfo && (
-                    <div className="absolute top-4 left-4 bg-red-600 text-white px-3 py-1 rounded text-xs font-bold shadow-md z-10">
+                    <div className={`absolute top-4 ${remainingSeats <= 5 ? 'mt-8' : ''} left-4 bg-red-600 text-white px-3 py-1 rounded text-xs font-bold shadow-lg z-10 border-2 border-white/30 backdrop-blur-sm`}>
                         Giảm {discountInfo.percent}%
                     </div>
                 )}
+                {/* Countdown Timer for Horizontal Card */}
+                {discountInfo && (
+                    <div className="absolute top-4 right-4 z-20 bg-gradient-to-r from-red-600 to-orange-500 text-white px-2 py-1 rounded text-xs font-bold shadow-lg border border-white/20 backdrop-blur-sm flex items-center gap-1">
+                        <span className="hidden md:inline uppercase mr-1">Ưu đãi kết thúc:</span>
+                        <CountdownTimer targetDate={discountInfo.discountDate} size="sm" className="text-white" showIcon={true} />
+                    </div>
+                )}
+
+                {/* Hover Description Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-4 z-20">
+                    <p className="text-white text-sm font-medium line-clamp-3 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                        {tour.moTa}
+                    </p>
+                </div>
             </div>
 
             {/* Horizontal Content */}
@@ -295,21 +367,30 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
                             <Clock className="w-4 h-4 text-blue-500" />
                             <span>Thời gian: <span className="font-semibold text-gray-800">{durationText}</span></span>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4 text-blue-500" />
+                        <div className="flex items-start gap-2">
+                            <Calendar className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
                             <span>Ngày đi: <span className="font-semibold text-gray-800">{nextDepartureText}</span></span>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <MapPin className="w-4 h-4 text-blue-500" />
+                        <div className="flex items-start gap-2">
+                            <MapPin className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
                             <span>Khởi hành: <span className="font-semibold text-gray-800">{tour.diemKhoiHanh || "Chưa cập nhật"}</span></span>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <Truck className="w-4 h-4 text-blue-500" />
+                        <div className="flex items-start gap-2">
+                            {getVehicleIcon(tour.phuongTien, "w-4 h-4 text-blue-500 mt-0.5 shrink-0")}
                             <span>Phương tiện: <span className="font-semibold text-gray-800">{tour.phuongTien || "Xe du lịch"}</span></span>
                         </div>
                         <div className="flex items-center gap-2">
-                            <User className="w-4 h-4 text-blue-500" />
-                            <span>Còn: <span className="font-semibold text-red-500">{remainingSeats} chỗ</span></span>
+                            {remainingSeats <= 5 ? (
+                                <span className="font-bold text-red-600 flex items-center gap-1 animate-pulse bg-red-50 px-2 py-0.5 rounded-full border border-red-100">
+                                    <Flame size={14} className="fill-red-600" />
+                                    Gấp: Chỉ còn {remainingSeats} chỗ!
+                                </span>
+                            ) : (
+                                <>
+                                    <User className="w-4 h-4 text-blue-500" />
+                                    <span>Còn: <span className="font-semibold text-red-500">{remainingSeats} chỗ</span></span>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -330,7 +411,7 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
                         to={`/tours/${linkId}`}
                         className="bg-blue-600 text-white px-8 py-3 rounded-lg font-bold text-sm hover:bg-blue-700 transition-all uppercase shadow-blue-200 shadow-md transform hover:-translate-y-0.5"
                     >
-                        Xem chi tiết
+                        Xem lịch trình
                     </Link>
                 </div>
             </div>

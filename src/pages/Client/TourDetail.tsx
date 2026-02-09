@@ -2,7 +2,8 @@ import { useEffect, useState, useCallback } from 'react';
 import { toast } from 'react-hot-toast';
 import { useParams, useNavigate } from 'react-router-dom';
 import { isFutureDate, formatTimeRange, compareTimeStrings, getLocalDateStr } from '../../utils/dateUtils';
-import { ChevronDown, ChevronUp, Share2, Heart, Ticket, Clock, MapPin, Truck, Info, Map, CheckCircle, AlertCircle, Star, MessageSquare, Trash2, Edit, Reply, Check, X, Calendar, UserCheck, Utensils, Image as ImageIcon, ThumbsUp, Camera, Cloud, Bell, BellOff } from 'lucide-react';
+import { ChevronDown, ChevronUp, Share2, Heart, Ticket, Clock, MapPin, Info, Map, CheckCircle, AlertCircle, Star, MessageSquare, Trash2, Edit, Reply, Check, X, Calendar, UserCheck, Utensils, Image as ImageIcon, ThumbsUp, Camera, Cloud, Bell, BellOff, Plane, Train, Ship, Car, Bus, Flame } from 'lucide-react';
+import CountdownTimer from '../../components/common/CountdownTimer';
 import { tourService } from '../../services/tourService';
 import { reviewService } from '../../services/reviewService';
 import type { Tour, Review } from '../../types';
@@ -34,7 +35,7 @@ const getLocationsFromTourName = (name: string) => {
     .trim();
 
   // 3. Split and Filter
-  return nameToParse.split(/[-–,]/)
+  return nameToParse.split(/[:\-–,]/)
     .map(s => s.trim())
     .filter(s => {
       if (s.length < 2) { return false; }
@@ -43,9 +44,10 @@ const getLocationsFromTourName = (name: string) => {
       if (/trọn gói/i.test(s)) { return false; }
       if (/khởi hành/i.test(s)) { return false; }
       if (/giá/i.test(s)) { return false; }
+      if (s.split(/\s+/).length > 4) { return false; } // Ignore long descriptive titles
       return true;
     })
-    .slice(0, 3);
+    .slice(0, 10);
 };
 
 // Reusable Media Grid Component
@@ -607,6 +609,23 @@ const TourDetail = () => {
     ? Math.max(...(tour.lichTrinh || tour.tourChiTiets).map((ct: any) => ct.ngayThu))
     : 1;
   const durationText = tour.thoiGian || `${maxDay} ngày ${maxDay - 1 > 0 ? (maxDay - 1) + ' đêm' : ''} `;
+
+  const getVehicleIcon = (vehicle: string = '', size: number = 20, className: string = 'text-blue-500') => {
+    const v = vehicle.toLowerCase();
+    if (v.includes('bay')) {
+      return <Plane size={size} className={className} />;
+    }
+    if (v.includes('thủy') || v.includes('du thuyền') || v.includes('phà')) {
+      return <Ship size={size} className={className} />;
+    }
+    if (v.includes('tàu')) {
+      return <Train size={size} className={className} />;
+    }
+    if (v.includes('xe') || v.includes('ô tô')) {
+      return <Bus size={size} className={className} />;
+    }
+    return <Car size={size} className={className} />;
+  };
 
   return (
     <>
@@ -1434,7 +1453,7 @@ const TourDetail = () => {
                       let displayPrice = (tour.isTuChon ? Math.round(tour.tongGiaDuKien / (tour.soLuongCho || 1)) : tour.tongGiaDuKien);
                       const originalPrice = displayPrice;
                       let discountPercent = 0;
-                      let discountDate = "";
+                      let rawDiscountDate: Date | null = null;
 
                       if (tour.ngayKhoiHanh && tour.discounts) {
                         const sortedDates = tour.ngayKhoiHanh
@@ -1448,7 +1467,8 @@ const TourDetail = () => {
                           if (discount) {
                             discountPercent = discount.percentage;
                             displayPrice = originalPrice * (1 - discountPercent / 100);
-                            discountDate = new Date(sortedDates[0]).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+                            rawDiscountDate = new Date(sortedDates[0]);
+                            rawDiscountDate.setHours(23, 59, 59, 999);
                           }
                         }
                       }
@@ -1463,8 +1483,21 @@ const TourDetail = () => {
                             </p>
                           </div>
                           {discountPercent > 0 && (
-                            <div className="mt-1 bg-red-100 text-red-700 text-xs font-black px-2 py-0.5 rounded-full border border-red-200 inline-flex items-center gap-1">
-                              <Clock size={12} /> Giờ chót: -{discountPercent}% ({discountDate})
+                            <div className="mt-2 flex flex-col items-center gap-1 w-full">
+                              <div className="bg-red-100 text-red-700 text-xs font-black px-2 py-0.5 rounded-full border border-red-200 inline-flex items-center gap-1">
+                                <Clock size={12} /> Giờ chót: -{discountPercent}%
+                              </div>
+                              {rawDiscountDate && (
+                                <div className="bg-gradient-to-r from-red-600 to-orange-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-md flex items-center justify-center gap-2 w-full animate-pulse border border-white/20">
+                                  <span className="uppercase tracking-wider">Kết thúc sau:</span>
+                                  <CountdownTimer
+                                    targetDate={rawDiscountDate}
+                                    size="sm"
+                                    className="text-white"
+                                    showIcon={false}
+                                  />
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
@@ -1532,7 +1565,13 @@ const TourDetail = () => {
                         return (
                           <div className="text-right">
                             <span className="font-bold text-red-600 text-xl">{nextRem}</span>
-                            {nextDateStr && !tour.isTuChon && <span className="text-xs text-gray-500 block">({nextDateStr})</span>}
+                            {nextRem <= 5 && nextRem > 0 && (
+                              <div className="flex items-center gap-1 text-red-600 font-bold text-xs animate-pulse justify-end mt-1">
+                                <Flame size={12} className="fill-red-600" />
+                                <span>Chỉ còn {nextRem} chỗ!</span>
+                              </div>
+                            )}
+                            {nextDateStr && !tour.isTuChon && <span className="text-xs text-gray-500 block mt-1">({nextDateStr})</span>}
                           </div>
                         );
                       })()}
@@ -1543,9 +1582,9 @@ const TourDetail = () => {
                         <Calendar size={20} className="text-blue-500" />
                         <span>Ngày đi</span>
                       </div>
-                      <div className="text-right">
+                      <div className="text-right flex-1 min-w-0 ml-4">
                         {tour.ngayKhoiHanh && Array.isArray(tour.ngayKhoiHanh) && tour.ngayKhoiHanh.length > 0 ? (
-                          <div className="flex flex-col gap-1.5 items-end max-h-32 overflow-y-auto no-scrollbar pr-1">
+                          <div className="inline-flex max-w-full flex-row gap-2 overflow-x-auto pb-1 no-scrollbar mask-linear-fade">
                             {(() => {
                               const futureDates = tour.ngayKhoiHanh
                                 .map(d => new Date(d))
@@ -1568,32 +1607,30 @@ const TourDetail = () => {
                                 return <span className="text-gray-500 italic">Hết lịch</span>;
                               }
 
-                              // Group by Month/Year
-                              const grouped = futureDates.reduce((acc, date) => {
-                                const key = `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
-                                if (!acc[key]) { acc[key] = []; }
-                                acc[key].push(date.getDate().toString().padStart(2, '0'));
-                                return acc;
-                              }, {} as Record<string, string[]>);
+                              return futureDates.map((date, idx) => {
+                                // Capitalize first letter of day
+                                const dayName = date.toLocaleDateString('vi-VN', { weekday: 'short' }); // Short day name T2, T3...
+                                const capitalizedDay = dayName.charAt(0).toUpperCase() + dayName.slice(1);
+                                const dateStr = date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
 
-                              return Object.entries(grouped).map(([monthYear, days], idx) => (
-                                <div key={idx} className="font-bold text-blue-700 bg-blue-50 px-2 py-1 rounded text-xs text-right">
-                                  <span className="text-blue-900">{days.join(', ')}</span>
-                                  <span className="text-gray-400 font-normal mx-1">/</span>
-                                  <span className="text-blue-600">{monthYear}</span>
-                                </div>
-                              ));
+                                return (
+                                  <div key={idx} className="shrink-0 bg-blue-50 border border-blue-100 text-blue-900 px-2 py-1 rounded text-xs font-bold flex items-center gap-1.5 whitespace-nowrap group/date hover:bg-blue-100 hover:border-blue-200 transition-colors">
+                                    <span className="text-[10px] uppercase text-blue-500 font-normal">{capitalizedDay}</span>
+                                    <span>{dateStr}</span>
+                                  </div>
+                                );
+                              });
                             })()}
                           </div>
                         ) : (
                           <span className="text-gray-500 italic">Liên hệ</span>
                         )}
-                      </div >
+                      </div>
                     </div >
 
                     <div className="flex items-center justify-between group">
                       <div className="flex items-center gap-3 text-gray-600">
-                        <Truck size={20} className="text-blue-500" />
+                        {getVehicleIcon(tour.phuongTien, 20, "text-blue-500")}
                         <span>Phương tiện</span>
                       </div>
                       <span className="font-bold text-gray-900">{tour.phuongTien || "Xe du lịch"}</span>
@@ -1665,10 +1702,10 @@ const TourDetail = () => {
 
           </div >
         </div >
-      </div>
+      </div >
 
       {/* Mobile Sticky Booking Bar */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 z-[1000] shadow-[0_-4px_25px_rgba(0,0,0,0.15)] pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+      < div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 z-[1000] shadow-[0_-4px_25px_rgba(0,0,0,0.15)] pb-[max(0.75rem,env(safe-area-inset-bottom))]" >
         <div className="flex items-center justify-between gap-3 w-full">
           {/* Price Section */}
           <div className="flex flex-col min-w-0">
@@ -1718,7 +1755,7 @@ const TourDetail = () => {
             ĐẶT TOUR NGAY <Ticket size={16} />
           </button>
         </div>
-      </div>
+      </div >
     </>
   );
 };

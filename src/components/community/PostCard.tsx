@@ -85,6 +85,16 @@ export default function PostCard({ post, onDelete, onEdit, onShare, isQuoted = f
                             </div>
                         )}
 
+                        {/* Status Badge for Owner/Admin */}
+                        {(isOwner || isAdmin) && !isQuoted && post.status !== 'Approved' && (
+                            <div className={`text-[10px] font-bold px-2 py-1 rounded-full border flex items-center gap-1 ${post.status === 'Rejected'
+                                ? 'bg-red-100 text-red-700 border-red-200'
+                                : 'bg-yellow-100 text-yellow-700 border-yellow-200'
+                                }`}>
+                                {post.status === 'Rejected' ? 'ĐÃ TỪ CHỐI' : 'CHỜ DUYỆT'}
+                            </div>
+                        )}
+
                         {/* Actions: Edit/Delete */}
                         {(isOwner || isAdmin) && !isQuoted && (
                             <div className="flex gap-1">
@@ -160,35 +170,56 @@ export default function PostCard({ post, onDelete, onEdit, onShare, isQuoted = f
 
                 {/* Interactions */}
                 {!isQuoted && (
-                    <div className="flex items-center justify-between border-t border-gray-100 pt-3 text-gray-500">
-                        <div className="flex gap-4">
-                            <button onClick={handleLike} className={`flex items-center gap-1 hover:text-red-500 transition ${isLiked ? 'text-red-500 font-bold' : ''}`}>
-                                <Heart size={20} className={isLiked ? 'fill-current' : ''} />
-                                <span>{likes.length}</span>
-                            </button>
-                            <button onClick={handleCommentClick} className="flex items-center gap-1 hover:text-blue-500 transition">
-                                <MessageCircle size={20} />
-                                <span>{post.comments?.length || 0}</span>
-                            </button>
+                    <>
+                        {/* Rejection/Pending Reason for Owner */}
+                        {(isOwner || isAdmin) && post.status !== 'Approved' && post.moderationData && (
+                            <div className={`mt-3 p-3 rounded-lg text-sm ${post.status === 'Rejected' ? 'bg-red-50 border border-red-100 text-red-800' : 'bg-yellow-50 border border-yellow-100 text-yellow-800'
+                                }`}>
+                                <p className="font-bold mb-1 flex items-center gap-2">
+                                    {post.status === 'Rejected' ? '⛔ Bài viết bị từ chối' : '⚠️ Đang chờ duyệt'}
+                                    {post.moderationData.confidence > 0 && <span className="text-xs font-normal opacity-70">(AI Confidence: {Math.round(post.moderationData.confidence * 100)}%)</span>}
+                                </p>
+                                <p>{post.moderationData.reason || 'Nội dung cần được kiểm tra thêm.'}</p>
+                                {post.moderationData.flaggedCategories && post.moderationData.flaggedCategories.length > 0 && (
+                                    <div className="mt-1 flex flex-wrap gap-1">
+                                        {post.moderationData.flaggedCategories.map((cat: string) => (
+                                            <span key={cat} className="bg-white/50 px-1.5 py-0.5 rounded text-xs border border-black/10">{cat}</span>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        <div className="flex items-center justify-between border-t border-gray-100 pt-3 text-gray-500">
+                            <div className="flex gap-4">
+                                <button onClick={handleLike} className={`flex items-center gap-1 hover:text-red-500 transition ${isLiked ? 'text-red-500 font-bold' : ''}`}>
+                                    <Heart size={20} className={isLiked ? 'fill-current' : ''} />
+                                    <span>{likes.length}</span>
+                                </button>
+                                <button onClick={handleCommentClick} className="flex items-center gap-1 hover:text-blue-500 transition">
+                                    <MessageCircle size={20} />
+                                    <span>{post.comments?.length || 0}</span>
+                                </button>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <button
+                                    onClick={handleCopyLink}
+                                    className="flex items-center gap-1 hover:text-blue-600 transition"
+                                    title="Sao chép liên kết"
+                                >
+                                    <LinkIcon size={18} />
+                                </button>
+                                <button
+                                    onClick={() => onShare && onShare(post)}
+                                    className="flex items-center gap-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-full transition-all font-bold text-xs"
+                                    title="Chia sẻ bài viết"
+                                >
+                                    <Share2 size={16} />
+                                    <span>Chia sẻ ({post.shareCount || 0})</span>
+                                </button>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-4">
-                            <button
-                                onClick={handleCopyLink}
-                                className="flex items-center gap-1 hover:text-blue-600 transition"
-                                title="Sao chép liên kết"
-                            >
-                                <LinkIcon size={18} />
-                            </button>
-                            <button
-                                onClick={() => onShare && onShare(post)}
-                                className="flex items-center gap-1 hover:text-green-600 transition"
-                                title="Chia sẻ bài viết"
-                            >
-                                <Share2 size={20} />
-                                <span className="text-sm font-medium">{post.shareCount || 0}</span>
-                            </button>
-                        </div>
-                    </div>
+                    </>
                 )}
             </div>
         </>

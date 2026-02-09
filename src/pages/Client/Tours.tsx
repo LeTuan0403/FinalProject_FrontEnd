@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Search, Filter, ArrowUpDown } from 'lucide-react';
+import { Search, Filter, ArrowUpDown, Check } from 'lucide-react';
 import { useTours } from '../../hooks/useTours';
 import TourCard from '../../components/common/TourCard';
 import type { Tour } from '../../types';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import DualRangeSlider from '../../components/common/DualRangeSlider';
+import CollapsibleFilter from '../../components/common/CollapsibleFilter';
 
 const Tours = () => {
   const { tours, loading, error } = useTours();
@@ -20,14 +22,22 @@ const Tours = () => {
 
   // Filter States
   const [selectedRegion, setSelectedRegion] = useState<string>('all');
-  const [priceRange, setPriceRange] = useState<string>('all');
-  const [selectedType, setSelectedType] = useState<string>('all');
+
+  // NEW: Price Range (Min, Max) - Default 0 to 100M
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 100000000]);
+
+  // NEW: Multi-select for Type
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+
   const [durationRange, setDurationRange] = useState<string>('all');
-  const [transport, setTransport] = useState<string>('all'); // New: Transport
-  const [sortBy, setSortBy] = useState<string>('default'); // New: Sort
+
+  // NEW: Multi-select for Transport
+  const [selectedTransports, setSelectedTransports] = useState<string[]>([]);
+
+  const [sortBy, setSortBy] = useState<string>('default');
   const [searchTerm, setSearchTerm] = useState<string>(searchParams.get('search') || '');
-  const [startDate, setStartDate] = useState<string>(''); // New: Start Date
-  const [isDiscountedOnly, setIsDiscountedOnly] = useState<boolean>(false); // New: Discount Filter
+  const [startDate, setStartDate] = useState<string>('');
+  const [isDiscountedOnly, setIsDiscountedOnly] = useState<boolean>(false);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -36,42 +46,70 @@ const Tours = () => {
     const region = searchParams.get('region');
     const date = searchParams.get('date');
 
-    if (search) { setSearchTerm(search); }
-    if (type) { setSelectedType(type); }
-    if (region) { setSelectedRegion(region); }
-    if (date) { setStartDate(date); }
+    if (search) {
+      setSearchTerm(search);
+    }
+    if (type) {
+      setSelectedTypes([type]);
+    }
+    if (region) {
+      setSelectedRegion(region);
+    }
+    if (date) {
+      setStartDate(date);
+    }
   }, [searchParams]);
 
+  const toggleType = (type: string) => {
+    setSelectedTypes(prev =>
+      prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
+    );
+  };
+
+  const toggleTransport = (transport: string) => {
+    setSelectedTransports(prev => {
+      return prev.includes(transport) ? prev.filter(t => t !== transport) : [...prev, transport];
+    });
+  };
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
+    // eslint-disable-next-line complexity
     // Filter: Approved AND Not Custom (Standard Tours only) AND Has Future Departures
     let result = tours.filter(t => {
-      if (!t.daDuyet || t.isTuChon) { return false; }
+      if (!t.daDuyet || t.isTuChon) {
+        return false;
+      }
 
       // Check for future dates
-      if (!t.ngayKhoiHanh || !Array.isArray(t.ngayKhoiHanh) || t.ngayKhoiHanh.length === 0) { return false; }
+      if (!t.ngayKhoiHanh || !Array.isArray(t.ngayKhoiHanh) || t.ngayKhoiHanh.length === 0) {
+        return false;
+      }
       const today = new Date();
       today.setHours(0, 0, 0, 0); // Reset time to start of day for accurate comparison
       const hasFutureDate = t.ngayKhoiHanh.some(date => new Date(date) >= today);
       return hasFutureDate;
     });
 
-    // Filter by Type (Domestic/International)
-    if (selectedType !== 'all') {
-      if (selectedType === 'Trong Nước') {
-        result = result.filter(t => t.loaiTour && t.loaiTour.includes('Trong Nước'));
-      } else {
-        result = result.filter(t => t.loaiTour && t.loaiTour.includes('Nước Ngoài'));
-      }
+    // Filter by Type (Domestic/International/Multi-select)
+    if (selectedTypes.length > 0) {
+      result = result.filter(t => {
+        if (!t.loaiTour) {
+          return false;
+        }
+        // Check if ANY selected type matches the tour's type
+        return selectedTypes.some(type => t.loaiTour?.includes(type));
+      });
     }
 
     // Filter by Region / Continent
     if (selectedRegion !== 'all') {
       result = result.filter(t => {
-        if (!t.khuVuc) { return false; }
-        // Strict match or substring match if DB data is slightly messy but contains the key
+        if (!t.khuVuc) {
+          return false;
+        }
         const kv = t.khuVuc.toLowerCase();
         const selected = selectedRegion.toLowerCase();
-
         return kv.includes(selected);
       });
     }
@@ -79,8 +117,9 @@ const Tours = () => {
     // Filter by Date
     if (startDate) {
       result = result.filter(t => {
-        if (!t.ngayKhoiHanh || !Array.isArray(t.ngayKhoiHanh)) { return false; }
-        // Check if any available date MATCHES the selected start date EXACTLY
+        if (!t.ngayKhoiHanh || !Array.isArray(t.ngayKhoiHanh)) {
+          return false;
+        }
         return t.ngayKhoiHanh.some(d => {
           const tourDate = new Date(d).toISOString().split('T')[0];
           return tourDate === startDate;
@@ -94,34 +133,36 @@ const Tours = () => {
         const days = t.tourChiTiets?.length
           ? Math.max(...t.tourChiTiets.map(d => d.ngayThu))
           : 1;
-        if (durationRange === '1-3') { return days <= 3; }
-        if (durationRange === '4-7') { return days >= 4 && days <= 7; }
-        if (durationRange === 'over7') { return days > 7; }
+        if (durationRange === '1-3') {
+          return days <= 3;
+        }
+        if (durationRange === '4-7') {
+          return days >= 4 && days <= 7;
+        }
+        if (durationRange === 'over7') {
+          return days > 7;
+        }
         return true;
       });
     }
 
-    // Filter by Price
-    if (priceRange !== 'all') {
-      if (priceRange === 'under5') {
-        result = result.filter(t => t.tongGiaDuKien < 5000000);
-      } else if (priceRange === '5to10') {
-        result = result.filter(t => t.tongGiaDuKien >= 5000000 && t.tongGiaDuKien <= 10000000);
-      } else if (priceRange === 'over10') {
-        result = result.filter(t => t.tongGiaDuKien > 10000000);
-      }
-    }
+    // Filter by Price (Range Slider)
+    result = result.filter(t => {
+      const price = t.tongGiaDuKien || 0;
+      return price >= priceRange[0] && price <= priceRange[1];
+    });
 
-    // Filter by Transport
-    if (transport !== 'all') {
-      if (transport === 'oto') {
-        result = result.filter(t => {
-          const vehicle = t.phuongTien?.toLowerCase() || '';
-          return vehicle.includes('ô tô') || vehicle.includes('oto') || vehicle.includes('limousine') || vehicle.includes('xe giường nằm') || vehicle.includes('xe du lịch');
+    // Filter by Transport (Multi-select)
+    if (selectedTransports.length > 0) {
+      result = result.filter(t => {
+        const vehicle = t.phuongTien?.toLowerCase() || '';
+        return selectedTransports.some(st => {
+          if (st === 'oto') {
+            return vehicle.includes('ô tô') || vehicle.includes('oto') || vehicle.includes('limousine') || vehicle.includes('xe giường nằm') || vehicle.includes('xe du lịch');
+          }
+          return vehicle.includes(st.toLowerCase());
         });
-      } else {
-        result = result.filter(t => t.phuongTien && t.phuongTien.toLowerCase().includes(transport.toLowerCase()));
-      }
+      });
     }
 
     // Filter by Search Term
@@ -136,26 +177,29 @@ const Tours = () => {
 
     // Sorting
     if (sortBy !== 'default') {
-      // Create a copy to sort
       result = [...result].sort((a, b) => {
         const getDuration = (t: Tour) => {
-          // 1. Try detailed schedule (lichTrinh or tourChiTiets)
           const schedule = t.lichTrinh || t.tourChiTiets;
           if (schedule && schedule.length > 0) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const maxDay = Math.max(...schedule.map((d: any) => d.ngayThu || 0));
-            if (maxDay > 1) { return maxDay; }
+            if (maxDay > 1) {
+              return maxDay;
+            }
           }
-          // 2. Parse string (fallback)
           if (t.thoiGian) {
-            const match = t.thoiGian.match(/(\d+)\s*(ngày|ngay|n)/i); // Matches "3 ngày", "3N", "3 Ngay"
-            if (match) { return parseInt(match[1]); }
+            const match = t.thoiGian.match(/(\d+)\s*(ngày|ngay|n)/i);
+            if (match) {
+              return parseInt(match[1]);
+            }
           }
           return 1;
         };
 
         const getMaxDiscount = (t: Tour) => {
-          if (!t.discounts || t.discounts.length === 0) { return 0; }
+          if (!t.discounts || t.discounts.length === 0) {
+            return 0;
+          }
           return Math.max(...t.discounts.map(d => d.percentage));
         };
 
@@ -175,19 +219,18 @@ const Tours = () => {
       });
     }
 
-
-    // ... existing filters ...
-
     // Filter by AI Recommendations
     if (aiFilteredIds && aiFilteredIds.length > 0) {
       result = result.filter(t => aiFilteredIds.includes(String(t._id)) || aiFilteredIds.includes(String(t.tourId)));
     }
 
     setFilteredTours([...result]);
-  }, [selectedRegion, priceRange, searchTerm, selectedType, durationRange, transport, sortBy, startDate, tours, isDiscountedOnly, aiFilteredIds]);
+  }, [selectedRegion, priceRange, searchTerm, selectedTypes, durationRange, selectedTransports, sortBy, startDate, tours, isDiscountedOnly, aiFilteredIds]);
 
   const handleAIRecommend = async () => {
-    if (!aiRequirement.trim()) return;
+    if (!aiRequirement.trim()) {
+      return;
+    }
 
     setAiLoading(true);
     try {
@@ -216,17 +259,20 @@ const Tours = () => {
     setAiRequirement('');
   };
 
-  if (loading) { return <div className="text-center py-20 text-gray-500">Đang tải danh sách tour...</div>; }
-  if (error) { return <div className="text-center py-20 text-red-500">{error}</div>; }
+  const formatCurrency = (val: number) => {
+    return (val / 1000000).toLocaleString('vi-VN', { maximumFractionDigits: 1 }) + ' tr';
+  };
+
+  if (loading) {
+    return <div className="text-center py-20 text-gray-500">Đang tải danh sách tour...</div>;
+  }
+  if (error) {
+    return <div className="text-center py-20 text-red-500">{error}</div>;
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
-
-
-
       <div className="flex flex-col lg:flex-row gap-8">
-
-
         <div className="w-full lg:w-1/4 shrink-0">
           <div className="bg-white rounded-xl shadow-md p-6 sticky top-24 max-h-[calc(100vh-10rem)] overflow-y-auto custom-scrollbar">
             <div className="flex items-center gap-2 mb-6 border-b pb-4">
@@ -260,51 +306,44 @@ const Tours = () => {
               />
             </div>
 
-            {/* FILTER GROUP: TYPE (Domestic / International) */}
-            <div className="mb-6">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Loại Tour</label>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => { setSelectedType('all'); setSelectedRegion('all'); }}
-                  className={`flex-1 py-2 text-sm rounded-lg font-medium transition ${selectedType === 'all' ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-                >
-                  Tất cả
-                </button>
-                <button
-                  onClick={() => { setSelectedType('Trong Nước'); setSelectedRegion('all'); }}
-                  className={`flex-1 py-2 text-sm rounded-lg font-medium transition ${selectedType === 'Trong Nước' ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-                >
-                  Trong nước
-                </button>
-                <button
-                  onClick={() => { setSelectedType('Nước Ngoài'); setSelectedRegion('all'); }}
-                  className={`flex-1 py-2 text-sm rounded-lg font-medium transition ${selectedType === 'Nước Ngoài' ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-                >
-                  Nước ngoài
-                </button>
+            {/* FILTER GROUP: TYPE (Checkbox) */}
+            <CollapsibleFilter title="Loại Tour">
+              <div className="space-y-2">
+                {['Trong Nước', 'Nước Ngoài'].map(type => (
+                  <label key={type} className="flex items-center gap-2 cursor-pointer group">
+                    <div className={`w-5 h-5 rounded border flex items-center justify-center transition ${selectedTypes.includes(type) ? 'bg-blue-600 border-blue-600' : 'border-gray-300 bg-white group-hover:border-blue-400'}`}>
+                      {selectedTypes.includes(type) && <Check size={14} className="text-white" />}
+                    </div>
+                    <input
+                      type="checkbox"
+                      className="hidden"
+                      checked={selectedTypes.includes(type)}
+                      onChange={() => toggleType(type)}
+                    />
+                    <span className="text-sm text-gray-600 group-hover:text-blue-600 transition">{type}</span>
+                  </label>
+                ))}
               </div>
-            </div>
+            </CollapsibleFilter>
 
             {/* FILTER GROUP: REGION / CONTINENT */}
-            {(selectedType !== 'all') && (
-              <div className="mb-6 transition-all duration-300">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  {selectedType === 'Trong Nước' ? 'Khu vực (Việt Nam)' : 'Châu Lục'}
+            {selectedTypes.length > 0 && (
+              <div className="mb-6 pl-2 border-l-2 border-gray-100">
+                <label className="block text-xs font-semibold text-gray-500 uppercase mb-2">
+                  Khu vực chi tiết
                 </label>
-                <div className="space-y-2 pl-1">
-                  {(selectedType === 'Trong Nước' ? [
-                    { value: 'all', label: 'Tất cả' },
+                <div className="space-y-2">
+                  {(selectedTypes.includes('Trong Nước') ? [
                     { value: 'Miền Bắc', label: 'Miền Bắc' },
                     { value: 'Miền Trung', label: 'Miền Trung' },
                     { value: 'Miền Nam', label: 'Miền Nam' }
-                  ] : [
-                    { value: 'all', label: 'Tất cả' },
+                  ] : []).concat(selectedTypes.includes('Nước Ngoài') ? [
                     { value: 'Châu Á', label: 'Châu Á' },
                     { value: 'Châu Âu', label: 'Châu Âu' },
                     { value: 'Châu Mỹ', label: 'Châu Mỹ' },
                     { value: 'Châu Úc', label: 'Châu Úc' },
                     { value: 'Châu Phi', label: 'Châu Phi' }
-                  ]).map(opt => (
+                  ] : []).map(opt => (
                     <label key={opt.value} className="flex items-center gap-2 cursor-pointer group">
                       <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${selectedRegion === opt.value ? 'border-blue-600' : 'border-gray-300 group-hover:border-blue-400'}`}>
                         {selectedRegion === opt.value && <div className="w-2 h-2 rounded-full bg-blue-600" />}
@@ -320,13 +359,19 @@ const Tours = () => {
                       <span className={`text-sm ${selectedRegion === opt.value ? 'font-medium text-blue-700' : 'text-gray-600'}`}>{opt.label}</span>
                     </label>
                   ))}
+                  <label className="flex items-center gap-2 cursor-pointer group mt-2 pt-2 border-t border-gray-100">
+                    <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${selectedRegion === 'all' ? 'border-blue-600' : 'border-gray-300'}`}>
+                      {selectedRegion === 'all' && <div className="w-2 h-2 rounded-full bg-blue-600" />}
+                    </div>
+                    <input type="radio" value="all" checked={selectedRegion === 'all'} onChange={() => setSelectedRegion('all')} className="hidden" />
+                    <span className="text-sm text-gray-500">Tất cả khu vực</span>
+                  </label>
                 </div>
               </div>
             )}
 
             {/* FILTER GROUP: DURATION */}
-            <div className="mb-6">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Thời gian</label>
+            <CollapsibleFilter title="Thời gian">
               <div className="space-y-2">
                 {[
                   { value: 'all', label: 'Tất cả' },
@@ -347,60 +392,48 @@ const Tours = () => {
                   </label>
                 ))}
               </div>
-            </div>
+            </CollapsibleFilter>
 
-            {/* FILTER GROUP: TRANSPORT (New) */}
-            <div className="mb-6">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Phương tiện</label>
+            {/* FILTER GROUP: TRANSPORT (Multi-select) */}
+            <CollapsibleFilter title="Phương tiện">
               <div className="space-y-2">
                 {[
-                  { value: 'all', label: 'Tất cả' },
                   { value: 'oto', label: 'Ô tô' },
                   { value: 'Máy bay', label: 'Máy bay' },
                   { value: 'Tàu hỏa', label: 'Tàu hỏa' }
                 ].map(opt => (
                   <label key={opt.value} className="flex items-center gap-2 cursor-pointer group">
+                    <div className={`w-5 h-5 rounded border flex items-center justify-center transition ${selectedTransports.includes(opt.value) ? 'bg-blue-600 border-blue-600' : 'border-gray-300 bg-white group-hover:border-blue-400'}`}>
+                      {selectedTransports.includes(opt.value) && <Check size={14} className="text-white" />}
+                    </div>
                     <input
-                      type="radio"
-                      name="transport"
-                      value={opt.value}
-                      checked={transport === opt.value}
-                      onChange={(e) => setTransport(e.target.value)}
-                      className="text-blue-600 focus:ring-blue-500"
+                      type="checkbox"
+                      className="hidden"
+                      checked={selectedTransports.includes(opt.value)}
+                      onChange={() => toggleTransport(opt.value)}
                     />
-                    <span className="text-gray-600 text-sm">{opt.label}</span>
+                    <span className="text-sm text-gray-600 group-hover:text-blue-600 transition">{opt.label}</span>
                   </label>
                 ))}
               </div>
-            </div>
+            </CollapsibleFilter>
 
-            {/* Price Filter */}
-            <div className="mb-6">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Khoảng giá</label>
-              <div className="space-y-2">
-                {[
-                  { value: 'all', label: 'Tất cả' },
-                  { value: 'under5', label: 'Dưới 5 triệu' },
-                  { value: '5to10', label: 'Từ 5 - 10 triệu' },
-                  { value: 'over10', label: 'Trên 10 triệu' }
-                ].map(opt => (
-                  <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="price"
-                      value={opt.value}
-                      checked={priceRange === opt.value}
-                      onChange={(e) => setPriceRange(e.target.value)}
-                      className="text-blue-600 focus:ring-blue-500"
-                    />
-                    <span className="text-gray-600 text-sm">{opt.label}</span>
-                  </label>
-                ))}
+            {/* Price Filter (Slider) */}
+            <CollapsibleFilter title="Khoảng giá">
+              <div className="px-4 pb-2">
+                <DualRangeSlider
+                  min={0}
+                  max={100000000}
+                  step={500000}
+                  initialValues={priceRange}
+                  onChange={(vals) => setPriceRange(vals)}
+                  formatLabel={formatCurrency}
+                />
               </div>
-            </div>
+            </CollapsibleFilter>
 
             {/* Discount Filter */}
-            <div className="mb-6 p-4 bg-red-50 rounded-lg border border-red-100">
+            <div className="p-4 bg-red-50 rounded-lg border border-red-100 mb-6">
               <label className="flex items-center gap-3 cursor-pointer select-none">
                 <div className="relative flex items-center">
                   <input
@@ -409,11 +442,9 @@ const Tours = () => {
                     onChange={(e) => setIsDiscountedOnly(e.target.checked)}
                     className="peer w-5 h-5 cursor-pointer appearance-none rounded border border-red-300 shadow-sm checked:bg-red-500 checked:border-red-500 transition-all"
                   />
-                  <svg className="absolute w-3.5 h-3.5 text-white hidden peer-checked:block pointer-events-none left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                  </svg>
+                  <Check size={14} className="absolute text-white hidden peer-checked:block pointer-events-none left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" />
                 </div>
-                <span className="font-bold text-red-600">Chỉ hiện tour đang giảm giá</span>
+                <span className="font-bold text-red-600 text-sm">Chỉ hiện tour giảm giá</span>
               </label>
             </div>
 
@@ -423,7 +454,7 @@ const Tours = () => {
         {/* TOUR LIST */}
         <div className="w-full lg:w-3/4">
 
-          {/* AI ASSISTANT (Moved Here) */}
+          {/* AI ASSISTANT */}
           <div className="mb-8 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-6 text-white shadow-xl relative overflow-hidden">
             <div className="absolute top-0 right-0 opacity-10 pointer-events-none">
               <svg width="300" height="300" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="currentColor" /></svg>
@@ -463,7 +494,6 @@ const Tours = () => {
                   </div>
                 )}
               </div>
-
             </div>
           </div>
 
@@ -499,7 +529,16 @@ const Tours = () => {
                 <div className="text-6xl mb-4">🔍</div>
                 <p className="text-xl text-gray-600 font-medium">Không tìm thấy tour phù hợp</p>
                 <button
-                  onClick={() => { setSelectedRegion('all'); setPriceRange('all'); setSearchTerm(''); setTransport('all'); setSortBy('default'); setStartDate(''); setIsDiscountedOnly(false); }}
+                  onClick={() => {
+                    setSelectedRegion('all');
+                    setPriceRange([0, 100000000]);
+                    setSearchTerm('');
+                    setSelectedTypes([]);
+                    setSelectedTransports([]);
+                    setSortBy('default');
+                    setStartDate('');
+                    setIsDiscountedOnly(false);
+                  }}
                   className="mt-4 text-blue-600 hover:underline"
                 >
                   Xóa bộ lọc

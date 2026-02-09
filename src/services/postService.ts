@@ -38,6 +38,12 @@ export interface Post {
     sharedPostId?: Post | null;
     isRewardClaimed?: boolean;
     shareCount?: number;
+    moderationData?: {
+        isSafe: boolean;
+        confidence: number;
+        reason: string;
+        flaggedCategories: string[];
+    };
 }
 
 export const postService = {

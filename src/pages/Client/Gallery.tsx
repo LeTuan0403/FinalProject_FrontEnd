@@ -163,9 +163,14 @@ const Gallery = () => {
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                       loading="lazy"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
+                      {loc.moTa && (
+                        <p className="text-white text-xs md:text-sm line-clamp-3 mb-2 opacity-95">
+                          {loc.moTa}
+                        </p>
+                      )}
                       {loc.giaVe > 0 && (
-                        <span className="text-white text-sm font-medium">
+                        <span className="text-yellow-400 text-sm font-bold">
                           Vé: {loc.giaVe.toLocaleString()}đ
                         </span>
                       )}
