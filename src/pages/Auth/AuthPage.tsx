@@ -39,7 +39,7 @@ const AuthPage = () => {
         register: loginRegister,
         handleSubmit: handleLoginSubmit,
         formState: { errors: loginErrors, isSubmitting: isLoginSubmitting }
-    } = useForm<LoginFormData>();
+    } = useForm<LoginFormData>({ mode: "onChange" });
     const [loginError, setLoginError] = useState('');
 
     // Register Form
@@ -48,7 +48,7 @@ const AuthPage = () => {
         handleSubmit: handleRegisterSubmit,
         watch: registerWatch,
         formState: { errors: registerErrors }
-    } = useForm<RegisterFormData>();
+    } = useForm<RegisterFormData>({ mode: "onChange" });
     const [registerError, setRegisterError] = useState('');
     const [isRegisterLoading, setIsRegisterLoading] = useState(false);
     const password = registerWatch("matKhau");
@@ -160,7 +160,6 @@ const AuthPage = () => {
                             </div>
                         )}
 
-                        {/* Replace custom button with GoogleLogin component */}
                         <div className="w-full flex justify-center mb-4">
                             <GoogleLogin
                                 onSuccess={handleGoogleSuccess}
@@ -205,16 +204,6 @@ const AuthPage = () => {
                         <h1 className="font-bold text-2xl mb-1 text-teal-800">Tạo Tài Khoản</h1>
                         <p className="text-gray-500 text-xs mb-4">Tham gia cộng đồng du lịch ngay</p>
 
-                        <button type="button" className="w-full flex items-center justify-center gap-2 border border-gray-200 rounded-lg py-2 hover:bg-gray-50 transition mb-3">
-                            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-4 h-4" />
-                            <span className="text-xs font-medium text-gray-600">Đăng ký với Google</span>
-                        </button>
-
-                        <div className="relative w-full mb-3">
-                            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-200"></div></div>
-                            <div className="relative flex justify-center text-[10px] uppercase"><span className="bg-white px-2 text-gray-400">Hoặc</span></div>
-                        </div>
-
                         {registerError && <div className="w-full text-red-500 text-xs mb-3 bg-red-50 p-2 rounded border border-red-100">{registerError}</div>}
 
                         <div className="w-full grid grid-cols-2 gap-2.5 pb-2">
@@ -229,8 +218,39 @@ const AuthPage = () => {
                             </div>
                             <div className="col-span-1"><InputField icon={MapPin} register={registerForm} name="tinhThanh" placeholder="Tỉnh/Thành" /></div>
                             <div className="col-span-1"><InputField icon={MapPin} register={registerForm} name="quanHuyen" placeholder="Quận/Huyện" /></div>
-                            <div className="col-span-1"><PasswordInput icon={Lock} register={registerForm} name="matKhau" rules={{ required: true, minLength: 8 }} placeholder="Mật khẩu" error={registerErrors.matKhau as FieldError} /></div>
-                            <div className="col-span-1"><PasswordInput icon={Lock} register={registerForm} name="confirmMatKhau" rules={{ validate: (v: string | undefined) => v === password || "Mật khẩu không khớp" }} placeholder="Xác nhận" error={registerErrors.confirmMatKhau as FieldError} /></div>
+                            <div className="col-span-1">
+                                <PasswordInput
+                                    icon={Lock}
+                                    register={registerForm}
+                                    name="matKhau"
+                                    rules={{
+                                        required: "Mật khẩu là bắt buộc",
+                                        validate: (pass?: string) => {
+                                            if (!pass) return "Mật khẩu là bắt buộc";
+                                            const missing = [];
+                                            if (pass.length < 8) missing.push("8 ký tự");
+                                            if (!/[a-z]/.test(pass)) missing.push("chữ thường");
+                                            if (!/[A-Z]/.test(pass)) missing.push("chữ hoa");
+                                            if (!/\d/.test(pass)) missing.push("số");
+                                            if (!/[^A-Za-z0-9]/.test(pass)) missing.push("ký tự đặc biệt");
+                                            if (missing.length > 0) return `Thiếu: ${missing.join(", ")}`;
+                                            return true;
+                                        }
+                                    }}
+                                    placeholder="Mật khẩu"
+                                    error={registerErrors.matKhau as FieldError}
+                                />
+                            </div>
+                            <div className="col-span-1">
+                                <PasswordInput
+                                    icon={Lock}
+                                    register={registerForm}
+                                    name="confirmMatKhau"
+                                    rules={{ validate: (v: string | undefined) => v === password || "Mật khẩu không khớp" }}
+                                    placeholder="Xác nhận"
+                                    error={registerErrors.confirmMatKhau as FieldError}
+                                />
+                            </div>
                         </div>
 
                         <button type="submit" disabled={isRegisterLoading} className="w-full rounded-lg bg-teal-600 text-white text-sm font-bold py-2.5 hover:bg-teal-700 transition shadow-md shadow-teal-200 mt-2">

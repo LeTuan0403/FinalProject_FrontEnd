@@ -136,6 +136,8 @@ const ChatWidget = () => {
         socket.on("connect", handleConnect);
 
         socket.on("receive_message", (data: Message) => {
+            if (data.senderId === currentUserId) return;
+            
             setMessages((prev) => {
                 // Prevent duplicate messages
                 if (prev.some(m => m._id === data._id)) {
