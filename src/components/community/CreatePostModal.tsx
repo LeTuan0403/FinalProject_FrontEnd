@@ -110,14 +110,26 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ isOpen, onClose, onSu
             };
 
             if (post) {
-                await postService.updatePost(post._id, data);
-                toast.success('Đã cập nhật bài viết! Vui lòng chờ duyệt lại.');
+                const res = await postService.updatePost(post._id, data);
+                if (res.data.status === 'Approved') {
+                    toast.success('Đã cập nhật bài viết thành công!');
+                } else if (res.data.status === 'Rejected') {
+                    toast.error('Bài viết đã bị từ chối do vi phạm tiêu chuẩn cộng đồng.');
+                } else {
+                    toast.success('Đã cập nhật bài viết! Vui lòng chờ quản trị viên duyệt lại.');
+                }
             } else if (sharedPost) {
                 await postService.sharePost({ content, sharedPostId: sharedPost._id });
                 toast.success('Đã chia sẻ bài viết!');
             } else {
-                await postService.createPost(data);
-                toast.success('Bài viết đã được gửi và đang chờ duyệt!');
+                const res = await postService.createPost(data);
+                if (res.data.status === 'Approved') {
+                    toast.success('Bài viết của bạn đã được AI duyệt và đăng thành công!');
+                } else if (res.data.status === 'Rejected') {
+                    toast.error('Bài viết đã bị từ chối do vi phạm tiêu chuẩn cộng đồng.');
+                } else {
+                    toast.success('Bài viết đã được gửi và đang chờ quản trị viên duyệt!');
+                }
             }
 
             onSuccess();

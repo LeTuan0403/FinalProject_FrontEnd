@@ -38,12 +38,12 @@ const DualRangeSlider: React.FC<DualRangeSliderProps> = ({
         [min, max]
     );
 
-    const getValue = (percent: number) => {
+    const getValue = useCallback((percent: number) => {
         const rawValue = (percent / 100) * (max - min) + min;
         // Snap to step
         const steppedValue = Math.round(rawValue / step) * step;
         return Math.max(min, Math.min(max, steppedValue));
-    };
+    }, [max, min, step]);
 
     const handleMouseDown = (type: 'min' | 'max') => (event: React.MouseEvent | React.TouchEvent) => {
         event.preventDefault();

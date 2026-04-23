@@ -23,7 +23,7 @@ const Sidebar = () => {
         { margin: false, id: 'reviews', label: 'Đánh giá', icon: <Star size={20} />, badge: counts.reviews },
         { margin: false, id: 'contacts', label: 'Liên hệ', icon: <Mail size={20} />, badge: counts.contacts },
         { margin: false, id: 'coupons', label: 'Mã giảm giá', icon: <Ticket size={20} /> },
-        { margin: false, id: 'posts', label: 'Bài viết cộng đồng', icon: <FileText size={20} /> },
+        { margin: false, id: 'posts', label: 'Bài viết cộng đồng', icon: <FileText size={20} />, badge: counts.posts },
         { margin: true, id: 'settings', label: 'Cài đặt', icon: <Settings size={20} /> },
     ];
 

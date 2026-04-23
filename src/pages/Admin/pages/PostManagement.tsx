@@ -3,11 +3,13 @@ import { postService, Post } from '../../../services/postService';
 import { Check, X, Trash2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import PostCard from '../../../components/community/PostCard';
+import { useNotification } from '../../../context/NotificationContext';
 
 const PostManagement = () => {
     const [posts, setPosts] = useState<Post[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<'All' | 'Pending' | 'Approved' | 'Rejected'>('Pending');
+    const { refreshCounts } = useNotification();
 
     const fetchPosts = useCallback(async () => {
         setLoading(true);
@@ -37,6 +39,7 @@ const PostManagement = () => {
             } else {
                 setPosts(posts.map(p => p._id === id ? { ...p, status: 'Approved' } : p));
             }
+            refreshCounts();
         } catch (error) {
             toast.error('Lỗi khi duyệt');
         }
@@ -52,6 +55,7 @@ const PostManagement = () => {
             } else {
                 setPosts(posts.map(p => p._id === id ? { ...p, status: 'Rejected' } : p));
             }
+            refreshCounts();
         } catch (error) {
             toast.error('Lỗi khi từ chối');
         }
@@ -63,6 +67,7 @@ const PostManagement = () => {
             await postService.deletePost(id);
             toast.success('Đã xóa bài viết');
             setPosts(posts.filter(p => p._id !== id));
+            refreshCounts();
         } catch (error) {
             toast.error('Lỗi khi xóa');
         }
@@ -113,7 +118,7 @@ const PostManagement = () => {
                             {/* Card Wrapper - PostCard handles its own internal styling */}
                             <div className="relative">
                                 {/* Pass clean UI props if needed, mostly re-using PostCard */}
-                                <PostCard post={post} onDelete={handleDelete} />
+                                <PostCard post={post} onDelete={handleDelete} hideStatus={true} hideActions={true} />
 
                                 {/* Admin: AI Moderation Info */}
                                 {post.moderationData && (

@@ -23,6 +23,7 @@ const AdminHeader = ({ onMenuClick }: { onMenuClick?: () => void }) => {
         { id: 'reviews', label: 'đánh giá chưa trả lời', count: counts.reviews, path: '/admin/reviews', color: 'text-yellow-600', bg: 'bg-yellow-50' },
         { id: 'tours', label: 'tour cần duyệt', count: counts.tours, path: '/admin/tours', color: 'text-green-600', bg: 'bg-green-50' },
         { id: 'messages', label: 'tin nhắn mới', count: counts.messages, path: '/admin/chat', color: 'text-indigo-600', bg: 'bg-indigo-50' },
+        { id: 'posts', label: 'bài viết chờ duyệt', count: counts.posts, path: '/admin/posts', color: 'text-teal-600', bg: 'bg-teal-50' },
     ].filter(n => n.count > 0);
 
     return (

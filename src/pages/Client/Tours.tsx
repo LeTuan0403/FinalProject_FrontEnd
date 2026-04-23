@@ -71,10 +71,9 @@ const Tours = () => {
       return prev.includes(transport) ? prev.filter(t => t !== transport) : [...prev, transport];
     });
   };
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   useEffect(() => {
-    // eslint-disable-next-line complexity
+     
     // Filter: Approved AND Not Custom (Standard Tours only) AND Has Future Departures
     let result = tours.filter(t => {
       if (!t.daDuyet || t.isTuChon) {

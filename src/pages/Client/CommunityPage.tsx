@@ -5,7 +5,7 @@ import CreatePostModal from '../../components/community/CreatePostModal';
 import PostDetailModal from '../../components/community/PostDetailModal';
 import { postService, Post } from '../../services/postService';
 import { useAuth } from '../../hooks/useAuth';
-import { Plus, Users, Globe, User as UserIcon, Flame, Clock, Search } from 'lucide-react';
+import { Plus, Users, Globe, User as UserIcon, Flame, Clock, Search, AlertTriangle, Trash2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useLastMinuteTours } from '../../hooks/useLastMinuteTours';
 import TourCard from '../../components/common/TourCard';
@@ -23,6 +23,8 @@ const CommunityPage = () => {
 
     const viewingPostId = searchParams.get('post');
     const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+    const [postToDelete, setPostToDelete] = useState<string | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const { lastMinuteTours } = useLastMinuteTours();
 
@@ -55,6 +57,26 @@ const CommunityPage = () => {
     useEffect(() => {
         fetchPosts();
     }, [fetchPosts]);
+
+    const handleDeletePost = (id: string) => {
+        setPostToDelete(id);
+    };
+
+    const confirmDeletePost = async () => {
+        if (!postToDelete) {return;}
+        setIsDeleting(true);
+        try {
+            await postService.deletePost(postToDelete);
+            setPosts(posts.filter(p => p._id !== postToDelete));
+            toast.success('Xóa bài viết thành công');
+        } catch (error) {
+            console.error(error);
+            toast.error('Không thể xóa bài viết');
+        } finally {
+            setIsDeleting(false);
+            setPostToDelete(null);
+        }
+    };
 
     return (
         <div className="min-h-screen bg-gray-50 pb-20 pt-6">
@@ -144,7 +166,7 @@ const CommunityPage = () => {
                                     <div key={post._id} className="transition-all duration-500 rounded-xl">
                                         <PostCard
                                             post={post}
-                                            onDelete={(id: string) => setPosts(posts.filter(p => p._id !== id))}
+                                            onDelete={handleDeletePost}
                                             onEdit={(p: Post) => {
                                                 setEditingPost(p);
                                                 setSharingPost(null);
@@ -237,6 +259,46 @@ const CommunityPage = () => {
                         setPosts(posts.map(p => p._id === postId ? { ...p, comments: newComments } : p));
                     }}
                 />
+
+                {/* Delete Confirmation Modal */}
+                {postToDelete && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+                        <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
+                            <div className="p-6 text-center">
+                                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <AlertTriangle size={32} className="text-red-500" />
+                                </div>
+                                <h3 className="text-xl font-black text-gray-800 mb-2">Xóa bài viết?</h3>
+                                <p className="text-gray-500 text-sm mb-6">
+                                    Bạn có chắc chắn muốn xóa bài viết này không? Hành động này không thể hoàn tác.
+                                </p>
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => setPostToDelete(null)}
+                                        disabled={isDeleting}
+                                        className="flex-1 py-2.5 px-4 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition disabled:opacity-50"
+                                    >
+                                        Hủy
+                                    </button>
+                                    <button
+                                        onClick={confirmDeletePost}
+                                        disabled={isDeleting}
+                                        className="flex-1 py-2.5 px-4 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {isDeleting ? (
+                                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        ) : (
+                                            <>
+                                                <Trash2 size={18} />
+                                                Xóa ngay
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -226,14 +226,14 @@ const AuthPage = () => {
                                     rules={{
                                         required: "Mật khẩu là bắt buộc",
                                         validate: (pass?: string) => {
-                                            if (!pass) return "Mật khẩu là bắt buộc";
+                                            if (!pass) {return "Mật khẩu là bắt buộc";}
                                             const missing = [];
-                                            if (pass.length < 8) missing.push("8 ký tự");
-                                            if (!/[a-z]/.test(pass)) missing.push("chữ thường");
-                                            if (!/[A-Z]/.test(pass)) missing.push("chữ hoa");
-                                            if (!/\d/.test(pass)) missing.push("số");
-                                            if (!/[^A-Za-z0-9]/.test(pass)) missing.push("ký tự đặc biệt");
-                                            if (missing.length > 0) return `Thiếu: ${missing.join(", ")}`;
+                                            if (pass.length < 8) {missing.push("8 ký tự");}
+                                            if (!/[a-z]/.test(pass)) {missing.push("chữ thường");}
+                                            if (!/[A-Z]/.test(pass)) {missing.push("chữ hoa");}
+                                            if (!/\d/.test(pass)) {missing.push("số");}
+                                            if (!/[^A-Za-z0-9]/.test(pass)) {missing.push("ký tự đặc biệt");}
+                                            if (missing.length > 0) {return `Thiếu: ${missing.join(", ")}`;}
                                             return true;
                                         }
                                     }}

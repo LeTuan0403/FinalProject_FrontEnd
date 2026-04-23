@@ -12,10 +12,12 @@ interface PostCardProps {
     onEdit?: (post: Post) => void;
     onShare?: (post: Post) => void;
     isQuoted?: boolean;
+    hideStatus?: boolean;
+    hideActions?: boolean;
 }
 
 // eslint-disable-next-line complexity
-export default function PostCard({ post, onDelete, onEdit, onShare, isQuoted = false }: PostCardProps) {
+export default function PostCard({ post, onDelete, onEdit, onShare, isQuoted = false, hideStatus = false, hideActions = false }: PostCardProps) {
     const { user } = useAuth();
     const [searchParams, setSearchParams] = useSearchParams();
     const [likes, setLikes] = useState(post.likes || []);
@@ -86,7 +88,7 @@ export default function PostCard({ post, onDelete, onEdit, onShare, isQuoted = f
                         )}
 
                         {/* Status Badge for Owner/Admin */}
-                        {(isOwner || isAdmin) && !isQuoted && post.status !== 'Approved' && (
+                        {!hideStatus && (isOwner || isAdmin) && !isQuoted && post.status !== 'Approved' && (
                             <div className={`text-[10px] font-bold px-2 py-1 rounded-full border flex items-center gap-1 ${post.status === 'Rejected'
                                 ? 'bg-red-100 text-red-700 border-red-200'
                                 : 'bg-yellow-100 text-yellow-700 border-yellow-200'
@@ -96,7 +98,7 @@ export default function PostCard({ post, onDelete, onEdit, onShare, isQuoted = f
                         )}
 
                         {/* Actions: Edit/Delete */}
-                        {(isOwner || isAdmin) && !isQuoted && (
+                        {!hideActions && (isOwner || isAdmin) && !isQuoted && (
                             <div className="flex gap-1">
                                 {isOwner && onEdit && (
                                     <button onClick={() => onEdit(post)} className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-full transition" title="Chỉnh sửa">
@@ -172,20 +174,23 @@ export default function PostCard({ post, onDelete, onEdit, onShare, isQuoted = f
                 {!isQuoted && (
                     <>
                         {/* Rejection/Pending Reason for Owner */}
-                        {(isOwner || isAdmin) && post.status !== 'Approved' && post.moderationData && (
+                        {(isOwner || isAdmin) && post.status !== 'Approved' && (
                             <div className={`mt-3 p-3 rounded-lg text-sm ${post.status === 'Rejected' ? 'bg-red-50 border border-red-100 text-red-800' : 'bg-yellow-50 border border-yellow-100 text-yellow-800'
                                 }`}>
-                                <p className="font-bold mb-1 flex items-center gap-2">
+                                <p className="font-bold flex items-center gap-2">
                                     {post.status === 'Rejected' ? '⛔ Bài viết bị từ chối' : '⚠️ Đang chờ duyệt'}
-                                    {post.moderationData.confidence > 0 && <span className="text-xs font-normal opacity-70">(AI Confidence: {Math.round(post.moderationData.confidence * 100)}%)</span>}
                                 </p>
-                                <p>{post.moderationData.reason || 'Nội dung cần được kiểm tra thêm.'}</p>
-                                {post.moderationData.flaggedCategories && post.moderationData.flaggedCategories.length > 0 && (
-                                    <div className="mt-1 flex flex-wrap gap-1">
-                                        {post.moderationData.flaggedCategories.map((cat: string) => (
-                                            <span key={cat} className="bg-white/50 px-1.5 py-0.5 rounded text-xs border border-black/10">{cat}</span>
-                                        ))}
-                                    </div>
+                                {post.status === 'Rejected' && post.moderationData && (
+                                    <>
+                                        <p className="mt-1">{post.moderationData.reason || 'Nội dung vi phạm tiêu chuẩn cộng đồng.'}</p>
+                                        {post.moderationData.flaggedCategories && post.moderationData.flaggedCategories.length > 0 && (
+                                            <div className="mt-2 flex flex-wrap gap-1">
+                                                {post.moderationData.flaggedCategories.map((cat: string) => (
+                                                    <span key={cat} className="bg-white/50 px-1.5 py-0.5 rounded text-xs border border-black/10">{cat}</span>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </>
                                 )}
                             </div>
                         )}

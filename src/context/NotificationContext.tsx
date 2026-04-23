@@ -1,6 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import axios from "axios";
+import { toast } from "react-hot-toast";
 
 // Reuse ChatContext socket if available, or just rely on API for v1. 
 // Given ChatContext is global, we can use it.
@@ -13,6 +14,7 @@ interface NotificationCounts {
     contacts: number;
     reviews: number;
     messages: number;
+    posts: number;
     total: number;
 }
 
@@ -28,6 +30,7 @@ const defaultCounts: NotificationCounts = {
     contacts: 0,
     reviews: 0,
     messages: 0,
+    posts: 0,
     total: 0
 };
 
@@ -66,10 +69,19 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     useEffect(() => {
         if (!socket) { return; }
 
-        const handleNotification = (data: unknown) => {
-            // data = { type: 'booking' | 'contact' ... }
-            // For simplicity, just refetch all counts to be accurate
-            // Or optimistically increment if we trust the event
+        const handleNotification = (data: { message?: string, type?: string } | null | undefined) => {
+            // Show toast if there's a message
+            if (data && data.message) {
+                toast(data.message, {
+                    icon: data.type === 'post' ? '📝' : data.type === 'message' ? '💬' : '🔔',
+                    duration: 4000,
+                    style: {
+                        background: '#3b82f6',
+                        color: '#fff',
+                        fontWeight: 'bold',
+                    }
+                });
+            }
 
             if (data) { fetchCounts(); }
         };

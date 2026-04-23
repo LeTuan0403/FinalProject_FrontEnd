@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Bell, Trash2 } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../hooks/useAuth';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useChat } from '../context/ChatContext';
 
 const API_URL = 'http://localhost:5000/api/notifications';
@@ -26,6 +26,7 @@ const NotificationDropdown = ({ extraSection, extraCount = 0 }: NotificationDrop
     const { user } = useAuth();
     const { socket, toggleChat } = useChat();
     const navigate = useNavigate();
+    const location = useLocation();
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [isOpen, setIsOpen] = useState(false);
@@ -63,27 +64,8 @@ const NotificationDropdown = ({ extraSection, extraCount = 0 }: NotificationDrop
         socket.emit('join_room', `user_${user.userId}`);
 
         const handleNewNotification = (newNotif: Notification) => {
-            // If the new notification says history is deleted, clear local 'MESSAGE' type notifications
-            if (newNotif.type === 'HISTORY_DELETED') {
-                setNotifications(prev => {
-                    const filtered = prev.filter(n => n.type !== 'MESSAGE');
-                    return [newNotif, ...filtered];
-                });
-
-                // Recalculate unread count
-                // Note: We can't easily know exactly how many were unread messages without recalculating from state.
-                // A simpler, safer way is to just setNotifications and then let a separate effect or just fetchCounts handle it?
-                // Or better: manual calc.
-                setNotifications(prev => {
-                    const filtered = prev.filter(n => n.type !== 'MESSAGE');
-                    const newUnreadCount = [newNotif, ...filtered].filter(n => !n.isRead).length;
-                    setUnreadCount(newUnreadCount);
-                    return [newNotif, ...filtered];
-                });
-            } else {
-                setNotifications(prev => [newNotif, ...prev]);
-                setUnreadCount(prev => prev + 1);
-            }
+            setNotifications(prev => [newNotif, ...prev]);
+            setUnreadCount(prev => prev + 1);
 
             // Optional: Play a sound
             // const audio = new Audio('/notification.mp3');
@@ -108,11 +90,22 @@ const NotificationDropdown = ({ extraSection, extraCount = 0 }: NotificationDrop
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
+    // Close dropdown when route changes
+    useEffect(() => {
+        setIsOpen(false);
+    }, [location.pathname]);
+
     const handleNotificationClick = async (notification: Notification) => {
         if (!notification.isRead) {
             await markAsRead(notification._id);
         }
         setIsOpen(false);
+
+        // If in admin dashboard, prioritize navigation
+        if (location.pathname.startsWith('/admin') && notification.link) {
+            navigate(notification.link);
+            return;
+        }
 
         if (notification.type === 'HISTORY_DELETED' || notification.type === 'MESSAGE') {
             toggleChat(true);

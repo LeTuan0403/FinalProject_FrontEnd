@@ -42,6 +42,7 @@ const TourActionButton = ({ onClick, title, active, activeClass, icon: Icon, var
     );
 };
 
+// eslint-disable-next-line complexity
 const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavorite }: TourCardProps) => {
     const { user } = useAuth();
     const { addToCompare, removeFromCompare, isInCompare } = useComparison();
@@ -127,8 +128,7 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
     };
 
     const discountInfo = getDiscountInfo();
-
-    // eslint-disable-next-line complexity
+     
     const getVehicleIcon = (vehicle: string = '', className: string = 'w-4 h-4 text-blue-500') => {
         const v = vehicle.toLowerCase();
         if (v.includes('bay')) {
