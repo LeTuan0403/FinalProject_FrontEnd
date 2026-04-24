@@ -51,29 +51,33 @@ const Dashboard = () => {
 
     // 2. Top Booked Tours
     const topTours = useMemo(() => {
-        const tourCounts: Record<number, number> = {};
-        const tourNames: Record<number, string> = {};
+        const tourCounts: Record<string, number> = {};
+        const tourNames: Record<string, string> = {};
 
         bookings.forEach(b => {
             if (b.tourId) {
-                tourCounts[b.tourId] = (tourCounts[b.tourId] || 0) + 1;
+                const id = String(b.tourId);
+                tourCounts[id] = (tourCounts[id] || 0) + 1;
                 // Try to find name if available in booking, else lookup in tours array
                 if (b.tour?.tenTour) {
-                    tourNames[b.tourId] = b.tour.tenTour;
+                    tourNames[id] = b.tour.tenTour;
                 }
             }
         });
 
         // Fill missing names from tours array if needed
         tours.forEach(t => {
-            if (tourCounts[t.tourId] && !tourNames[t.tourId]) {
-                tourNames[t.tourId] = t.tenTour;
+            if (t.tourId) {
+                const id = String(t.tourId);
+                if (tourCounts[id] && !tourNames[id]) {
+                    tourNames[id] = t.tenTour;
+                }
             }
         });
 
         return Object.entries(tourCounts)
             .map(([id, count]) => ({
-                name: tourNames[Number(id)] || `Tour #${id}`,
+                name: tourNames[id] || `Tour #${id}`,
                 count: count
             }))
             .sort((a, b) => b.count - a.count)

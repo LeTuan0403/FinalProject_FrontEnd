@@ -293,7 +293,7 @@ const BookingManagement = () => {
                 isOpen={!!editBooking}
                 onClose={() => setEditBooking(null)}
                 onSubmit={handleUpdate}
-                bookingData={editBooking}
+                bookingData={editBooking!}
             />
 
             {/* Refund Detail Modal */}
