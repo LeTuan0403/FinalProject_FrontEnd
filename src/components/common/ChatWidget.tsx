@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { MessageCircle, X, Phone, Facebook } from "lucide-react";
 import { useChat } from "../../context/ChatContext";
 import { useAuth } from "../../hooks/useAuth";
-import axios from "axios";
+import axiosClient from "../../api/axiosClient";
 import { Message, TourShort } from "../../types/chat";
 import ChatWindow from "../chat/ChatWindow";
 import { calculateDuration } from "../../utils/tourUtils";
@@ -83,7 +83,7 @@ const ChatWidget = () => {
             // If logged in, prioritize fetching from API
             if (user) {
                 try {
-                    const res = await axios.get(`http://localhost:5000/api/chat/conversation/${user.userId}`);
+                    const res = await axiosClient.get(`/chat/conversation/${user.userId}`);
                     if (res.data && res.data._id) {
                         savedConvId = res.data._id;
                         localStorage.setItem("chat_conversation_id", savedConvId!);
@@ -103,7 +103,7 @@ const ChatWidget = () => {
                 setConversationId(savedConvId);
                 // Fetch history
                 try {
-                    const res = await axios.get(`http://localhost:5000/api/chat/message/${savedConvId}`);
+                    const res = await axiosClient.get(`/chat/message/${savedConvId}`);
                     setMessages(res.data);
                     // Calculate unread count (from Admin and NOT read)
                     const unread = res.data.filter((m: Message) => m.senderId === 'admin' && !m.isRead).length;
@@ -215,7 +215,7 @@ const ChatWidget = () => {
                 if (socket) { socket.emit("mark_read", conversationId); }
 
                 // 2. Persist to DB so it doesn't show as unread next time
-                axios.put(`http://localhost:5000/api/chat/conversation/read/${conversationId}`, { role: 'user' })
+                axiosClient.put(`/chat/conversation/read/${conversationId}`, { role: 'user' })
                     .catch(() => {
                         // Ignore error
                     });
@@ -224,7 +224,7 @@ const ChatWidget = () => {
     }, [isChatOpen, messages, conversationId, socket]);
 
     const ensureConversation = useCallback(async (senderId: string) => {
-        const res = await axios.post("http://localhost:5000/api/chat/conversation", {
+        const res = await axiosClient.post("/chat/conversation", {
             senderId,
             guestName: user ? user.hoTen : "Khách vãng lai"
         });
@@ -313,11 +313,11 @@ const ChatWidget = () => {
 
         // 4. Send to API & Socket
         try {
-            await axios.post("http://localhost:5000/api/chat/message", msgDataTextAPI);
+            await axiosClient.post("/chat/message", msgDataTextAPI);
             if (socket) {
                 socket.emit("send_message", msgDataTextUI);
             }
-            await axios.post("http://localhost:5000/api/chat/message", msgDataCardAPI);
+            await axiosClient.post("/chat/message", msgDataCardAPI);
             if (socket) {
                 socket.emit("send_message", msgDataCardUI);
             }
@@ -364,7 +364,7 @@ const ChatWidget = () => {
         // If no conversation, create one first
         if (!currentConvId) {
             try {
-                const res = await axios.post("http://localhost:5000/api/chat/conversation", {
+                const res = await axiosClient.post("/chat/conversation", {
                     senderId,
                     guestName: user ? user.hoTen : "Khách vãng lai"
                 });
@@ -396,7 +396,7 @@ const ChatWidget = () => {
 
         // Save to DB via API (more reliable than socket for persistence)
         try {
-            await axios.post("http://localhost:5000/api/chat/message", msgData);
+            await axiosClient.post("/chat/message", msgData);
             // Send to Socket for Realtime
             if (socket) { socket.emit("send_message", msgData); }
         } catch (e) {
@@ -409,7 +409,7 @@ const ChatWidget = () => {
         if (!window.confirm("Bạn có chắc muốn xóa toàn bộ cuộc trò chuyện này?")) { return; }
 
         try {
-            await axios.delete(`http://localhost:5000/api/chat/conversation/${conversationId}`);
+            await axiosClient.delete(`/chat/conversation/${conversationId}`);
             setMessages([]);
             setConversationId(null);
             localStorage.removeItem("chat_conversation_id");

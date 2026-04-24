@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { MessageCircle, Search, Send, MapPin, X, Trash2, ChevronUp, ChevronDown } from "lucide-react";
-import axios from "axios";
+import axiosClient, { BASE_URL } from "../../../api/axiosClient";
 import { useChat } from "../../../context/ChatContext";
 import { useNotification } from "../../../context/NotificationContext";
 
@@ -32,7 +32,7 @@ const AdminChat = () => {
 
     const fetchAllTours = async () => {
         try {
-            const res = await axios.get("http://localhost:5000/api/tours");
+            const res = await axiosClient.get("/tours");
             // Assuming API returns full list. Filter fields if possible, or just use full obj.
             setTours(res.data as TourShort[]);
         } catch (e) {
@@ -65,7 +65,7 @@ const AdminChat = () => {
 
         try {
             // Backend expects tourId as string
-            await axios.post("http://localhost:5000/api/chat/message", msgData);
+            await axiosClient.post("/chat/message", msgData);
 
             // Socket expects... full object if we want recipient to see it immediately?
             // Or backend broadcasts full object?
@@ -115,9 +115,9 @@ const AdminChat = () => {
             if (messageContent) { params.append('searchContent', messageContent); }
 
             const queryString = params.toString();
-            const url = `http://localhost:5000/api/chat/conversations${queryString ? `?${queryString}` : ''}`;
+            const url = `/chat/conversations${queryString ? `?${queryString}` : ''}`;
 
-            const res = await axios.get(url);
+            const res = await axiosClient.get(url);
             setConversations(sortConversations(res.data));
         } catch (e) {
             console.error("Fetch convs failed", e);
@@ -151,7 +151,7 @@ const AdminChat = () => {
             } else {
                 // 2. Not found -> Fetch from API
                 try {
-                    const res = await axios.get(`http://localhost:5000/api/chat/conversation/id/${targetConvId}`);
+                    const res = await axiosClient.get(`/chat/conversation/id/${targetConvId}`);
                     const newConv = res.data;
 
                     if (newConv) {
@@ -180,12 +180,12 @@ const AdminChat = () => {
         if (selectedConv) {
             const fetchMessages = async () => {
                 try {
-                    const res = await axios.get(`http://localhost:5000/api/chat/message/${selectedConv._id}`);
+                    const res = await axiosClient.get(`/chat/message/${selectedConv._id}`);
                     setMessages(res.data);
 
                     // Only mark as read if it's currently unread
                     if (!selectedConv.isReadByAdmin) {
-                        await axios.put(`http://localhost:5000/api/chat/conversation/read/${selectedConv._id}`, { role: 'admin' });
+                        await axiosClient.put(`/chat/conversation/read/${selectedConv._id}`, { role: 'admin' });
                         refreshCounts();
 
                         // Update local state and RE-SORT
@@ -341,7 +341,7 @@ const AdminChat = () => {
         if (!selectedConv || !window.confirm("Xóa tin nhắn này?")) { return; }
 
         try {
-            await axios.delete(`http://localhost:5000/api/chat/message/${msgId}`);
+            await axiosClient.delete(`/chat/message/${msgId}`);
             setMessages(prev => prev.filter(m => m._id !== msgId));
             if (socket) { socket.emit("admin_delete_message", { conversationId: selectedConv._id, messageId: msgId }); }
         } catch (e) {
@@ -354,7 +354,7 @@ const AdminChat = () => {
         if (!window.confirm("Bạn có chắc muốn xóa cuộc trò chuyện này? Hành động này không thể hoàn tác.")) { return; }
 
         try {
-            await axios.delete(`http://localhost:5000/api/chat/conversation/${selectedConv._id}`);
+            await axiosClient.delete(`/chat/conversation/${selectedConv._id}`);
 
             // Emit socket event to notify user
             if (socket) { socket.emit("admin_delete_conversation", selectedConv._id); }
@@ -386,7 +386,7 @@ const AdminChat = () => {
         setHasCustomerRead(false); // Reset read status on new message
 
         try {
-            await axios.post("http://localhost:5000/api/chat/message", msgData);
+            await axiosClient.post("/chat/message", msgData);
             if (socket) { socket.emit("send_message", msgData); }
 
             // Update local conversation preview
@@ -685,7 +685,7 @@ const AdminChat = () => {
                                         <div key={tour._id} className="group border rounded-xl hover:shadow-lg cursor-pointer transition overflow-hidden bg-white flex flex-col h-full hover:border-blue-300" onClick={() => handleRecommendTour(tour)}>
                                             <div className="aspect-[4/3] overflow-hidden relative bg-gray-100">
                                                 <img
-                                                    src={tour.hinhAnhBia ? (tour.hinhAnhBia.startsWith('http') ? tour.hinhAnhBia : `http://localhost:5000${tour.hinhAnhBia}`) : "https://images.unsplash.com/photo-1540541338287-41700207dee6"}
+                                                    src={tour.hinhAnhBia ? (tour.hinhAnhBia.startsWith('http') ? tour.hinhAnhBia : `${BASE_URL}${tour.hinhAnhBia}`) : "https://images.unsplash.com/photo-1540541338287-41700207dee6"}
                                                     alt=""
                                                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                                                 />

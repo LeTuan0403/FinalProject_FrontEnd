@@ -16,7 +16,8 @@ import WeatherWidget from '../../components/common/WeatherWidget';
 const getMediaUrl = (url: string) => {
   if (!url) { return ''; }
   if (url.startsWith('http') || url.startsWith('blob:')) { return url; }
-  return `http://localhost:5000${url}`;
+  const baseUrl = ((import.meta as unknown as { env: { VITE_API_URL: string } }).env.VITE_API_URL || 'http://localhost:5000/api').trim().replace(/\/api\/?$/, '');
+  return `${baseUrl}${url}`;
 };
 
 // Helper: Parse destinations from Tour Name

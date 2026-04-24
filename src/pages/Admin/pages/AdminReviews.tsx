@@ -10,7 +10,8 @@ import { useChat } from '../../../context/ChatContext';
 const getMediaUrl = (url: string) => {
     if (!url) { return ''; }
     if (url.startsWith('http') || url.startsWith('blob:')) { return url; }
-    return `http://localhost:5000${url}`;
+    const baseUrl = ((import.meta as unknown as { env: { VITE_API_URL: string } }).env.VITE_API_URL || 'http://localhost:5000/api').trim().replace(/\/api\/?$/, '');
+    return `${baseUrl}${url}`;
 };
 
 const AdminReviews = () => {

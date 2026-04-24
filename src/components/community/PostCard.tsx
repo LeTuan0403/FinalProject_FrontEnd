@@ -5,6 +5,7 @@ import { Heart, MessageCircle, Share2, Edit, Trash2, Link as LinkIcon } from 'lu
 import { useAuth } from '../../hooks/useAuth';
 import { postService } from '../../services/postService';
 import { toast } from 'react-hot-toast';
+import { BASE_URL } from '../../api/axiosClient';
 
 interface PostCardProps {
     post: Post;
@@ -137,7 +138,7 @@ export default function PostCard({ post, onDelete, onEdit, onShare, isQuoted = f
                         {post.media.map((url, idx) => (
                             <img
                                 key={idx}
-                                src={url.startsWith('http') ? url : `http://localhost:5000${url}`}
+                                src={url.startsWith('http') ? url : `${BASE_URL}${url}`}
                                 alt=""
                                 className="w-full h-full object-cover max-h-[400px]"
                             />
@@ -151,7 +152,7 @@ export default function PostCard({ post, onDelete, onEdit, onShare, isQuoted = f
                         <div className="w-16 h-16 bg-gray-200 rounded-lg flex-shrink-0 overflow-hidden">
                             {post.linkedTourId.hinhAnhBia ? (
                                 <img
-                                    src={post.linkedTourId.hinhAnhBia.startsWith('http') ? post.linkedTourId.hinhAnhBia : `http://localhost:5000${post.linkedTourId.hinhAnhBia.startsWith('/') ? '' : '/'}${post.linkedTourId.hinhAnhBia}`}
+                                    src={post.linkedTourId.hinhAnhBia.startsWith('http') ? post.linkedTourId.hinhAnhBia : `${BASE_URL}${post.linkedTourId.hinhAnhBia.startsWith('/') ? '' : '/'}${post.linkedTourId.hinhAnhBia}`}
                                     alt=""
                                     className="w-full h-full object-cover"
                                 />

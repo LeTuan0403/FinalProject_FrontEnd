@@ -233,7 +233,8 @@ const Tours = () => {
 
     setAiLoading(true);
     try {
-      const res = await axios.post('http://localhost:5000/api/tours/ai-recommend', { requirement: aiRequirement });
+      const apiUrl = (import.meta as unknown as { env: { VITE_API_URL: string } }).env.VITE_API_URL || 'http://localhost:5000/api';
+      const res = await axios.post(`${apiUrl}/tours/ai-recommend`, { requirement: aiRequirement });
 
       const { tourIds, message } = res.data;
       if (tourIds && tourIds.length > 0) {

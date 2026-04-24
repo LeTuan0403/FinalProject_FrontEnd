@@ -47,7 +47,8 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
 
     const fetchCounts = async () => {
         try {
-            const res = await axios.get("http://localhost:5000/api/admin/notifications/counts");
+            const apiUrl = ((import.meta as unknown as { env: { VITE_API_URL: string } }).env.VITE_API_URL || 'http://localhost:5000/api').trim();
+            const res = await axios.get(`${apiUrl}/admin/notifications/counts`);
             if (res.data.success) {
                 setCounts(res.data.counts);
             }

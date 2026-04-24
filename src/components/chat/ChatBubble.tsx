@@ -1,5 +1,6 @@
 import { X } from "lucide-react";
 import { Message } from "../../types/chat";
+import { BASE_URL } from '../../api/axiosClient';
 
 interface ChatBubbleProps {
     message: Message;
@@ -40,7 +41,7 @@ const ChatBubble = ({ message, isMe, onDelete, showAdminAvatar = false, highligh
                 {message.type === 'tour_card' && message.tourId && typeof message.tourId === 'object' ? (
                     <div className="bg-white text-gray-800 rounded-xl overflow-hidden shadow-sm max-w-[280px] -m-1">
                         <img
-                            src={message.tourId.hinhAnhBia ? (message.tourId.hinhAnhBia.startsWith('http') ? message.tourId.hinhAnhBia : `http://localhost:5000${message.tourId.hinhAnhBia}`) : "https://images.unsplash.com/photo-1540541338287-41700207dee6"}
+                            src={message.tourId.hinhAnhBia ? (message.tourId.hinhAnhBia.startsWith('http') ? message.tourId.hinhAnhBia : `${BASE_URL}${message.tourId.hinhAnhBia}`) : "https://images.unsplash.com/photo-1540541338287-41700207dee6"}
                             alt={message.tourId.tenTour}
                             className="w-full h-32 object-cover"
                         />

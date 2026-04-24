@@ -27,9 +27,11 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     // Actually, 'io' returns a socket manager. 
     // If we want to truly clear session, disconnect/connect is enough.
     // We use useMemo to ensure we keep the SAME socket instance across renders
-    const socket = useMemo(() => io("http://localhost:5000", {
+    // We use useMemo to ensure we keep the SAME socket instance across renders
+    const socketUrl = ((import.meta as unknown as { env: { VITE_API_URL: string } }).env.VITE_API_URL || "http://localhost:5000/api").trim().replace(/\/api\/?$/, '');
+    const socket = useMemo(() => io(socketUrl, {
         autoConnect: false
-    }), []);
+    }), [socketUrl]);
 
     useEffect(() => {
         // When component mounts OR user changes, we ensure connection

@@ -5,7 +5,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useChat } from '../context/ChatContext';
 
-const API_URL = 'http://localhost:5000/api/notifications';
+const API_URL = ((import.meta as unknown as { env: { VITE_API_URL: string } }).env.VITE_API_URL || 'http://localhost:5000/api').trim() + '/notifications';
 
 interface Notification {
     _id: string;
