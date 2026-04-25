@@ -2,8 +2,14 @@ import { Link } from 'react-router-dom';
 import { Facebook, Youtube, Mail, Phone, MapPin } from 'lucide-react';
 import ZaloIcon from './icons/ZaloIcon';
 import { MomoIcon, MBBankIcon, CashIcon } from './icons/PaymentIcons';
+import { toast } from 'react-hot-toast';
 
 const Footer = () => {
+  const handleComingSoon = (e: React.MouseEvent) => {
+    e.preventDefault();
+    toast('Nội dung trang này đang được cập nhật.', { icon: '🚧' });
+  };
+
   return (
     <footer className="bg-white text-gray-700 border-t border-gray-200 pt-12 pb-6">
       <div className="container mx-auto px-4 md:px-6">
@@ -41,10 +47,10 @@ const Footer = () => {
           <div>
             <h4 className="text-blue-900 font-bold mb-4 uppercase text-lg">Về chúng tôi</h4>
             <ul className="space-y-2 text-sm">
-              <li><Link to="/" className="hover:text-blue-600 transition">Giới thiệu</Link></li>
-              <li><Link to="/tours" className="hover:text-blue-600 transition">Chính sách bảo mật</Link></li>
-              <li><Link to="/custom-tour" className="hover:text-blue-600 transition">Điều khoản chung</Link></li>
-              <li><Link to="/gallery" className="hover:text-blue-600 transition">Chính sách thanh toán</Link></li>
+              <li><a href="#!" onClick={handleComingSoon} className="hover:text-blue-600 transition">Giới thiệu</a></li>
+              <li><a href="#!" onClick={handleComingSoon} className="hover:text-blue-600 transition">Chính sách bảo mật</a></li>
+              <li><a href="#!" onClick={handleComingSoon} className="hover:text-blue-600 transition">Điều khoản chung</a></li>
+              <li><a href="#!" onClick={handleComingSoon} className="hover:text-blue-600 transition">Chính sách thanh toán</a></li>
               <li><Link to="/contact" className="hover:text-blue-600 transition">Liên hệ</Link></li>
             </ul>
           </div>
@@ -52,10 +58,10 @@ const Footer = () => {
           <div>
             <h4 className="text-blue-900 font-bold mb-4 uppercase text-lg">Góc khách hàng</h4>
             <ul className="space-y-2 text-sm">
-              <li><a href="#" className="hover:text-blue-600 transition">Chính sách đặt tour</a></li>
-              <li><a href="#" className="hover:text-blue-600 transition">Chính sách hoàn hủy</a></li>
-              <li><a href="#" className="hover:text-blue-600 transition">Ý kiến khách hàng</a></li>
-              <li><a href="#" className="hover:text-blue-600 transition">Phiếu góp ý</a></li>
+              <li><a href="#!" onClick={handleComingSoon} className="hover:text-blue-600 transition">Chính sách đặt tour</a></li>
+              <li><a href="#!" onClick={handleComingSoon} className="hover:text-blue-600 transition">Chính sách hoàn hủy</a></li>
+              <li><a href="#!" onClick={handleComingSoon} className="hover:text-blue-600 transition">Ý kiến khách hàng</a></li>
+              <li><a href="#!" onClick={handleComingSoon} className="hover:text-blue-600 transition">Phiếu góp ý</a></li>
             </ul>
           </div>
 
