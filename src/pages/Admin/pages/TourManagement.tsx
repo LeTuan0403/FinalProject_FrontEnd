@@ -11,7 +11,8 @@ const TourManagement = () => {
     const [tours, setTours] = useState<Tour[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [filterStatus, setFilterStatus] = useState<'all' | 'approved' | 'pending'>('all'); // ['all', 'approved', 'pending']
+    const [filterStatus, setFilterStatus] = useState<'all' | 'approved' | 'pending'>('all');
+    const [filterLocation, setFilterLocation] = useState<'all' | 'domestic' | 'international'>('all');
     const navigate = useNavigate();
     const { refreshCounts } = useNotification();
 
@@ -81,8 +82,12 @@ const TourManagement = () => {
     };
 
     const filteredTours = tours.filter(tour => {
-        if (filterStatus === 'approved') { return tour.daDuyet; }
-        if (filterStatus === 'pending') { return !tour.daDuyet; }
+        // Status filter
+        if (filterStatus === 'approved' && !tour.daDuyet) { return false; }
+        if (filterStatus === 'pending' && tour.daDuyet) { return false; }
+        // Location filter
+        if (filterLocation === 'domestic' && !tour.loaiTour?.includes('Trong Nước')) { return false; }
+        if (filterLocation === 'international' && !tour.loaiTour?.includes('Nước Ngoài')) { return false; }
         return true;
     });
 
@@ -109,26 +114,63 @@ const TourManagement = () => {
                 </button>
             </div>
 
-            {/* Tabs */}
-            <div className="flex gap-2 border-b border-gray-200 pb-1">
-                <button
-                    onClick={() => setFilterStatus('all')}
-                    className={`px-4 py-2 rounded-t-lg font-medium transition-colors ${filterStatus === 'all' ? 'bg-white text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-                >
-                    Tất cả ({tours.length})
-                </button>
-                <button
-                    onClick={() => setFilterStatus('approved')}
-                    className={`px-4 py-2 rounded-t-lg font-medium transition-colors ${filterStatus === 'approved' ? 'bg-white text-green-600 border-b-2 border-green-600' : 'text-gray-500 hover:text-gray-700'}`}
-                >
-                    Đã duyệt ({tours.filter(t => t.daDuyet).length})
-                </button>
-                <button
-                    onClick={() => setFilterStatus('pending')}
-                    className={`px-4 py-2 rounded-t-lg font-medium transition-colors ${filterStatus === 'pending' ? 'bg-white text-yellow-600 border-b-2 border-yellow-600' : 'text-gray-500 hover:text-gray-700'}`}
-                >
-                    Chờ duyệt ({tours.filter(t => !t.daDuyet).length})
-                </button>
+            {/* Tabs + Location Filter */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                {/* Status Tabs */}
+                <div className="flex gap-2 border-b border-gray-200 pb-1 flex-1">
+                    <button
+                        onClick={() => setFilterStatus('all')}
+                        className={`px-4 py-2 rounded-t-lg font-medium transition-colors ${filterStatus === 'all' ? 'bg-white text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                    >
+                        Tất cả ({tours.length})
+                    </button>
+                    <button
+                        onClick={() => setFilterStatus('approved')}
+                        className={`px-4 py-2 rounded-t-lg font-medium transition-colors ${filterStatus === 'approved' ? 'bg-white text-green-600 border-b-2 border-green-600' : 'text-gray-500 hover:text-gray-700'}`}
+                    >
+                        Đã duyệt ({tours.filter(t => t.daDuyet).length})
+                    </button>
+                    <button
+                        onClick={() => setFilterStatus('pending')}
+                        className={`px-4 py-2 rounded-t-lg font-medium transition-colors ${filterStatus === 'pending' ? 'bg-white text-yellow-600 border-b-2 border-yellow-600' : 'text-gray-500 hover:text-gray-700'}`}
+                    >
+                        Chờ duyệt ({tours.filter(t => !t.daDuyet).length})
+                    </button>
+                </div>
+
+                {/* Location Filter */}
+                <div className="flex items-center gap-1.5 bg-gray-100 p-1 rounded-xl shrink-0">
+                    <button
+                        onClick={() => setFilterLocation('all')}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-all ${
+                            filterLocation === 'all'
+                                ? 'bg-white text-gray-800 shadow-sm'
+                                : 'text-gray-500 hover:text-gray-700'
+                        }`}
+                    >
+                        🌐 Tất cả
+                    </button>
+                    <button
+                        onClick={() => setFilterLocation('domestic')}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-all ${
+                            filterLocation === 'domestic'
+                                ? 'bg-green-500 text-white shadow-sm'
+                                : 'text-gray-500 hover:text-gray-700'
+                        }`}
+                    >
+                        🇻🇳 Trong Nước
+                    </button>
+                    <button
+                        onClick={() => setFilterLocation('international')}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-all ${
+                            filterLocation === 'international'
+                                ? 'bg-blue-500 text-white shadow-sm'
+                                : 'text-gray-500 hover:text-gray-700'
+                        }`}
+                    >
+                        ✈️ Nước Ngoài
+                    </button>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 gap-4">

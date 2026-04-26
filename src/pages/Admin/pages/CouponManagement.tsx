@@ -26,11 +26,57 @@ const CouponManagement = () => {
     // Assign Modal State
     const [showAssignModal, setShowAssignModal] = useState(false);
     const [assignCouponId, setAssignCouponId] = useState<string | null>(null);
-    const [searchTerm, setSearchTerm] = useState('');
+    const [searchTerm, setSearchTerm] = useState(''); // For user search in assign modal
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [userResults, setUserResults] = useState<any[]>([]);
     const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
     const [assignLoading, setAssignLoading] = useState(false);
+
+    // Coupon Search & Filter State
+    const [searchCoupon, setSearchCoupon] = useState('');
+    const [filterType, setFilterType] = useState('all');
+
+    // Sort State: field = 'value' | 'minOrder' | null, dir = 'desc' | 'asc' | 'none'
+    const [sortField, setSortField] = useState<'value' | 'minOrder' | null>(null);
+    const [sortDir, setSortDir] = useState<'desc' | 'asc' | 'none'>('none');
+
+    const handleSort = (field: 'value' | 'minOrder') => {
+        if (sortField !== field) {
+            // Switch to new field, start with desc
+            setSortField(field);
+            setSortDir('desc');
+        } else {
+            // Cycle: desc -> asc -> none
+            if (sortDir === 'desc') { setSortDir('asc'); }
+            else if (sortDir === 'asc') { setSortField(null); setSortDir('none'); }
+            else { setSortDir('desc'); }
+        }
+    };
+
+    const getSortIcon = (field: 'value' | 'minOrder') => {
+        if (sortField !== field || sortDir === 'none') {
+            return (
+                <span className="inline-flex flex-col ml-1 opacity-30">
+                    <svg width="8" height="5" viewBox="0 0 8 5" fill="currentColor"><path d="M4 0L8 5H0z"/></svg>
+                    <svg width="8" height="5" viewBox="0 0 8 5" fill="currentColor" className="mt-0.5"><path d="M4 5L0 0h8z"/></svg>
+                </span>
+            );
+        }
+        if (sortDir === 'desc') {
+            return (
+                <span className="inline-flex flex-col ml-1 text-blue-600">
+                    <svg width="8" height="5" viewBox="0 0 8 5" fill="currentColor" className="opacity-100"><path d="M4 0L8 5H0z"/></svg>
+                    <svg width="8" height="5" viewBox="0 0 8 5" fill="currentColor" className="mt-0.5 opacity-30"><path d="M4 5L0 0h8z"/></svg>
+                </span>
+            );
+        }
+        return (
+            <span className="inline-flex flex-col ml-1 text-blue-600">
+                <svg width="8" height="5" viewBox="0 0 8 5" fill="currentColor" className="opacity-30"><path d="M4 0L8 5H0z"/></svg>
+                <svg width="8" height="5" viewBox="0 0 8 5" fill="currentColor" className="mt-0.5 opacity-100"><path d="M4 5L0 0h8z"/></svg>
+            </span>
+        );
+    };
 
     useEffect(() => {
         fetchCoupons();
@@ -193,19 +239,57 @@ const CouponManagement = () => {
         return <div>Loading...</div>;
     }
 
+    const filteredCoupons = (() => {
+        let list = coupons.filter(c => {
+            const matchesSearch = c.code.toLowerCase().includes(searchCoupon.toLowerCase());
+            const matchesType = filterType === 'all' || c.type === filterType;
+            return matchesSearch && matchesType;
+        });
+        if (sortField && sortDir !== 'none') {
+            list = [...list].sort((a, b) =>
+                sortDir === 'desc' ? b[sortField] - a[sortField] : a[sortField] - b[sortField]
+            );
+        }
+        return list;
+    })();
+
     return (
         <div>
             {/* --- HEADER --- */}
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
                 <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
                     <Ticket className="text-blue-600" /> Quản Lý Mã Giảm Giá
                 </h1>
-                <button
-                    onClick={() => { resetForm(); setShowModal(true); }}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 font-bold shadow-md"
-                >
-                    <Plus size={20} /> Tạo Mã Mới
-                </button>
+                
+                <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+                    <div className="relative w-full md:w-64">
+                        <input
+                            type="text"
+                            placeholder="Tìm kiếm mã code..."
+                            className="w-full pl-10 pr-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+                            value={searchCoupon}
+                            onChange={(e) => setSearchCoupon(e.target.value)}
+                        />
+                        <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
+                    </div>
+                    
+                    <select
+                        value={filterType}
+                        onChange={(e) => setFilterType(e.target.value)}
+                        className="w-full md:w-auto px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm bg-white text-gray-700 font-medium"
+                    >
+                        <option value="all">Tất cả loại mã</option>
+                        <option value="PERCENT">Theo phần trăm (%)</option>
+                        <option value="FIXED">Theo số tiền (VNĐ)</option>
+                    </select>
+
+                    <button
+                        onClick={() => { resetForm(); setShowModal(true); }}
+                        className="bg-blue-600 text-white px-4 py-2 rounded-xl flex items-center justify-center gap-2 hover:bg-blue-700 font-bold shadow-md whitespace-nowrap"
+                    >
+                        <Plus size={20} /> Tạo Mã Mới
+                    </button>
+                </div>
             </div>
 
             {/* --- TABLE --- */}
@@ -216,8 +300,22 @@ const CouponManagement = () => {
                             <tr>
                                 <th className="p-4 font-semibold text-gray-600">Mã Code</th>
                                 <th className="p-4 font-semibold text-gray-600">Loại</th>
-                                <th className="p-4 font-semibold text-gray-600">Giá Trị</th>
-                                <th className="p-4 font-semibold text-gray-600">Đơn Tối Thiểu</th>
+                                <th className="p-4 font-semibold text-gray-600">
+                                    <button
+                                        onClick={() => handleSort('value')}
+                                        className="flex items-center gap-1 font-semibold text-gray-600 hover:text-blue-600 transition-colors"
+                                    >
+                                        Giá Trị {getSortIcon('value')}
+                                    </button>
+                                </th>
+                                <th className="p-4 font-semibold text-gray-600">
+                                    <button
+                                        onClick={() => handleSort('minOrder')}
+                                        className="flex items-center gap-1 font-semibold text-gray-600 hover:text-blue-600 transition-colors"
+                                    >
+                                        Đơn Tối Thiểu {getSortIcon('minOrder')}
+                                    </button>
+                                </th>
                                 <th className="p-4 font-semibold text-gray-600">Hạn Dùng</th>
                                 <th className="p-4 font-semibold text-gray-600">Đã Dùng</th>
                                 <th className="p-4 font-semibold text-gray-600">Trạng Thái</th>
@@ -225,7 +323,7 @@ const CouponManagement = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
-                            {coupons.map((coupon) => (
+                            {filteredCoupons.map((coupon) => (
                                 <tr key={coupon._id} className="hover:bg-gray-50 transition">
                                     <td className="p-4 font-bold text-blue-600">{coupon.code}</td>
                                     <td className="p-4">
@@ -294,10 +392,10 @@ const CouponManagement = () => {
                                     </td>
                                 </tr>
                             ))}
-                            {coupons.length === 0 && (
+                            {filteredCoupons.length === 0 && (
                                 <tr>
                                     <td colSpan={8} className="p-8 text-center text-gray-500">
-                                        Chưa có mã giảm giá nào.
+                                        Không tìm thấy mã giảm giá nào phù hợp.
                                     </td>
                                 </tr>
                             )}

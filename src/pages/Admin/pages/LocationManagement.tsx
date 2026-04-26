@@ -11,6 +11,7 @@ const LocationManagement = () => {
     const [showModal, setShowModal] = useState(false);
     const [editingLoc, setEditingLoc] = useState<DiaDiem | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [filterPrice, setFilterPrice] = useState('all'); // all, free, paid
 
     // Form State
     const [formData, setFormData] = useState<Partial<DiaDiem>>({
@@ -100,10 +101,17 @@ const LocationManagement = () => {
         setShowModal(true);
     };
 
-    const filtered = locations.filter(l =>
-        l.tenDiaDiem.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        l.diaChiCuThe?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filtered = locations.filter(l => {
+        const matchesSearch = l.tenDiaDiem.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                              l.diaChiCuThe?.toLowerCase().includes(searchTerm.toLowerCase());
+                              
+        const price = l.giaVe || 0;
+        const matchesPrice = filterPrice === 'all' ? true :
+                             filterPrice === 'free' ? price === 0 :
+                             price > 0;
+                             
+        return matchesSearch && matchesPrice;
+    });
 
     return (
         <div className="relative">
@@ -117,16 +125,27 @@ const LocationManagement = () => {
                 </button>
             </div>
 
-            {/* Search */}
-            <div className="mb-6 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-                <input
-                    type="text"
-                    placeholder="Tìm kiếm địa điểm..."
-                    className="w-full pl-10 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                    value={searchTerm}
-                    onChange={e => setSearchTerm(e.target.value)}
-                />
+            {/* Search & Filter */}
+            <div className="mb-6 flex flex-col md:flex-row gap-4">
+                <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                    <input
+                        type="text"
+                        placeholder="Tìm kiếm địa điểm..."
+                        className="w-full pl-10 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                        value={searchTerm}
+                        onChange={e => setSearchTerm(e.target.value)}
+                    />
+                </div>
+                <select
+                    value={filterPrice}
+                    onChange={(e) => setFilterPrice(e.target.value)}
+                    className="p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white text-gray-700 font-medium"
+                >
+                    <option value="all">Tất cả giá vé</option>
+                    <option value="free">Miễn phí</option>
+                    <option value="paid">Có phí</option>
+                </select>
             </div>
 
             {/* Table */}

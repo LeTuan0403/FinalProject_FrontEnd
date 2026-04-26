@@ -9,6 +9,7 @@ const UserManagement = () => {
     const [users, setUsers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [filterRole, setFilterRole] = useState('all');
     const [bookingCounts, setBookingCounts] = useState<Record<number, number>>({});
 
     // Pagination state
@@ -25,7 +26,7 @@ const UserManagement = () => {
         }, 500); // Debounce search
         return () => clearTimeout(timer);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [page, searchTerm]);
+    }, [page, searchTerm, filterRole]);
 
     const fetchBookingStats = async () => {
         try {
@@ -61,6 +62,7 @@ const UserManagement = () => {
             setLoading(true);
             const res = await userService.getAll({
                 keyword: searchTerm,
+                role: filterRole !== 'all' ? filterRole : undefined,
                 page: page,
                 pageSize: pageSize
             });
@@ -135,18 +137,32 @@ const UserManagement = () => {
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                 <h1 className="text-3xl font-bold text-gray-800">Quản lý Người dùng ({totalUsers})</h1>
 
-                <div className="relative w-full md:w-96">
-                    <input
-                        type="text"
-                        placeholder="Tìm kiếm theo tên, email, sđt..."
-                        className="w-full pl-10 pr-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
-                        value={searchTerm}
+                <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+                    <div className="relative w-full md:w-80">
+                        <input
+                            type="text"
+                            placeholder="Tìm kiếm theo tên, email, sđt..."
+                            className="w-full pl-10 pr-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+                            value={searchTerm}
+                            onChange={(e) => {
+                                setSearchTerm(e.target.value);
+                                setPage(1); // Reset to page 1 on search
+                            }}
+                        />
+                        <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
+                    </div>
+                    <select
+                        value={filterRole}
                         onChange={(e) => {
-                            setSearchTerm(e.target.value);
-                            setPage(1); // Reset to page 1 on search
+                            setFilterRole(e.target.value);
+                            setPage(1);
                         }}
-                    />
-                    <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
+                        className="w-full md:w-auto px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm bg-white text-gray-700 font-medium"
+                    >
+                        <option value="all">Tất cả vai trò</option>
+                        <option value="1">Quản trị viên (Admin)</option>
+                        <option value="0">Khách hàng</option>
+                    </select>
                 </div>
             </div>
 
@@ -167,7 +183,7 @@ const UserManagement = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
-                                {users.map((u) => (
+                                {users.filter(u => filterRole === 'all' || u.isAdmin === Number(filterRole)).map((u) => (
                                     <tr key={u.userId} className="hover:bg-gray-50">
                                         <td className="p-4">
                                             <div className="flex items-center gap-3">
