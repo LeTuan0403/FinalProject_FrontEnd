@@ -10,7 +10,6 @@ const UserManagement = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterRole, setFilterRole] = useState('all');
-    const [bookingCounts, setBookingCounts] = useState<Record<number, number>>({});
 
     // Pagination state
     const [page, setPage] = useState(1);
@@ -22,40 +21,12 @@ const UserManagement = () => {
     useEffect(() => {
         const timer = setTimeout(() => {
             fetchUsers();
-            fetchBookingStats();
         }, 500); // Debounce search
         return () => clearTimeout(timer);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [page, searchTerm, filterRole]);
 
-    const fetchBookingStats = async () => {
-        try {
-            // Note: This is not efficient for large datasets but works given current API limitations
-            const res = await bookingService.getAll();
 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            let bookings: any[] = [];
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const rawData = res.data as any; // Fix TS error
-            if (Array.isArray(rawData)) {
-                bookings = rawData;
-            } else if (rawData && Array.isArray(rawData.data)) {
-                bookings = rawData.data;
-            }
-
-            const counts: Record<number, number> = {};
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            bookings.forEach((booking: any) => {
-                if (booking.userId) {
-                    counts[booking.userId] = (counts[booking.userId] || 0) + 1;
-                }
-            });
-
-            setBookingCounts(counts);
-        } catch (err) {
-            console.error("Failed to fetch booking stats", err);
-        }
-    };
 
     const fetchUsers = async () => {
         try {
@@ -213,7 +184,7 @@ const UserManagement = () => {
                                         <td className="p-4 text-center">
                                             <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm font-bold">
                                                 <ShoppingBag size={14} />
-                                                {bookingCounts[u.userId] || 0}
+                                                {u.soTour || 0}
                                             </span>
                                         </td>
                                         <td className="p-4">

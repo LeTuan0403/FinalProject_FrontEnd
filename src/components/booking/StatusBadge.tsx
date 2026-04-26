@@ -5,26 +5,28 @@ interface StatusBadgeProps {
 }
 
 const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
-    const isPending = ['Pending', 'Chờ thanh toán'].includes(status);
-    const isConfirmed = ['Confirmed', 'Đã thanh toán'].includes(status);
-    const isCompleted = ['Completed', 'Hoàn tất'].includes(status);
-    const isCancelled = ['Cancelled', 'Hủy', 'Đã hủy'].includes(status);
+    const isPending = status === 'Chờ thanh toán';
+    const isConfirmed = status === 'Đã thanh toán';
+    const isCompleted = status === 'Hoàn thành';
+    const isCancelled = status === 'Đã hủy';
+    const isRefundPending = status === 'Chờ hoàn tiền';
+    const isRefunded = status === 'Đã hoàn tiền';
 
-    let colorClass = 'bg-red-100 text-red-700';
+    let colorClass = 'bg-gray-100 text-gray-700';
     let label = status;
 
     if (isPending) {
         colorClass = 'bg-yellow-100 text-yellow-700';
-        label = 'Chờ thanh toán';
     } else if (isConfirmed) {
-        colorClass = 'bg-green-100 text-green-700';
-        label = 'Đã thanh toán';
+        colorClass = 'bg-indigo-100 text-indigo-700';
     } else if (isCompleted) {
-        colorClass = 'bg-blue-100 text-blue-700';
-        label = 'Hoàn tất';
+        colorClass = 'bg-green-100 text-green-700';
     } else if (isCancelled) {
+        colorClass = 'bg-red-100 text-red-700';
+    } else if (isRefundPending) {
+        colorClass = 'bg-purple-100 text-purple-700';
+    } else if (isRefunded) {
         colorClass = 'bg-gray-100 text-gray-700';
-        label = 'Đã hủy';
     }
 
     return (

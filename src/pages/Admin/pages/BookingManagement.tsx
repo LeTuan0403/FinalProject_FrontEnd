@@ -18,7 +18,7 @@ const BookingManagement = () => {
     const [editBooking, setEditBooking] = useState<Booking | null>(null);
     const [refundDetailBooking, setRefundDetailBooking] = useState<Booking | null>(null);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    
+
     // Search & Filter State
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -37,11 +37,9 @@ const BookingManagement = () => {
                 const aIsPending = pendingStatuses.includes(a.trangThai);
                 const bIsPending = pendingStatuses.includes(b.trangThai);
 
-                // Pending comes first
                 if (aIsPending && !bIsPending) { return -1; }
                 if (!aIsPending && bIsPending) { return 1; }
 
-                // Then sort by Date (Oldest first)
                 return new Date(a.ngayDat || 0).getTime() - new Date(b.ngayDat || 0).getTime();
             });
 
@@ -160,14 +158,14 @@ const BookingManagement = () => {
     const filteredBookings = bookings.filter(b => {
         const contact = getContactInfo(b);
         const searchStr = searchTerm.toLowerCase();
-        const matchesSearch = 
+        const matchesSearch =
             b.donDatId.toString().includes(searchStr) ||
             contact.name.toLowerCase().includes(searchStr) ||
             contact.phone.includes(searchStr) ||
             (b.tour?.tenTour || '').toLowerCase().includes(searchStr);
-            
+
         const matchesFilter = filterStatus === 'all' || b.trangThai === filterStatus;
-        
+
         return matchesSearch && matchesFilter;
     });
 
@@ -178,7 +176,7 @@ const BookingManagement = () => {
             <div className="space-y-6">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <h1 className="text-3xl font-bold text-gray-800">Quản lý Đơn đặt tour</h1>
-                    
+
                     <div className="flex-1 max-w-md w-full relative">
                         <input
                             type="text"
@@ -194,37 +192,53 @@ const BookingManagement = () => {
                 </div>
 
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div className="p-4 bg-gray-50 border-b border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                        <div className="flex items-center gap-4">
-                            <span className="font-bold text-gray-700">Tổng số đơn: {filteredBookings.length}</span>
-                            <select
-                                value={filterStatus}
-                                onChange={(e) => setFilterStatus(e.target.value)}
-                                className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm font-medium text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            >
-                                <option value="all">Tất cả trạng thái</option>
-                                <option value="Pending">Pending</option>
-                                <option value="Chờ thanh toán">Chờ thanh toán</option>
-                                <option value="Đã thanh toán">Đã thanh toán</option>
-                                <option value="Đã hủy">Đã hủy</option>
-                                <option value="Chờ hoàn tiền">Chờ hoàn tiền</option>
-                                <option value="Đã hoàn tiền">Đã hoàn tiền</option>
-                            </select>
+                    <div className="p-4 bg-gray-50 border-b border-gray-100 space-y-4">
+                        <div className="flex flex-wrap items-center gap-2">
+                            {[
+                                { id: 'all', label: 'Tất cả', count: bookings.length, color: 'blue' },
+                                { id: 'Chờ thanh toán', label: 'Chờ thanh toán', count: bookings.filter(b => b.trangThai === 'Chờ thanh toán').length, color: 'yellow' },
+                                { id: 'Đã thanh toán', label: 'Đã thanh toán', count: bookings.filter(b => b.trangThai === 'Đã thanh toán').length, color: 'indigo' },
+                                { id: 'Hoàn thành', label: 'Hoàn thành', count: bookings.filter(b => b.trangThai === 'Hoàn thành').length, color: 'green' },
+                                { id: 'Đã hủy', label: 'Đã hủy', count: bookings.filter(b => b.trangThai === 'Đã hủy').length, color: 'red' },
+                                { id: 'Chờ hoàn tiền', label: 'Chờ hoàn tiền', count: bookings.filter(b => b.trangThai === 'Chờ hoàn tiền').length, color: 'purple' },
+                                { id: 'Đã hoàn tiền', label: 'Đã hoàn tiền', count: bookings.filter(b => b.trangThai === 'Đã hoàn tiền').length, color: 'gray' }
+                            ].map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setFilterStatus(tab.id)}
+                                    className={`px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2 border ${filterStatus === tab.id
+                                            ? `bg-${tab.color}-50 text-${tab.color}-700 border-${tab.color}-200 shadow-sm`
+                                            : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
+                                        }`}
+                                >
+                                    {tab.label}
+                                    <span className={`px-2 py-0.5 rounded-lg text-[10px] ${filterStatus === tab.id ? `bg-${tab.color}-200` : 'bg-gray-100'
+                                        }`}>
+                                        {tab.count}
+                                    </span>
+                                </button>
+                            ))}
                         </div>
-                        <div className="flex gap-2">
-                            <button
-                                onClick={() => setIsCreateModalOpen(true)}
-                                className="text-sm bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 font-bold flex items-center gap-1 shadow-sm"
-                            >
-                                <Plus size={16} /> Tạo đơn
-                            </button>
-                            <button
-                                onClick={fetchBookings}
-                                className="text-sm bg-white border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-100 text-blue-600 font-bold flex items-center gap-1"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.59-10.09l5.25 5.52"/></svg>
-                                Làm mới
-                            </button>
+
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pt-2">
+                            <span className="text-sm font-medium text-gray-500">
+                                Hiển thị <span className="font-bold text-gray-800">{filteredBookings.length}</span> đơn hàng phù hợp
+                            </span>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setIsCreateModalOpen(true)}
+                                    className="text-sm bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 font-bold flex items-center gap-2 shadow-md transition-all active:scale-95"
+                                >
+                                    <Plus size={18} /> Tạo đơn mới
+                                </button>
+                                <button
+                                    onClick={fetchBookings}
+                                    className="text-sm bg-white border border-gray-200 px-4 py-2 rounded-xl hover:bg-gray-100 text-blue-600 font-bold flex items-center gap-2 transition-all active:scale-95 shadow-sm"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.59-10.09l5.25 5.52" /></svg>
+                                    Làm mới
+                                </button>
+                            </div>
                         </div>
                     </div>
                     <table className="w-full text-left">
