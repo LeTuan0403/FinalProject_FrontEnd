@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { Loader, Trash2, Search, ChevronLeft, ChevronRight, MapPin, ShoppingBag } from 'lucide-react';
 import { userService } from '../../../services/authService';
-import { bookingService } from '../../../services/bookingService';
 
 const UserManagement = () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

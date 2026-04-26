@@ -207,8 +207,8 @@ const BookingManagement = () => {
                                     key={tab.id}
                                     onClick={() => setFilterStatus(tab.id)}
                                     className={`px-4 py-2 rounded-xl text-sm font-bold transition-all flex items-center gap-2 border ${filterStatus === tab.id
-                                            ? `bg-${tab.color}-50 text-${tab.color}-700 border-${tab.color}-200 shadow-sm`
-                                            : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
+                                        ? `bg-${tab.color}-50 text-${tab.color}-700 border-${tab.color}-200 shadow-sm`
+                                        : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50'
                                         }`}
                                 >
                                     {tab.label}
