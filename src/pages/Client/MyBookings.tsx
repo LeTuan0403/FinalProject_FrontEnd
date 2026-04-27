@@ -186,7 +186,7 @@ const MyBookings = () => {
                                     </div>
                                     <div className="flex gap-3">
                                         <Link
-                                            to={`/tours/${booking.tour?._id || booking.tourId}`}
+                                            to={`/tours/${booking.tour?.tourId || booking.tourId}`}
                                             className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-bold hover:bg-gray-200 transition"
                                         >
                                             Xem Tour

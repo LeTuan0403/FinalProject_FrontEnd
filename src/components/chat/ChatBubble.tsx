@@ -52,7 +52,7 @@ const ChatBubble = ({ message, isMe, onDelete, showAdminAvatar = false, highligh
                                 <span className="font-bold text-blue-600">{message.tourId.tongGiaDuKien?.toLocaleString('vi-VN')}₫</span>
                             </div>
                             <a
-                                href={`/tours/${message.tourId.tourId}`}
+                                href={`/tours/${message.tourId?.tourId || message.tourId}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="block w-full text-center bg-blue-50 text-blue-600 py-1.5 rounded-lg font-bold text-xs hover:bg-blue-100 transition"

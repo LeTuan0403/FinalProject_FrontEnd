@@ -85,8 +85,8 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
     const nextDepartureText = getNextDeparture(tour);
     const tourCode = getTourCode(tour);
     const remainingSeats = getRemainingSeats(tour);
-    // Handle case where tourId might be an object or missing (use _id fallback)
-    const linkId = (tour.tourId && typeof tour.tourId !== 'object') ? tour.tourId : tour._id;
+    // Always use numeric tourId as the canonical tour link identifier
+    const linkId = tour.tourId;
 
     // Last Minute Discount Logic
     const getDiscountInfo = () => {

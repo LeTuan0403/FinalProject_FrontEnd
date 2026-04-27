@@ -70,7 +70,7 @@ const PaymentPage = () => {
                     <h2 className="text-xl font-bold text-gray-800 mb-2">Đơn hàng đã bị hủy</h2>
                     <p className="text-gray-500 mb-6">Đơn hàng này đã bị hủy và không thể thực hiện thanh toán. Vui lòng đặt lại tour nếu bạn vẫn muốn tham gia.</p>
                     <div className="space-y-3">
-                        <button onClick={() => navigate(`/tours/${booking.tourId}`)} className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition">
+                        <button onClick={() => navigate(`/tours/${booking.tour?.tourId || booking.tourId}`)} className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition">
                             Đặt Lại Tour Này
                         </button>
                         <button onClick={() => navigate('/my-bookings')} className="w-full bg-gray-100 text-gray-600 font-bold py-3 rounded-xl hover:bg-gray-200 transition">
