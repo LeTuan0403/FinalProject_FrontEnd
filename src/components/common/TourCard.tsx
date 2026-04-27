@@ -81,12 +81,6 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
         }
     };
 
-    const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
-        e.dataTransfer.effectAllowed = "copy";
-        e.dataTransfer.setData("application/tour-data", JSON.stringify(tour));
-        // Optional: Set a custom drag image if needed, but default ghost image is usually fine
-    };
-
     const durationText = calculateDuration(tour);
     const nextDepartureText = getNextDeparture(tour);
     const tourCode = getTourCode(tour);
@@ -128,7 +122,7 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
     };
 
     const discountInfo = getDiscountInfo();
-     
+
     const getVehicleIcon = (vehicle: string = '', className: string = 'w-4 h-4 text-blue-500') => {
         const v = vehicle.toLowerCase();
         if (v.includes('bay')) {
@@ -148,11 +142,7 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
 
     if (variant === 'vertical') {
         return (
-            <div
-                draggable="true"
-                onDragStart={handleDragStart}
-                className="bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all overflow-hidden flex flex-col border border-gray-100 group relative cursor-grab active:cursor-grabbing"
-            >
+            <div className="bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all overflow-hidden flex flex-col border border-gray-100 group relative">
                 {/* Low Seat Warning Overlay (Vertical) */}
                 {remainingSeats > 0 && remainingSeats <= 5 && (
                     <div className="absolute top-4 left-4 z-20 animate-pulse bg-red-600 text-white text-[10px] font-black px-2 py-1 rounded-full shadow-lg flex items-center gap-1 border border-white/30 backdrop-blur-sm">
@@ -167,7 +157,7 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
                     activeClass="bg-red-50 text-red-500"
                     icon={Heart}
                     variant="overlay"
-                    className="absolute top-4 right-4 z-10"
+                    className="absolute top-4 right-4 z-30"
                 />
                 <TourActionButton
                     onClick={handleToggleCompare}
@@ -176,7 +166,7 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
                     activeClass="bg-teal-50 text-teal-600"
                     icon={Scale}
                     variant="overlay"
-                    className="absolute top-4 right-16 z-10"
+                    className="absolute top-4 right-16 z-30"
                 />
 
                 <div className="relative overflow-hidden h-32 md:h-60">
@@ -268,11 +258,7 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
 
     // Horizontal Variant
     return (
-        <div
-            draggable="true"
-            onDragStart={handleDragStart}
-            className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all overflow-hidden flex flex-col md:flex-row border border-gray-100 group relative cursor-grab active:cursor-grabbing"
-        >
+        <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all overflow-hidden flex flex-col md:flex-row border border-gray-100 group relative">
             {/* Low Seat Warning Overlay (Horizontal) */}
             {remainingSeats > 0 && remainingSeats <= 5 && (
                 <div className="absolute top-4 left-4 z-30 animate-pulse bg-red-600 text-white text-[10px] font-black px-2 py-1 rounded-full shadow-lg flex items-center gap-1 border border-white/30 backdrop-blur-sm">
@@ -289,7 +275,7 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
                 activeClass="bg-red-50 text-red-500"
                 icon={Heart}
                 variant="overlay"
-                className="absolute top-4 right-4 z-10 md:hidden"
+                className="absolute top-4 right-4 z-30 md:hidden"
             />
             <TourActionButton
                 onClick={handleToggleCompare}
@@ -298,7 +284,7 @@ const TourCard = ({ tour, variant = 'vertical', isFavorite = false, onToggleFavo
                 activeClass="bg-teal-50 text-teal-600"
                 icon={Scale}
                 variant="overlay"
-                className="absolute top-16 right-4 z-10 md:hidden"
+                className="absolute top-16 right-4 z-30 md:hidden"
             />
 
             {/* Horizontal Image */}

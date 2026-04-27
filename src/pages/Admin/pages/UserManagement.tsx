@@ -25,8 +25,6 @@ const UserManagement = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [page, searchTerm, filterRole]);
 
-
-
     const fetchUsers = async () => {
         try {
             setLoading(true);

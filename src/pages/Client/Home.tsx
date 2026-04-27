@@ -33,44 +33,6 @@ const Home = () => {
   const [departurePoint, setDeparturePoint] = useState('');
   const [departureDate, setDepartureDate] = useState('');
 
-  // Drag to scroll hook
-  const useDraggableScroll = () => {
-    const [isDragging, setIsDragging] = useState(false);
-    const [startX, setStartX] = useState(0);
-    const [scrollLeft, setScrollLeft] = useState(0);
-
-    const onMouseDown = (e: React.MouseEvent) => {
-      setIsDragging(true);
-      const slider = e.currentTarget as HTMLElement;
-      setStartX(e.pageX - slider.offsetLeft);
-      setScrollLeft(slider.scrollLeft);
-      slider.style.cursor = 'grabbing';
-      slider.style.userSelect = 'none'; // Prevent text selection
-    };
-
-    const stopDragging = (e: React.MouseEvent) => {
-      if (isDragging) {
-        setIsDragging(false);
-        const slider = e.currentTarget as HTMLElement;
-        slider.style.cursor = 'grab';
-        slider.style.removeProperty('user-select');
-      }
-    };
-
-    const onMouseMove = (e: React.MouseEvent) => {
-      if (!isDragging) { return; }
-      e.preventDefault();
-      const slider = e.currentTarget as HTMLElement;
-      const x = e.pageX - slider.offsetLeft;
-      const walk = (x - startX) * 1; // Natural 1:1 scroll speed
-      slider.scrollLeft = scrollLeft - walk;
-    };
-
-    return { events: { onMouseDown, onMouseLeave: stopDragging, onMouseUp: stopDragging, onMouseMove }, style: { cursor: 'grab' as const } };
-  };
-
-  const draggable = useDraggableScroll();
-
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const params = new URLSearchParams();
@@ -261,20 +223,16 @@ const Home = () => {
                 DU LỊCH <span className="text-blue-600">TRONG NƯỚC</span>
               </h2>
             </div>
-            <Link to="/tours?type=TrongNuoc" className="text-blue-600 hover:text-blue-800 font-bold text-sm md:text-base uppercase flex items-center gap-2 group">
+            <Link to="/tours?type=Trong Nước" className="text-blue-600 hover:text-blue-800 font-bold text-sm md:text-base uppercase flex items-center gap-2 group">
               Xem tất cả
               <span className="transform group-hover:translate-x-1 transition-transform">→</span>
             </Link>
           </div>
 
           {domesticTours.length > 0 ? (
-            <div
-              className="flex overflow-x-auto gap-6 pb-6 custom-scrollbar scroll-smooth snap-x snap-mandatory"
-              {...draggable.events}
-              style={draggable.style}
-            >
+            <div className="flex overflow-x-auto gap-6 pb-6 custom-scrollbar scroll-smooth snap-x snap-mandatory">
               {domesticTours.map(tour => (
-                <div key={tour.tourId} className="w-[280px] md:w-[320px] shrink-0 snap-start select-none">
+                <div key={tour.tourId} className="w-[280px] md:w-[320px] shrink-0 snap-start">
                   <TourCard tour={tour} variant="vertical" />
                 </div>
               ))}
@@ -304,13 +262,9 @@ const Home = () => {
           </div>
 
           {asiaTours.length > 0 ? (
-            <div
-              className="flex overflow-x-auto gap-6 pb-6 custom-scrollbar scroll-smooth snap-x snap-mandatory"
-              {...draggable.events}
-              style={draggable.style}
-            >
+            <div className="flex overflow-x-auto gap-6 pb-6 custom-scrollbar scroll-smooth snap-x snap-mandatory">
               {asiaTours.map((tour) => (
-                <div key={tour.tourId} className="w-[280px] md:w-[320px] shrink-0 snap-start select-none">
+                <div key={tour.tourId} className="w-[280px] md:w-[320px] shrink-0 snap-start">
                   <TourCard tour={tour} variant="vertical" />
                 </div>
               ))}
@@ -340,13 +294,9 @@ const Home = () => {
           </div>
 
           {otherTours.length > 0 ? (
-            <div
-              className="flex overflow-x-auto gap-6 pb-6 custom-scrollbar scroll-smooth snap-x snap-mandatory"
-              {...draggable.events}
-              style={draggable.style}
-            >
+            <div className="flex overflow-x-auto gap-6 pb-6 custom-scrollbar scroll-smooth snap-x snap-mandatory">
               {otherTours.map((tour) => (
-                <div key={tour.tourId} className="w-[280px] md:w-[320px] shrink-0 snap-start select-none">
+                <div key={tour.tourId} className="w-[280px] md:w-[320px] shrink-0 snap-start">
                   <TourCard tour={tour} variant="vertical" />
                 </div>
               ))}

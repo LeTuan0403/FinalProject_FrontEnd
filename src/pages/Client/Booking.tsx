@@ -31,6 +31,7 @@ const Booking = () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [availableCoupons, setAvailableCoupons] = useState<any[]>([]);
     const [showCouponModal, setShowCouponModal] = useState(false);
+    const [userSkippedCoupon, setUserSkippedCoupon] = useState(false);
 
     // Form Stats
     const [formData, setFormData] = useState({
@@ -221,8 +222,8 @@ const Booking = () => {
 
                 setAvailableCoupons(processed);
 
-                // Auto Apply Best Coupon (ONLY if not applied yet, AND available)
-                if (!isCouponApplied && processed.length > 0) {
+                // Auto Apply Best Coupon (ONLY if not applied yet, AND available, AND user hasn't explicitly skipped)
+                if (!isCouponApplied && processed.length > 0 && !userSkippedCoupon) {
                     const best = processed[0];
                     setCouponCode(best.code);
                     setCouponDiscount(best.potentialDiscount);
@@ -237,7 +238,7 @@ const Booking = () => {
         if (user && formData.adults && !loading) { // Logic triggers when price relevant params exist
             fetchAndOptimize();
         }
-    }, [baseTotalPrice, user, formData.adults, formData.children, loading, isCouponApplied, tour, calcDiscount]);
+    }, [baseTotalPrice, user, formData.adults, formData.children, loading, isCouponApplied, tour, calcDiscount, userSkippedCoupon]);
 
     // REAL-TIME RECALCULATION: Keep discount synced with guest count
     useEffect(() => {
@@ -273,6 +274,7 @@ const Booking = () => {
             setAppliedCouponData(res.data.coupon);
             setCouponDiscount(res.data.discountAmount);
             setIsCouponApplied(true);
+            setUserSkippedCoupon(false); // User explicitly applied, reset skip flag
         } catch (err: unknown) {
             const error = err as { response?: { data?: { msg?: string } } };
             setCouponDiscount(0);
@@ -624,6 +626,7 @@ const Booking = () => {
                                                         setIsCouponApplied(false);
                                                         setCouponCode('');
                                                         setCouponDiscount(0);
+                                                        setUserSkippedCoupon(true); // User explicitly canceled
                                                     }}
                                                     className="px-4 py-2 bg-red-100 text-red-600 rounded-lg font-bold hover:bg-red-200"
                                                 >
@@ -964,6 +967,7 @@ const Booking = () => {
                                             setAppliedCouponData(coupon);
                                             setCouponDiscount(coupon.potentialDiscount);
                                             setIsCouponApplied(true);
+                                            setUserSkippedCoupon(false); // User explicitly selected
                                             setShowCouponModal(false);
                                             toast.success(`Đã áp dụng mã ${coupon.code}`);
                                         }}

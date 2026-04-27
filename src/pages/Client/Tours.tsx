@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Search, Filter, ArrowUpDown, Check } from 'lucide-react';
 import { useTours } from '../../hooks/useTours';
 import TourCard from '../../components/common/TourCard';
@@ -12,6 +12,7 @@ import CollapsibleFilter from '../../components/common/CollapsibleFilter';
 const Tours = () => {
   const { tours, loading, error } = useTours();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [filteredTours, setFilteredTours] = useState<Tour[]>([]);
 
   // AI Assistant States
@@ -71,9 +72,9 @@ const Tours = () => {
       return prev.includes(transport) ? prev.filter(t => t !== transport) : [...prev, transport];
     });
   };
-   
+
   useEffect(() => {
-     
+
     // Filter: Approved AND Not Custom (Standard Tours only) AND Has Future Departures
     let result = tours.filter(t => {
       if (!t.daDuyet || t.isTuChon) {
@@ -129,9 +130,7 @@ const Tours = () => {
     // Filter by Duration
     if (durationRange !== 'all') {
       result = result.filter(t => {
-        const days = t.tourChiTiets?.length
-          ? Math.max(...t.tourChiTiets.map(d => d.ngayThu))
-          : 1;
+        const days = getDuration(t);
         if (durationRange === '1-3') {
           return days <= 3;
         }
@@ -177,24 +176,6 @@ const Tours = () => {
     // Sorting
     if (sortBy !== 'default') {
       result = [...result].sort((a, b) => {
-        const getDuration = (t: Tour) => {
-          const schedule = t.lichTrinh || t.tourChiTiets;
-          if (schedule && schedule.length > 0) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const maxDay = Math.max(...schedule.map((d: any) => d.ngayThu || 0));
-            if (maxDay > 1) {
-              return maxDay;
-            }
-          }
-          if (t.thoiGian) {
-            const match = t.thoiGian.match(/(\d+)\s*(ngày|ngay|n)/i);
-            if (match) {
-              return parseInt(match[1]);
-            }
-          }
-          return 1;
-        };
-
         const getMaxDiscount = (t: Tour) => {
           if (!t.discounts || t.discounts.length === 0) {
             return 0;
@@ -225,6 +206,24 @@ const Tours = () => {
 
     setFilteredTours([...result]);
   }, [selectedRegion, priceRange, searchTerm, selectedTypes, durationRange, selectedTransports, sortBy, startDate, tours, isDiscountedOnly, aiFilteredIds]);
+
+  const getDuration = (t: Tour) => {
+    const schedule = t.lichTrinh || t.tourChiTiets;
+    if (schedule && schedule.length > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const maxDay = Math.max(...schedule.map((d: any) => d.ngayThu || 0));
+      if (maxDay >= 1) {
+        return maxDay;
+      }
+    }
+    if (t.thoiGian) {
+      const match = t.thoiGian.match(/(\d+)\s*(ngày|ngay|n)/i);
+      if (match) {
+        return parseInt(match[1]);
+      }
+    }
+    return 1;
+  };
 
   const handleAIRecommend = async () => {
     if (!aiRequirement.trim()) {
@@ -259,6 +258,23 @@ const Tours = () => {
     setAiRequirement('');
   };
 
+  const resetFilters = () => {
+    setSelectedRegion('all');
+    setPriceRange([0, 100000000]);
+    setSearchTerm('');
+    setSelectedTypes([]);
+    setSelectedTransports([]);
+    setSortBy('default');
+    setStartDate('');
+    setDurationRange('all');
+    setIsDiscountedOnly(false);
+    setAiFilteredIds(null);
+    setAiMessage('');
+    setAiRequirement('');
+    // Clear URL params using React Router
+    navigate('/tours', { replace: true });
+  };
+
   const formatCurrency = (val: number) => {
     return (val / 1000000).toLocaleString('vi-VN', { maximumFractionDigits: 1 }) + ' tr';
   };
@@ -275,9 +291,17 @@ const Tours = () => {
       <div className="flex flex-col lg:flex-row gap-8">
         <div className="w-full lg:w-1/4 shrink-0">
           <div className="bg-white rounded-xl shadow-md p-6 sticky top-24 max-h-[calc(100vh-10rem)] overflow-y-auto custom-scrollbar">
-            <div className="flex items-center gap-2 mb-6 border-b pb-4">
-              <Filter className="text-blue-600" />
-              <h3 className="font-bold text-xl text-gray-800">Bộ Lọc Tìm Kiếm</h3>
+            <div className="flex items-center justify-between mb-6 border-b pb-4">
+              <div className="flex items-center gap-2">
+                <Filter className="text-blue-600" />
+                <h3 className="font-bold text-xl text-gray-800">Bộ Lọc</h3>
+              </div>
+              <button
+                onClick={resetFilters}
+                className="text-xs font-bold text-red-500 hover:text-red-700 transition uppercase tracking-tighter bg-red-50 px-2 py-1 rounded"
+              >
+                Xóa bộ lọc
+              </button>
             </div>
 
             {/* Keyword Search */}
@@ -529,16 +553,7 @@ const Tours = () => {
                 <div className="text-6xl mb-4">🔍</div>
                 <p className="text-xl text-gray-600 font-medium">Không tìm thấy tour phù hợp</p>
                 <button
-                  onClick={() => {
-                    setSelectedRegion('all');
-                    setPriceRange([0, 100000000]);
-                    setSearchTerm('');
-                    setSelectedTypes([]);
-                    setSelectedTransports([]);
-                    setSortBy('default');
-                    setStartDate('');
-                    setIsDiscountedOnly(false);
-                  }}
+                  onClick={resetFilters}
                   className="mt-4 text-blue-600 hover:underline"
                 >
                   Xóa bộ lọc

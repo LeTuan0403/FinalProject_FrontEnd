@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { User, Menu, X, Map, Phone } from 'lucide-react';
 import { useState } from 'react';
@@ -7,6 +7,7 @@ import NotificationDropdown from './NotificationDropdown';
 const Header = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [extraMenuOpen, setExtraMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -14,6 +15,19 @@ const Header = () => {
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const isActive = (path: string) => {
+    if (path === '/') { return location.pathname === '/'; }
+    return location.pathname.startsWith(path);
+  };
+
+  const getLinkClass = (path: string) => {
+    return `transition font-bold ${isActive(path) ? 'text-blue-600' : 'text-gray-700 hover:text-blue-600'}`;
+  };
+
+  const getMobileLinkClass = (path: string) => {
+    return `block px-4 py-3 font-bold text-sm border-b border-gray-100 transition ${isActive(path) ? 'text-blue-600 bg-blue-50' : 'text-gray-800 hover:bg-gray-50'}`;
   };
 
   return (
@@ -81,12 +95,12 @@ const Header = () => {
             </Link>
 
             <nav className="hidden lg:flex gap-6 items-center uppercase font-bold text-sm text-gray-700">
-              <Link to="/" className="hover:text-blue-600 transition text-blue-600">TRANG CHỦ</Link>
-              <Link to="/tours" className="hover:text-blue-600 transition">DANH SÁCH TOUR</Link>
-              <Link to="/community" className="hover:text-blue-600 transition">CỘNG ĐỒNG</Link>
-              <Link to="/custom-tour" className="hover:text-blue-600 transition">TỰ THIẾT KẾ</Link>
-              <Link to="/gallery" className="hover:text-blue-600 transition">HÌNH ẢNH</Link>
-              <Link to="/contact" className="hover:text-blue-600 transition">LIÊN HỆ</Link>
+              <Link to="/" className={getLinkClass('/')}>TRANG CHỦ</Link>
+              <Link to="/tours" className={getLinkClass('/tours')}>DANH SÁCH TOUR</Link>
+              <Link to="/community" className={getLinkClass('/community')}>CỘNG ĐỒNG</Link>
+              <Link to="/custom-tour" className={getLinkClass('/custom-tour')}>TỰ THIẾT KẾ</Link>
+              <Link to="/gallery" className={getLinkClass('/gallery')}>HÌNH ẢNH</Link>
+              <Link to="/contact" className={getLinkClass('/contact')}>LIÊN HỆ</Link>
               {(user?.role === 'Admin' || user?.role === '1') && (
                 <Link to="/admin" className="text-orange-500 hover:text-orange-600 transition font-black">ADMIN</Link>
               )}
@@ -134,18 +148,19 @@ const Header = () => {
       {/* Mobile Menu */}
       {mobileMenuOpen && (
         <div className="lg:hidden bg-white border-t border-gray-200 py-2 shadow-lg absolute w-full left-0 z-40">
-          <Link to="/" className="block px-4 py-3 hover:bg-gray-50 font-bold text-sm text-gray-800 border-b border-gray-100">TRANG CHỦ</Link>
-          <Link to="/tours" className="block px-4 py-3 hover:bg-gray-50 font-bold text-sm text-gray-800 border-b border-gray-100">DANH SÁCH TOUR</Link>
-          <Link to="/custom-tour" className="block px-4 py-3 hover:bg-gray-50 font-bold text-sm text-gray-800 border-b border-gray-100">TỰ THIẾT KẾ</Link>
-          <Link to="/gallery" className="block px-4 py-3 hover:bg-gray-50 font-bold text-sm text-gray-800 border-b border-gray-100">HÌNH ẢNH</Link>
-          <Link to="/contact" className="block px-4 py-3 hover:bg-gray-50 font-bold text-sm text-gray-800 border-b border-gray-100">LIÊN HỆ</Link>
+          <Link to="/" className={getMobileLinkClass('/')}>TRANG CHỦ</Link>
+          <Link to="/tours" className={getMobileLinkClass('/tours')}>DANH SÁCH TOUR</Link>
+          <Link to="/community" className={getMobileLinkClass('/community')}>CỘNG ĐỒNG</Link>
+          <Link to="/custom-tour" className={getMobileLinkClass('/custom-tour')}>TỰ THIẾT KẾ</Link>
+          <Link to="/gallery" className={getMobileLinkClass('/gallery')}>HÌNH ẢNH</Link>
+          <Link to="/contact" className={getMobileLinkClass('/contact')}>LIÊN HỆ</Link>
           {user && (
             <>
-              <Link to="/profile" className="block px-4 py-3 hover:bg-gray-50 font-bold text-sm text-blue-600 border-b border-gray-100">HỒ SƠ CÁ NHÂN</Link>
-              <Link to="/my-tours" className="block px-4 py-3 hover:bg-gray-50 font-bold text-sm text-blue-600 border-b border-gray-100">TOUR CỦA TÔI</Link>
-              <Link to="/my-favorites" className="block px-4 py-3 hover:bg-gray-50 font-bold text-sm text-blue-600 border-b border-gray-100">DANH SÁCH YÊU THÍCH</Link>
-              <Link to="/my-bookings" className="block px-4 py-3 hover:bg-gray-50 font-bold text-sm text-blue-600 border-b border-gray-100">ĐƠN ĐẶT CỦA TÔI</Link>
-              <Link to="/my-coupons" className="block px-4 py-3 hover:bg-gray-50 font-bold text-sm text-blue-600 border-b border-gray-100">KHO VOUCHER</Link>
+              <Link to="/profile" className={getMobileLinkClass('/profile')}>HỒ SƠ CÁ NHÂN</Link>
+              <Link to="/my-tours" className={getMobileLinkClass('/my-tours')}>TOUR CỦA TÔI</Link>
+              <Link to="/my-favorites" className={getMobileLinkClass('/my-favorites')}>DANH SÁCH YÊU THÍCH</Link>
+              <Link to="/my-bookings" className={getMobileLinkClass('/my-bookings')}>ĐƠN ĐẶT CỦA TÔI</Link>
+              <Link to="/my-coupons" className={getMobileLinkClass('/my-coupons')}>KHO VOUCHER</Link>
             </>
           )}
           {(user?.role === 'Admin' || user?.role === '1') && (

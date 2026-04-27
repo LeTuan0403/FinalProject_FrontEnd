@@ -13,7 +13,7 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
     const isRefunded = status === 'Đã hoàn tiền';
 
     let colorClass = 'bg-gray-100 text-gray-700';
-    let label = status;
+    const label = status;
 
     if (isPending) {
         colorClass = 'bg-yellow-100 text-yellow-700';
