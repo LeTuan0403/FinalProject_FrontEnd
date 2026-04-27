@@ -75,7 +75,7 @@ const Header = () => {
                 <Map className="w-8 h-8 text-white" />
               </div>
               <div className="flex flex-col">
-                <span className="text-blue-900 text-2xl font-black tracking-tight leading-none">TravelBooking</span>
+                <span className="text-blue-900 text-2xl font-black tracking-tight leading-none">TravelNest</span>
                 <span className="text-sm text-blue-600 font-medium tracking-widest uppercase">Khám phá thế giới</span>
               </div>
             </Link>
