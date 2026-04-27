@@ -68,9 +68,9 @@ const BookingSuccess = () => {
                 )}
 
                 <div className="space-y-3">
-                    {booking && (booking.tour?.tourId || booking.tourId) && (
+                    {booking && (
                         <Link
-                            to={`/tours/${booking.tour?.tourId || booking.tourId}`}
+                            to={`/tours/${booking.tour?.tourId || booking.tour?._id || (typeof booking.tourId === 'object' ? (booking.tourId as any)._id || (booking.tourId as any).tourId : booking.tourId)}`}
                             className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition flex items-center justify-center gap-2 shadow-lg shadow-blue-200"
                         >
                             <MapPin size={20} />
